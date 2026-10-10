@@ -9,6 +9,9 @@ dependencies = [
     "sqlalchemy>=2.0",
 ]
 
+[project.scripts]
+ration-seed = "ration.seed.command:main"
+
 [dependency-groups]
 dev = [
     "pytest>=8.3",
