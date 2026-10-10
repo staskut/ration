@@ -40,8 +40,11 @@ jobs:
       - name: Validate the API contract
         run: uv run openapi-spec-validator ../openapi.yaml
 
-      - name: Test
-        run: uv run pytest
+      - name: Unit tests
+        run: uv run pytest tests/unit
+
+      - name: Integration tests
+        run: uv run pytest tests/integration
 
   frontend:
     name: Frontend

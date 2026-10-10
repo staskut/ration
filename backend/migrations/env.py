@@ -13,7 +13,12 @@ from ration.config import settings
 from ration.repositories.models import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings().database_url)
+
+# Only fall back to the application settings when a URL has not already been
+# supplied. Overriding unconditionally would make a caller's explicit URL —
+# a test database, or a one-off migration against staging — silently ignored.
+if not config.get_main_option("sqlalchemy.url", None):
+    config.set_main_option("sqlalchemy.url", settings().database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

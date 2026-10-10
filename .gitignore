@@ -38,7 +38,3 @@ coverage/
 .idea/
 .vscode/
 *.swp
-
-# Local database files
-backend/*.db
-backend/.tmp-*.db

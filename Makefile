@@ -1,7 +1,10 @@
-.PHONY: help test lint format test-backend lint-backend test-frontend lint-frontend
+.PHONY: help test lint format test-backend test-unit test-integration \
+        lint-backend test-frontend lint-frontend
 
 help:
-	@echo "make test    - run backend and frontend tests"
+	@echo "make test             - everything"
+	@echo "make test-unit        - domain tests, no database"
+	@echo "make test-integration - repository and API tests, real database"
 	@echo "make lint    - lint and check formatting for both"
 	@echo "make format  - apply formatting"
 
@@ -9,8 +12,13 @@ test: test-backend test-frontend
 
 lint: lint-backend lint-frontend
 
-test-backend:
-	cd backend && uv run pytest
+test-backend: test-unit test-integration
+
+test-unit:
+	cd backend && uv run pytest tests/unit
+
+test-integration:
+	cd backend && uv run pytest tests/integration
 
 lint-backend:
 	cd backend && uv run ruff check . && uv run ruff format --check . && uv run lint-imports
