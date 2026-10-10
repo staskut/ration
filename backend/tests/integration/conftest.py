@@ -14,8 +14,8 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Engine
-from sqlalchemy.orm import Session
+from sqlalchemy import Engine, select
+from sqlalchemy.orm import Session, sessionmaker
 
 from ration.repositories import models
 from ration.repositories.database import make_engine
@@ -177,3 +177,67 @@ def seeded_plan(session: Session, seeded_profile: str, small_catalog: dict[str, 
     session.add(plan)
     session.commit()
     return plan.id
+
+
+# --------------------------------------------------------------------- API ---
+
+SEED_PASSWORD = "correct-horse-battery"
+
+
+@pytest.fixture
+def api(engine: Engine):  # type: ignore[no-untyped-def]
+    """A TestClient over a migrated, seeded database.
+
+    The seeded accounts get a real password here. The seed itself writes a
+    placeholder hash that cannot verify, so an unseeded deployment has no
+    usable credentials by accident.
+    """
+    from fastapi.testclient import TestClient
+
+    from ration.api.app import create_app
+    from ration.api.security import hash_password
+    from ration.seed.command import seed
+
+    seed(engine)
+    with Session(engine) as session:
+        for user in session.scalars(select(models.User)):
+            user.password_hash = hash_password(SEED_PASSWORD)
+        session.commit()
+
+    app = create_app()
+    app.state.engine = engine
+    app.state.session_factory = sessionmaker(bind=engine, expire_on_commit=False)
+    with TestClient(app) as client:
+        yield client
+
+
+@pytest.fixture
+def planner(api):  # type: ignore[no-untyped-def]
+    from ration.seed.command import PLANNER_EMAIL
+
+    response = api.post("/api/auth/login", json={"email": PLANNER_EMAIL, "password": SEED_PASSWORD})
+    assert response.status_code == 204, response.text
+    return api
+
+
+@pytest.fixture
+def follower(api, engine: Engine):  # type: ignore[no-untyped-def]
+    """A second client, so one test can hold both roles at once.
+
+    Depends on `api` because that is what seeds the database and gives the
+    accounts a usable password.
+    """
+    from fastapi.testclient import TestClient
+
+    from ration.api.app import create_app
+    from ration.seed.command import FOLLOWER_EMAIL
+
+    app = create_app()
+    app.state.engine = engine
+    app.state.session_factory = sessionmaker(bind=engine, expire_on_commit=False)
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/auth/login", json={"email": FOLLOWER_EMAIL, "password": SEED_PASSWORD}
+        )
+        assert response.status_code == 204, response.text
+        yield client

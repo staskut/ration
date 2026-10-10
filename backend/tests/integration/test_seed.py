@@ -143,7 +143,11 @@ class TestProductionIsRefused:
         monkeypatch.setattr(
             config,
             "settings",
-            lambda: Settings(database_url="postgresql://x", environment="production"),
+            lambda: Settings(
+                database_url="postgresql://x",
+                environment="production",
+                session_secret="not-used-by-this-test",
+            ),
         )
         from ration.seed import command
 

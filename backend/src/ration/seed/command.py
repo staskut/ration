@@ -23,8 +23,11 @@ from ration.repositories import models
 from ration.repositories.database import make_engine
 from ration.seed.loader import ReferenceData, load_reference
 
-PLANNER_EMAIL = "planner@ration.local"
-FOLLOWER_EMAIL = "follower@ration.local"
+# .example is the IANA-reserved documentation TLD. .local and .test are
+# special-use names that email validators reject, which would make these
+# accounts unusable through the API.
+PLANNER_EMAIL = "planner@ration.example"
+FOLLOWER_EMAIL = "follower@ration.example"
 
 # Development credentials for the seeded accounts. Overridden by environment in
 # any deployed environment; the seed refuses to run in production regardless.

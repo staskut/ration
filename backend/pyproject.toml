@@ -5,8 +5,13 @@ description = "A weekly nutrition planner for a planner and a follower"
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.14",
+    "argon2-cffi>=23.1",
+    "email-validator>=2.2",
+    "fastapi>=0.115",
+    "itsdangerous>=2.2",
     "pyyaml>=6.0",
     "sqlalchemy>=2.0",
+    "uvicorn[standard]>=0.34",
 ]
 
 [project.scripts]
@@ -19,6 +24,7 @@ dev = [
     "import-linter>=2.3",
     "types-pyyaml>=6.0",
     "openapi-spec-validator>=0.9.0",
+    "httpx>=0.28",
 ]
 
 [build-system]
