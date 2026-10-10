@@ -136,13 +136,19 @@ class Module:
 
 @dataclass(frozen=True, slots=True)
 class SlotBudget:
-    """Calorie and protein bounds for one slot. Applies to the slot's sum."""
+    """Calorie and protein bounds for one slot. Applies to the slot's sum.
+
+    ``optional`` marks a slot that is not expected every day. The treat slot is
+    the case: the profile allows three treats a week, so a day without one is
+    correct rather than incomplete, and reporting it would be noise.
+    """
 
     slot: Slot
     kcal_min: Decimal
     kcal_max: Decimal
     protein_min: Decimal
     protein_max: Decimal
+    optional: bool = False
 
 
 @dataclass(frozen=True, slots=True)

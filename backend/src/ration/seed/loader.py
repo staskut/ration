@@ -132,6 +132,7 @@ def _load_profile(path: Path) -> Profile:
                 kcal_max=_dec(b["kcal_max"]),
                 protein_min=_dec(b["protein_min"]),
                 protein_max=_dec(b["protein_max"]),
+                optional=bool(b.get("optional", False)),
             )
             for b in raw.get("slot_budgets", [])
         ),

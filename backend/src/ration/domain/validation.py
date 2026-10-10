@@ -303,7 +303,7 @@ def _check_day_structure(day: PlanDay, profile: Profile, catalog: Catalog) -> li
         ]
 
     findings: list[Finding] = []
-    budgeted: set[Slot] = {b.slot for b in profile.slot_budgets} or set(SLOTS)
+    expected: set[Slot] = {b.slot for b in profile.slot_budgets if not b.optional} or set(SLOTS)
 
     for slot in SLOTS:
         entries = day.entries_in(slot)
@@ -321,7 +321,7 @@ def _check_day_structure(day: PlanDay, profile: Profile, catalog: Catalog) -> li
                 )
             )
 
-        if not entries and slot in budgeted:
+        if not entries and slot in expected:
             findings.append(
                 Finding(
                     level="info",

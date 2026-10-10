@@ -19,7 +19,10 @@ slot_budgets:
   - {slot: lunch, kcal_min: "515", kcal_max: "545", protein_min: "34", protein_max: "38"}
   - {slot: snack, kcal_min: "150", kcal_max: "250", protein_min: "0", protein_max: "12"}
   - {slot: dinner, kcal_min: "470", kcal_max: "495", protein_min: "35", protein_max: "42"}
-  - {slot: treat, kcal_min: "100", kcal_max: "150", protein_min: "0", protein_max: "5"}
+  # Optional: the frequency rule allows three treats a week, so a day without
+  # one is correct rather than incomplete.
+  - {slot: treat, kcal_min: "100", kcal_max: "150", protein_min: "0", protein_max: "5",
+     optional: true}
 
 # Section 4. Only items that exist in the catalog are listed; the document also
 # excludes chicken breast, mussels, cabbage, corn, quinoa, fennel and skyr,
