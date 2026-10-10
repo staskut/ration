@@ -34,6 +34,14 @@ select = [
     "SIM",  # simplify
     "RUF",
 ]
+ignore = [
+    # Ration is a Russian-language product: ingredient and module names are
+    # Cyrillic by design. These rules flag Cyrillic as "ambiguous" and would
+    # fire on nearly every fixture and test.
+    "RUF001",  # ambiguous character in a string
+    "RUF002",  # ambiguous character in a docstring
+    "RUF003",  # ambiguous character in a comment
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
