@@ -9,6 +9,7 @@ dependencies = []
 dev = [
     "pytest>=8.3",
     "ruff>=0.14",
+    "import-linter>=2.3",
 ]
 
 [build-system]
@@ -37,3 +38,22 @@ select = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.importlinter]
+root_package = "ration"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Domain is pure: no framework, no I/O, no outer layers"
+type = "forbidden"
+source_modules = ["ration.domain"]
+forbidden_modules = [
+    "fastapi",
+    "sqlalchemy",
+    "alembic",
+    "pydantic",
+    "httpx",
+    "starlette",
+    "ration.api",
+    "ration.repositories",
+]

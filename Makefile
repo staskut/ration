@@ -13,7 +13,7 @@ test-backend:
 	cd backend && uv run pytest
 
 lint-backend:
-	cd backend && uv run ruff check . && uv run ruff format --check .
+	cd backend && uv run ruff check . && uv run ruff format --check . && uv run lint-imports
 
 format:
 	cd backend && uv run ruff format .
