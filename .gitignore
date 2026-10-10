@@ -1,0 +1,40 @@
+# macOS
+.DS_Store
+
+# Source documents containing real personal health data — never commit.
+# The repo-safe, de-identified version is docs/sample-plan-6-days.md
+racion_pilot_6_dney.md
+docs/racion_pilot_6_dney.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Editors
+.idea/
+.vscode/
+*.swp
