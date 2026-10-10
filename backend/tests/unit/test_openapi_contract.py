@@ -105,21 +105,32 @@ def test_login_is_the_only_unauthenticated_operation() -> None:
     assert public == ["login"]
 
 
-def test_role_restricted_mutations_declare_a_forbidden_response() -> None:
-    """Planner-only routes must be able to say 403 to a follower.
+# Mutations both roles may perform. Everything else must be able to answer 403.
+# Kept as an explicit list rather than inferred, so adding a both-roles mutation
+# is a deliberate edit here instead of a silently widened permission.
+MUTATIONS_OPEN_TO_BOTH_ROLES = {
+    "logout",
+    "setShoppingItemChecked",  # the follower ticks items off in a shop
+}
 
-    Auth operations are excluded: signing out is something both roles do, so a
-    403 there would be describing a rule that does not exist.
-    """
+
+def test_role_restricted_mutations_declare_a_forbidden_response() -> None:
+    """Planner-only routes must be able to say 403 to a follower."""
     missing = [
         op["operationId"]
         for _, method, op in operations()
         if method in {"post", "put", "patch", "delete"}
         and op.get("security") != []
-        and "auth" not in op.get("tags", [])
+        and op["operationId"] not in MUTATIONS_OPEN_TO_BOTH_ROLES
         and "403" not in op["responses"]
     ]
     assert missing == []
+
+
+def test_the_both_roles_list_names_only_real_operations() -> None:
+    """Stops the allowlist outliving the operations it excuses."""
+    all_ids = {op["operationId"] for _, _, op in operations()}
+    assert all_ids >= MUTATIONS_OPEN_TO_BOTH_ROLES
 
 
 def test_the_not_found_response_explains_that_it_hides_existence() -> None:
@@ -131,3 +142,58 @@ def test_session_cookie_is_the_security_scheme() -> None:
     schemes = SPEC["components"]["securitySchemes"]
     assert schemes["sessionCookie"]["in"] == "cookie"
     assert SPEC["security"] == [{"sessionCookie": []}]
+
+
+class TestPlansAndDerived:
+    def test_a_plan_is_always_exactly_seven_days(self) -> None:
+        days = SPEC["components"]["schemas"]["Plan"]["properties"]["days"]
+        assert days["minItems"] == 7
+        assert days["maxItems"] == 7
+
+    def test_day_index_is_bounded_to_the_week(self) -> None:
+        bounded = [
+            parameter
+            for path_item in SPEC["paths"].values()
+            for parameter in path_item.get("parameters", [])
+            if parameter["name"] == "dayIndex"
+        ]
+        assert bounded, "no dayIndex parameters found"
+        for parameter in bounded:
+            assert parameter["schema"]["minimum"] == 0
+            assert parameter["schema"]["maximum"] == 6
+
+    def test_a_finding_carries_a_key_and_params_not_a_sentence(self) -> None:
+        finding = SPEC["components"]["schemas"]["Finding"]["properties"]
+        assert "message_key" in finding
+        assert "message" not in finding
+        assert finding["params"]["additionalProperties"] == {"type": "string"}
+
+    def test_entry_mutations_return_fresh_validation(self) -> None:
+        """A planner must never see a changed plan beside a stale report."""
+        for operation_id in ("createPlanEntry", "updatePlanEntry"):
+            operation = next(op for _, _, op in operations() if op["operationId"] == operation_id)
+            response = next(iter(operation["responses"].values()))
+            ref = response["content"]["application/json"]["schema"]["$ref"]
+            assert ref.endswith("PlanEntryWithValidation")
+
+    def test_entry_creation_can_report_a_conflict(self) -> None:
+        """A second `main` in one slot is a 409, not a silent accept."""
+        operation = next(op for _, _, op in operations() if op["operationId"] == "createPlanEntry")
+        assert "409" in operation["responses"]
+
+    def test_feedback_status_is_inferred_rather_than_submitted(self) -> None:
+        assert SPEC["components"]["schemas"]["Feedback"]["properties"]["status"]["readOnly"]
+        assert "status" not in SPEC["components"]["schemas"]["FeedbackInput"]["properties"]
+
+    def test_feedback_requires_only_a_rating(self) -> None:
+        """One tap. Bloating and satiety went unreported for a whole pilot."""
+        assert SPEC["components"]["schemas"]["FeedbackInput"]["required"] == ["rating"]
+
+    def test_the_shopping_line_surfaces_a_critical_size(self) -> None:
+        line = SPEC["components"]["schemas"]["ShoppingLine"]["properties"]
+        assert "size_is_critical" in line
+        assert "overage_g" in line
+
+    def test_the_websocket_message_carries_no_payload(self) -> None:
+        message = SPEC["components"]["schemas"]["WebSocketMessage"]["properties"]
+        assert set(message) == {"type", "plan_id", "changed"}

@@ -27,6 +27,9 @@ tags:
   - name: ingredients
   - name: modules
   - name: profiles
+  - name: plans
+  - name: derived
+  - name: follower
 
 paths:
   /auth/login:
@@ -355,6 +358,329 @@ paths:
         "404": {$ref: "#/components/responses/NotFound"}
         "422": {$ref: "#/components/responses/Unprocessable"}
 
+  /plans:
+    get:
+      tags: [plans]
+      operationId: listPlans
+      summary: Every plan for the signed-in pairing, most recent first
+      responses:
+        "200":
+          description: Plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/PlanSummary"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+    post:
+      tags: [plans]
+      operationId: createPlan
+      summary: |
+        Start a week. Always creates exactly seven days (PRD 3.6), which is what
+        lets frequency rules mean "per plan" with no rolling-window arithmetic.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, start_date]
+              properties:
+                name: {type: string}
+                start_date: {type: string, format: date}
+                copy_from_plan_id:
+                  type: [string, "null"]
+                  description: Copy another week's entries as a starting point.
+      responses:
+        "201":
+          description: Created, with seven days
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Plan"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /plans/{planId}:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [plans]
+      operationId: getPlan
+      responses:
+        "200":
+          description: The plan with its seven days
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Plan"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [plans]
+      operationId: updatePlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: {type: string}
+                status: {type: string, enum: [draft, active, archived]}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Plan"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+    delete:
+      tags: [plans]
+      operationId: deletePlan
+      responses:
+        "204": {description: Deleted}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /plans/{planId}/days/{dayIndex}:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+      - name: dayIndex
+        in: path
+        required: true
+        schema: {type: integer, minimum: 0, maximum: 6}
+    put:
+      tags: [plans]
+      operationId: updatePlanDay
+      summary: Set a day's template and notes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                day_template: {$ref: "#/components/schemas/DayTemplate"}
+                notes: {type: [string, "null"]}
+      responses:
+        "200":
+          description: Updated, with fresh validation
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PlanDayWithValidation"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /plans/{planId}/days/{dayIndex}/entries:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+      - name: dayIndex
+        in: path
+        required: true
+        schema: {type: integer, minimum: 0, maximum: 6}
+    post:
+      tags: [plans]
+      operationId: createPlanEntry
+      summary: |
+        Put a module in a slot. A slot takes at most one `main` entry; a second
+        is a 409. Any number of `side` entries is fine.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/PlanEntryInput"}
+      responses:
+        "201":
+          description: Created, with fresh validation
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PlanEntryWithValidation"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /plans/{planId}/entries/{entryId}:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+      - {name: entryId, in: path, required: true, schema: {type: string}}
+    patch:
+      tags: [plans]
+      operationId: updatePlanEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                module_id: {type: string}
+                portion_factor: {$ref: "#/components/schemas/Decimal"}
+                position: {type: integer, minimum: 0}
+      responses:
+        "200":
+          description: Updated, with fresh validation
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/PlanEntryWithValidation"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+    delete:
+      tags: [plans]
+      operationId: deletePlanEntry
+      responses:
+        "200":
+          description: Deleted, with fresh validation
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ValidationReport"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /plans/{planId}/validation:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [derived]
+      operationId: getValidation
+      summary: |
+        Every finding for the plan, errors first. Findings are reported against
+        the planner's own configured rules; Ration never judges a plan's
+        healthiness (PRD 7).
+      responses:
+        "200":
+          description: The report
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ValidationReport"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /plans/{planId}/shopping-list:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [derived]
+      operationId: getShoppingList
+      summary: Raw weights, rounded to whole packages, grouped by shop section
+      responses:
+        "200":
+          description: The list, including check-off state
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ShoppingList"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /plans/{planId}/shopping-list/{ingredientId}:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+      - {name: ingredientId, in: path, required: true, schema: {type: string}}
+    patch:
+      tags: [derived]
+      operationId: setShoppingItemChecked
+      summary: |
+        Tick an item off. State is stored server-side, not in the browser: the
+        follower may shop on a different device than they planned on, and
+        nothing in the system may depend on them maintaining anything.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [checked]
+              properties:
+                checked: {type: boolean}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ShoppingLine"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /plans/{planId}/prep-plan:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [derived]
+      operationId: getPrepPlan
+      summary: Batch cook sessions with their per-container breakdown
+      responses:
+        "200":
+          description: Cook sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/CookSession"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /plans/{planId}/entries/{entryId}/feedback:
+    parameters:
+      - {name: planId, in: path, required: true, schema: {type: string}}
+      - {name: entryId, in: path, required: true, schema: {type: string}}
+    put:
+      tags: [follower]
+      operationId: setFeedback
+      summary: |
+        Rate a meal. One request, one tap. `status` is inferred from the rating —
+        the follower never sets it, because the only data the real pilot produced
+        was tried/not-tried and liked/disliked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/FeedbackInput"}
+      responses:
+        "200":
+          description: Recorded
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Feedback"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /today:
+    get:
+      tags: [follower]
+      operationId: getToday
+      summary: |
+        Everything the follower needs for today in one request: slot times from
+        the day's template, each module with its portion weight and totals, and
+        any rating already given.
+      parameters:
+        - name: date
+          in: query
+          schema: {type: string, format: date}
+          description: Defaults to today. Present so the screen can be tested.
+      responses:
+        "200":
+          description: Today
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/TodayView"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
 components:
   securitySchemes:
     sessionCookie:
@@ -602,6 +928,286 @@ components:
         slot_budgets: {type: array, items: {$ref: "#/components/schemas/SlotBudget"}}
         ingredient_rules: {type: array, items: {$ref: "#/components/schemas/IngredientRule"}}
         frequency_rules: {type: array, items: {$ref: "#/components/schemas/FrequencyRule"}}
+
+    PlanSummary:
+      type: object
+      required: [id, name, profile_id, start_date, status]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        profile_id: {type: string}
+        start_date: {type: string, format: date}
+        status: {type: string, enum: [draft, active, archived]}
+
+    PlanEntry:
+      type: object
+      required: [id, slot, module_id, portion_factor, position]
+      properties:
+        id: {type: string}
+        slot: {$ref: "#/components/schemas/Slot"}
+        module_id: {type: string}
+        module_name: {type: string, readOnly: true}
+        role: {$ref: "#/components/schemas/Role", readOnly: true}
+        portion_factor:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          description: Scales a module without forking it. Between 0.5 and 1.5.
+        position: {type: integer, minimum: 0}
+        kcal: {allOf: [{$ref: "#/components/schemas/Decimal"}], readOnly: true}
+        protein_g: {allOf: [{$ref: "#/components/schemas/Decimal"}], readOnly: true}
+        feedback:
+          oneOf: [{$ref: "#/components/schemas/Feedback"}, {type: "null"}]
+          readOnly: true
+
+    PlanEntryInput:
+      type: object
+      required: [slot, module_id]
+      properties:
+        slot: {$ref: "#/components/schemas/Slot"}
+        module_id: {type: string}
+        portion_factor: {$ref: "#/components/schemas/Decimal"}
+        position: {type: integer, minimum: 0}
+
+    SlotTotals:
+      type: object
+      required: [slot, kcal, protein_g]
+      properties:
+        slot: {$ref: "#/components/schemas/Slot"}
+        kcal: {$ref: "#/components/schemas/Decimal"}
+        protein_g: {$ref: "#/components/schemas/Decimal"}
+        description:
+          type: string
+          description: |
+            Totals are the slot's sum across every entry, never a single entry's
+            — a main and a side can each sit inside a budget and breach together.
+
+    PlanDay:
+      type: object
+      required: [day_index, date, day_template, entries, kcal, protein_g]
+      properties:
+        day_index: {type: integer, minimum: 0, maximum: 6}
+        date: {type: string, format: date}
+        day_template: {$ref: "#/components/schemas/DayTemplate"}
+        notes: {type: [string, "null"]}
+        entries: {type: array, items: {$ref: "#/components/schemas/PlanEntry"}}
+        kcal: {allOf: [{$ref: "#/components/schemas/Decimal"}], readOnly: true}
+        protein_g: {allOf: [{$ref: "#/components/schemas/Decimal"}], readOnly: true}
+        slot_totals:
+          type: array
+          items: {$ref: "#/components/schemas/SlotTotals"}
+          readOnly: true
+
+    Plan:
+      type: object
+      required: [id, name, profile_id, start_date, status, days]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        profile_id: {type: string}
+        start_date: {type: string, format: date}
+        status: {type: string, enum: [draft, active, archived]}
+        days:
+          type: array
+          minItems: 7
+          maxItems: 7
+          items: {$ref: "#/components/schemas/PlanDay"}
+          description: Always exactly seven, created with the plan.
+
+    PlanDayWithValidation:
+      type: object
+      required: [day, validation]
+      properties:
+        day: {$ref: "#/components/schemas/PlanDay"}
+        validation: {$ref: "#/components/schemas/ValidationReport"}
+
+    PlanEntryWithValidation:
+      type: object
+      required: [entry, validation]
+      properties:
+        entry: {$ref: "#/components/schemas/PlanEntry"}
+        validation: {$ref: "#/components/schemas/ValidationReport"}
+      description: |
+        Mutations return the fresh report alongside the entry. Validation is
+        cheap — one plan, in memory — and the planner should never be looking at
+        a changed plan beside a stale report.
+
+    Finding:
+      type: object
+      required: [level, code, message_key, params]
+      properties:
+        level: {type: string, enum: [error, warning, info]}
+        code:
+          type: string
+          description: Stable identifier, safe to branch on.
+          examples: [DAY_KCAL_OUT_OF_RANGE, FREQUENCY_EXCEEDED]
+        message_key:
+          type: string
+          description: |
+            A key the client renders. Findings never carry a formatted sentence:
+            the follower's screens are Russian, and a sentence built server-side
+            would be untranslatable.
+        params:
+          type: object
+          additionalProperties: {type: string}
+          description: Numbers travel as strings, for the same reason as Decimal.
+        day_index: {type: [integer, "null"], minimum: 0, maximum: 6}
+        slot: {oneOf: [{$ref: "#/components/schemas/Slot"}, {type: "null"}]}
+        entry_id: {type: [string, "null"]}
+
+    ValidationReport:
+      type: object
+      required: [findings, error_count, warning_count]
+      properties:
+        findings:
+          type: array
+          items: {$ref: "#/components/schemas/Finding"}
+          description: Sorted errors first, then warnings, then info.
+        error_count: {type: integer, minimum: 0}
+        warning_count: {type: integer, minimum: 0}
+
+    ShoppingLine:
+      type: object
+      required:
+        [ingredient_id, name, shop_section, needed_raw_g, purchase_amount,
+         overage_g, checked, size_is_critical, is_staple]
+      properties:
+        ingredient_id: {type: string}
+        name: {type: string}
+        shop_section: {$ref: "#/components/schemas/ShopSection"}
+        needed_raw_g:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          description: What the plan consumes, converted from cooked by yield factor.
+        purchase_amount:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          description: What you end up with after rounding to whole packages.
+        overage_g:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          description: The difference, shown rather than hidden.
+        packages: {type: [integer, "null"], minimum: 0}
+        package_unit: {type: [string, "null"], enum: [g, ml, pcs, null]}
+        checked: {type: boolean}
+        size_is_critical:
+          type: boolean
+          description: |
+            Surfaced here, not buried in the module. The pilot's one real failure
+            was buying 45 g flatbreads against a 75 g spec.
+        is_staple:
+          type: boolean
+          description: Bought by the bottle; the quantity is advisory.
+
+    ShoppingList:
+      type: object
+      required: [plan_id, lines]
+      properties:
+        plan_id: {type: string}
+        lines: {type: array, items: {$ref: "#/components/schemas/ShoppingLine"}}
+
+    CookSessionItem:
+      type: object
+      required: [ingredient_id, name, grams_raw]
+      properties:
+        ingredient_id: {type: string}
+        name: {type: string}
+        grams_raw: {$ref: "#/components/schemas/Decimal"}
+
+    CookSession:
+      type: object
+      required: [module_id, module_name, portions, day_indexes, items]
+      properties:
+        module_id: {type: string}
+        module_name: {type: string}
+        portions: {type: integer, minimum: 1}
+        day_indexes: {type: array, items: {type: integer, minimum: 0, maximum: 6}}
+        items: {type: array, items: {$ref: "#/components/schemas/CookSessionItem"}}
+        prep_notes: {type: [string, "null"]}
+
+    FeedbackInput:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: string
+          enum: [liked, neutral, disliked]
+          description: The one-tap axis. Everything else is optional.
+        bloating: {type: [integer, "null"], minimum: 0, maximum: 3}
+        satiety: {type: [string, "null"], enum: [too_little, right, too_much, null]}
+        note: {type: [string, "null"]}
+
+    Feedback:
+      type: object
+      required: [plan_entry_id, status]
+      properties:
+        plan_entry_id: {type: string}
+        status:
+          type: string
+          enum: [not_tried, tried]
+          readOnly: true
+          description: |
+            Inferred from a rating, never set directly. A first-class state
+            rather than a null, because "untried" and "rejected" are different
+            facts and a planner must be able to tell them apart.
+        rating: {type: [string, "null"], enum: [liked, neutral, disliked, null]}
+        bloating: {type: [integer, "null"], minimum: 0, maximum: 3}
+        satiety: {type: [string, "null"], enum: [too_little, right, too_much, null]}
+        note: {type: [string, "null"]}
+
+    TodaySlot:
+      type: object
+      required: [slot, time, entries, kcal, protein_g]
+      properties:
+        slot: {$ref: "#/components/schemas/Slot"}
+        time:
+          type: string
+          description: From the day's template; a long shift moves dinner to 21:00.
+        entries: {type: array, items: {$ref: "#/components/schemas/TodayEntry"}}
+        kcal: {$ref: "#/components/schemas/Decimal"}
+        protein_g: {$ref: "#/components/schemas/Decimal"}
+
+    TodayEntry:
+      type: object
+      required: [entry_id, module_id, module_name, portion_grams, kcal, protein_g, home_only]
+      properties:
+        entry_id: {type: string}
+        module_id: {type: string}
+        module_name: {type: string}
+        portion_grams:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          description: Cooked weight, so a container can be packed on a scale.
+        kcal: {$ref: "#/components/schemas/Decimal"}
+        protein_g: {$ref: "#/components/schemas/Decimal"}
+        home_only:
+          type: boolean
+          description: Not to be packed for work — reheated fish, for example.
+        critical_notes: {type: array, items: {type: string}}
+        feedback: {oneOf: [{$ref: "#/components/schemas/Feedback"}, {type: "null"}]}
+
+    TodayView:
+      type: object
+      required: [plan_id, date, day_index, day_template, slots, kcal, protein_g]
+      properties:
+        plan_id: {type: string}
+        date: {type: string, format: date}
+        day_index: {type: integer, minimum: 0, maximum: 6}
+        day_template: {$ref: "#/components/schemas/DayTemplate"}
+        slots: {type: array, items: {$ref: "#/components/schemas/TodaySlot"}}
+        kcal: {$ref: "#/components/schemas/Decimal"}
+        protein_g: {$ref: "#/components/schemas/Decimal"}
+
+    WebSocketMessage:
+      type: object
+      required: [type, plan_id, changed]
+      description: |
+        Sent over `WS /ws/plans/{planId}`, which OpenAPI cannot describe but
+        which is part of the contract. The message carries no payload by design
+        (HLD AD-6): clients refetch what changed, so there is no second copy of
+        the response shapes to keep in sync.
+      properties:
+        type: {type: string, enum: [invalidate]}
+        plan_id: {type: string}
+        changed:
+          type: array
+          items:
+            type: string
+            enum: [entries, validation, shopping_list, feedback, days]
 
     ErrorDetail:
       type: object
