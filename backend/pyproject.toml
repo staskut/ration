@@ -13,6 +13,7 @@ dev = [
     "ruff>=0.14",
     "import-linter>=2.3",
     "types-pyyaml>=6.0",
+    "openapi-spec-validator>=0.9.0",
 ]
 
 [build-system]

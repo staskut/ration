@@ -1,0 +1,629 @@
+openapi: 3.1.0
+
+info:
+  title: Ration API
+  version: 0.1.0
+  description: |
+    A weekly nutrition planner for a planner and a follower.
+
+    This document is hand-written and is the contract (docs/hld.md AD-2). The
+    backend is implemented against it and the TypeScript client is generated
+    from it; CI fails if the committed client and a fresh generation disagree.
+    It is never generated from FastAPI decorators — a contract derived from the
+    code can describe the code but can never catch it.
+
+    Nutrition and weight values are carried as decimal **strings**, not JSON
+    numbers. The whole domain layer uses Decimal to keep a shopping list exact,
+    and a float round-trip through JSON would quietly undo that.
+
+servers:
+  - url: /api
+
+security:
+  - sessionCookie: []
+
+tags:
+  - name: auth
+  - name: ingredients
+  - name: modules
+  - name: profiles
+
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      security: []
+      summary: Sign in and receive a session cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: {type: string, format: email}
+                password: {type: string, minLength: 8}
+      responses:
+        "204":
+          description: Signed in; session cookie set
+          headers:
+            Set-Cookie:
+              schema: {type: string}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: Clear the session cookie
+      responses:
+        "204": {description: Signed out}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+
+  /auth/me:
+    get:
+      tags: [auth]
+      operationId: getCurrentUser
+      summary: Who is signed in, and which profile they are paired to
+      responses:
+        "200":
+          description: The signed-in user
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CurrentUser"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+
+  /ingredients:
+    get:
+      tags: [ingredients]
+      operationId: listIngredients
+      summary: Search the catalog, matching names and aliases
+      parameters:
+        - {name: q, in: query, schema: {type: string}, description: Matches name or alias}
+        - {name: locale, in: query, schema: {type: string, default: ru}}
+        - {name: section, in: query, schema: {$ref: "#/components/schemas/ShopSection"}}
+      responses:
+        "200":
+          description: Matching ingredients
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Ingredient"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+    post:
+      tags: [ingredients]
+      operationId: createIngredient
+      summary: Add an ingredient (planner only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/IngredientInput"}
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Ingredient"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /ingredients/{ingredientId}:
+    parameters:
+      - {name: ingredientId, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [ingredients]
+      operationId: getIngredient
+      responses:
+        "200":
+          description: The ingredient
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Ingredient"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [ingredients]
+      operationId: updateIngredient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/IngredientInput"}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Ingredient"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+    delete:
+      tags: [ingredients]
+      operationId: deleteIngredient
+      summary: Remove an ingredient; refused while a module still uses it
+      responses:
+        "204": {description: Deleted}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /modules:
+    get:
+      tags: [modules]
+      operationId: listModules
+      parameters:
+        - {name: slot, in: query, schema: {$ref: "#/components/schemas/Slot"}}
+        - {name: role, in: query, schema: {$ref: "#/components/schemas/Role"}}
+        - {name: tag, in: query, schema: {type: string}}
+      responses:
+        "200":
+          description: Matching modules
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Module"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+    post:
+      tags: [modules]
+      operationId: createModule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ModuleInput"}
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Module"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /modules/{moduleId}:
+    parameters:
+      - {name: moduleId, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [modules]
+      operationId: getModule
+      responses:
+        "200":
+          description: The module, with computed totals
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Module"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [modules]
+      operationId: updateModule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ModuleInput"}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Module"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+    delete:
+      tags: [modules]
+      operationId: deleteModule
+      summary: Remove a module; refused while a plan still uses it
+      responses:
+        "204": {description: Deleted}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+
+  /profiles/{profileId}:
+    parameters:
+      - {name: profileId, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [profiles]
+      operationId: getProfile
+      responses:
+        "200":
+          description: Targets, budgets and rules
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Profile"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [profiles]
+      operationId: updateProfile
+      summary: |
+        Change the targets. Values are always supplied by the planner; Ration
+        never computes or suggests a nutrition target (PRD 7).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ProfileTargetsInput"}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Profile"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /profiles/{profileId}/slot-budgets:
+    parameters:
+      - {name: profileId, in: path, required: true, schema: {type: string}}
+    put:
+      tags: [profiles]
+      operationId: replaceSlotBudgets
+      summary: Replace every slot budget at once
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: "#/components/schemas/SlotBudget"}
+      responses:
+        "200":
+          description: Replaced
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/SlotBudget"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /profiles/{profileId}/ingredient-rules:
+    parameters:
+      - {name: profileId, in: path, required: true, schema: {type: string}}
+    put:
+      tags: [profiles]
+      operationId: replaceIngredientRules
+      summary: |
+        Replace the exclusion and caution list. Rules belong to the profile, not
+        to the ingredient, so one catalog can serve more than one person.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: "#/components/schemas/IngredientRule"}
+      responses:
+        "200":
+          description: Replaced
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/IngredientRule"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+  /profiles/{profileId}/frequency-rules:
+    parameters:
+      - {name: profileId, in: path, required: true, schema: {type: string}}
+    put:
+      tags: [profiles]
+      operationId: replaceFrequencyRules
+      summary: |
+        Replace the weekly tag limits. "Liver at most once a week" is a row the
+        planner edits here, never a branch in code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: "#/components/schemas/FrequencyRule"}
+      responses:
+        "200":
+          description: Replaced
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/FrequencyRule"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: ration_session
+
+  responses:
+    Unauthorized:
+      description: Not signed in
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    Forbidden:
+      description: Signed in, but the wrong role for this operation
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    NotFound:
+      description: |
+        Absent, or belonging to another profile. The two are deliberately
+        indistinguishable so existence is never disclosed.
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    Conflict:
+      description: The request contradicts the current state
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+    Unprocessable:
+      description: Well-formed but invalid
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+
+  schemas:
+    Decimal:
+      type: string
+      pattern: '^-?\d+(\.\d+)?$'
+      description: |
+        A decimal carried as a string. JSON numbers are IEEE-754 doubles; using
+        one here would reintroduce the rounding drift the domain layer exists to
+        avoid, and a shopping list that is wrong by a gram stops being trusted.
+      examples: ["170", "0.65", "1700.5"]
+
+    Slot:
+      type: string
+      enum: [breakfast, lunch, snack, dinner, treat]
+
+    Role:
+      type: string
+      enum: [main, side]
+      description: A slot holds at most one `main` and any number of `side`.
+
+    DayTemplate:
+      type: string
+      enum: [normal, long_shift, training, duty_24h]
+
+    ShopSection:
+      type: string
+      enum:
+        [meat_fish, dairy, produce, fruit, grains, nuts_pastes, oils_sauces,
+         supplements, treats, other]
+
+    Role_User:
+      type: string
+      enum: [planner, follower]
+
+    CurrentUser:
+      type: object
+      required: [id, display_name, role, profile_id, locale]
+      properties:
+        id: {type: string}
+        display_name: {type: string}
+        role: {$ref: "#/components/schemas/Role_User"}
+        profile_id: {type: string}
+        locale: {type: string, default: ru}
+
+    Ingredient:
+      type: object
+      required:
+        [id, names, kcal_per_100g, protein_per_100g, yield_factor, shop_section,
+         is_staple]
+      properties:
+        id: {type: string}
+        names:
+          type: object
+          additionalProperties: {type: string}
+          description: One name per locale; `ru` is required.
+        aliases:
+          type: array
+          items: {type: string}
+          description: Resolved at entry time. Merging is always by id, never by name.
+        kcal_per_100g: {$ref: "#/components/schemas/Decimal"}
+        protein_per_100g: {$ref: "#/components/schemas/Decimal"}
+        yield_factor:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          description: |
+            Cooked weight divided by raw weight. Below 1 for meat and fish, 1.0
+            for anything eaten as purchased, and above 1 for dry goods that
+            absorb water — rice noodles are about 2.85.
+        package_size: {oneOf: [{$ref: "#/components/schemas/Decimal"}, {type: "null"}]}
+        package_unit: {type: [string, "null"], enum: [g, ml, pcs, null]}
+        shop_section: {$ref: "#/components/schemas/ShopSection"}
+        is_staple:
+          type: boolean
+          description: Bought by the bottle; the shopping list shows it without a weight.
+
+    IngredientInput:
+      type: object
+      required: [names, kcal_per_100g, protein_per_100g, yield_factor, shop_section]
+      properties:
+        names:
+          type: object
+          additionalProperties: {type: string}
+        aliases: {type: array, items: {type: string}}
+        kcal_per_100g: {$ref: "#/components/schemas/Decimal"}
+        protein_per_100g: {$ref: "#/components/schemas/Decimal"}
+        yield_factor: {$ref: "#/components/schemas/Decimal"}
+        package_size: {oneOf: [{$ref: "#/components/schemas/Decimal"}, {type: "null"}]}
+        package_unit: {type: [string, "null"], enum: [g, ml, pcs, null]}
+        shop_section: {$ref: "#/components/schemas/ShopSection"}
+        is_staple: {type: boolean, default: false}
+
+    ModuleLine:
+      type: object
+      required: [ingredient_id, grams_cooked]
+      properties:
+        ingredient_id: {type: string}
+        grams_cooked:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          description: Cooked weight, because that is what gets weighed when packing.
+        size_is_critical:
+          type: boolean
+          default: false
+          description: |
+            The package size is structural, not a shopping convenience. A module
+            built on a 75 g flatbread does not work with a 45 g one.
+
+    Module:
+      type: object
+      required: [id, name, slot, role, batch_portions, lines, tags, kcal, protein_g]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        slot: {$ref: "#/components/schemas/Slot"}
+        role: {$ref: "#/components/schemas/Role"}
+        batch_portions:
+          type: integer
+          minimum: 1
+          maximum: 7
+          description: |
+            Portions cooked at once. Never multiplies a shopping quantity — a
+            batch module appears once per planned day, and each is one portion.
+        lines: {type: array, items: {$ref: "#/components/schemas/ModuleLine"}}
+        tags: {type: array, items: {type: string}}
+        prep_notes: {type: [string, "null"]}
+        kcal:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          readOnly: true
+          description: Computed from the lines. Never stored, never submitted.
+        protein_g:
+          allOf: [{$ref: "#/components/schemas/Decimal"}]
+          readOnly: true
+
+    ModuleInput:
+      type: object
+      required: [name, slot, lines]
+      properties:
+        name: {type: string}
+        slot: {$ref: "#/components/schemas/Slot"}
+        role: {$ref: "#/components/schemas/Role", default: main}
+        batch_portions: {type: integer, minimum: 1, maximum: 7, default: 1}
+        lines:
+          type: array
+          minItems: 1
+          items: {$ref: "#/components/schemas/ModuleLine"}
+        tags: {type: array, items: {type: string}}
+        prep_notes: {type: [string, "null"]}
+
+    SlotBudget:
+      type: object
+      required: [slot, kcal_min, kcal_max, protein_min, protein_max]
+      properties:
+        slot: {$ref: "#/components/schemas/Slot"}
+        kcal_min: {$ref: "#/components/schemas/Decimal"}
+        kcal_max: {$ref: "#/components/schemas/Decimal"}
+        protein_min: {$ref: "#/components/schemas/Decimal"}
+        protein_max: {$ref: "#/components/schemas/Decimal"}
+        optional:
+          type: boolean
+          default: false
+          description: |
+            Not expected every day. The treat slot is the case: three a week is
+            the rule, so a day without one is correct rather than incomplete.
+
+    IngredientRule:
+      type: object
+      required: [ingredient_id, rule]
+      properties:
+        ingredient_id: {type: string}
+        rule: {type: string, enum: [excluded, caution]}
+        threshold_g:
+          oneOf: [{$ref: "#/components/schemas/Decimal"}, {type: "null"}]
+          description: |
+            Required when `rule` is `caution`. Compared against the total across
+            a whole day, so two modules can each stay under and breach together.
+
+    FrequencyRule:
+      type: object
+      required: [tag]
+      properties:
+        tag: {type: string}
+        max_per_week: {type: [integer, "null"], minimum: 0}
+        blocked_on_templates:
+          type: array
+          items: {$ref: "#/components/schemas/DayTemplate"}
+          description: Wine on a training day is blocked by a row here, not by code.
+
+    ProfileTargetsInput:
+      type: object
+      properties:
+        name: {type: string}
+        locale: {type: string}
+        daily_kcal_target: {$ref: "#/components/schemas/Decimal"}
+        daily_kcal_tolerance: {$ref: "#/components/schemas/Decimal"}
+        daily_protein_min: {$ref: "#/components/schemas/Decimal"}
+        daily_protein_target: {$ref: "#/components/schemas/Decimal"}
+
+    Profile:
+      type: object
+      required:
+        [id, name, locale, daily_kcal_target, daily_kcal_tolerance,
+         daily_protein_min, daily_protein_target, slot_budgets,
+         ingredient_rules, frequency_rules]
+      properties:
+        id: {type: string}
+        name: {type: string}
+        locale: {type: string}
+        daily_kcal_target: {$ref: "#/components/schemas/Decimal"}
+        daily_kcal_tolerance: {$ref: "#/components/schemas/Decimal"}
+        daily_protein_min: {$ref: "#/components/schemas/Decimal"}
+        daily_protein_target: {$ref: "#/components/schemas/Decimal"}
+        slot_budgets: {type: array, items: {$ref: "#/components/schemas/SlotBudget"}}
+        ingredient_rules: {type: array, items: {$ref: "#/components/schemas/IngredientRule"}}
+        frequency_rules: {type: array, items: {$ref: "#/components/schemas/FrequencyRule"}}
+
+    ErrorDetail:
+      type: object
+      required: [code]
+      properties:
+        field: {type: string}
+        code: {type: string}
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Stable identifier; safe to branch on.
+            message:
+              type: string
+              description: English, for developers. Never shown to the follower.
+            details:
+              type: array
+              items: {$ref: "#/components/schemas/ErrorDetail"}

@@ -37,6 +37,9 @@ jobs:
       - name: Check layer boundaries
         run: uv run lint-imports
 
+      - name: Validate the API contract
+        run: uv run openapi-spec-validator ../openapi.yaml
+
       - name: Test
         run: uv run pytest
 
