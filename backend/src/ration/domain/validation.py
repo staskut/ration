@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 
 from ration.domain.nutrition import day_totals, totals_by_slot
-from ration.domain.types import Catalog, Level, Plan, PlanDay, Profile, Slot
+from ration.domain.types import SLOTS, Catalog, Level, Plan, PlanDay, Profile, Slot
 
 _LEVEL_ORDER: Mapping[Level, int] = {"error": 0, "warning": 1, "info": 2}
 
@@ -44,7 +44,9 @@ def validate(plan: Plan, profile: Profile, catalog: Catalog) -> tuple[Finding, .
         findings.extend(_check_excluded_ingredients(day, profile, catalog))
         findings.extend(_check_caution_thresholds(day, profile, catalog))
         findings.extend(_check_template_gates(day, profile, catalog))
+        findings.extend(_check_day_structure(day, profile, catalog))
     findings.extend(_check_frequency_limits(plan, profile, catalog))
+    findings.extend(_check_batch_runs(plan, catalog))
     return _sorted(findings)
 
 
@@ -276,6 +278,92 @@ def _check_frequency_limits(plan: Plan, profile: Profile, catalog: Catalog) -> l
                     "tag": rule.tag,
                     "actual": str(used),
                     "max": str(rule.max_per_week),
+                },
+            )
+        )
+
+    return findings
+
+
+def _check_day_structure(day: PlanDay, profile: Profile, catalog: Catalog) -> list[Finding]:
+    """Shape of a day: one main per slot, and what is still missing.
+
+    Both "missing" codes are informational. A half-built week is the normal
+    state of a plan being worked on, and reporting it as an error would train
+    the planner to ignore errors.
+    """
+    if not day.is_planned:
+        return [
+            Finding(
+                level="info",
+                code="DAY_UNPLANNED",
+                message_key="validation.day_unplanned",
+                day_index=day.day_index,
+            )
+        ]
+
+    findings: list[Finding] = []
+    budgeted: set[Slot] = {b.slot for b in profile.slot_budgets} or set(SLOTS)
+
+    for slot in SLOTS:
+        entries = day.entries_in(slot)
+
+        mains = [e for e in entries if catalog.module(e.module_id).role == "main"]
+        if len(mains) > 1:
+            findings.append(
+                Finding(
+                    level="error",
+                    code="MULTIPLE_MAIN_ENTRIES",
+                    message_key="validation.multiple_main_entries",
+                    day_index=day.day_index,
+                    slot=slot,
+                    params={"actual": str(len(mains))},
+                )
+            )
+
+        if not entries and slot in budgeted:
+            findings.append(
+                Finding(
+                    level="info",
+                    code="SLOT_EMPTY",
+                    message_key="validation.slot_empty",
+                    day_index=day.day_index,
+                    slot=slot,
+                )
+            )
+
+    return findings
+
+
+def _check_batch_runs(plan: Plan, catalog: Catalog) -> list[Finding]:
+    """A module cooked ahead should be eaten on consecutive days.
+
+    Cooking a lunch for three days and eating it on days 0, 1 and 4 means it sat
+    in the fridge over a gap. Fewer appearances than batch_portions is fine —
+    cooking ahead and eating less is a choice, not a mistake.
+    """
+    appearances: dict[str, list[int]] = defaultdict(list)
+    for day in plan.days:
+        for entry in day.entries:
+            if catalog.module(entry.module_id).batch_portions > 1:
+                appearances[entry.module_id].append(day.day_index)
+
+    findings: list[Finding] = []
+    for module_id, days in appearances.items():
+        ordered = sorted(set(days))
+        if len(ordered) < 2:
+            continue
+        if ordered == list(range(ordered[0], ordered[0] + len(ordered))):
+            continue
+        findings.append(
+            Finding(
+                level="warning",
+                code="BATCH_NOT_CONSECUTIVE",
+                message_key="validation.batch_not_consecutive",
+                day_index=ordered[0],
+                params={
+                    "module": module_id,
+                    "days": ",".join(str(d) for d in ordered),
                 },
             )
         )
