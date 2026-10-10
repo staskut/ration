@@ -1,0 +1,35 @@
+# Targets and rules, from sections 1, 4, 5 and 7 of docs/sample-plan-6-days.md.
+#
+# Ration never computes a target (PRD 7). Every number here was set by the
+# planner; the system only stores and enforces them.
+
+id: reference
+name: "Эталонный профиль"
+locale: ru
+
+daily_kcal_target: "1700"
+daily_kcal_tolerance: "50"
+daily_protein_min: "105"
+daily_protein_target: "110"
+
+# Section 5. The document writes these as "около", so the bounds are the
+# document's own stated ranges, widened only where it uses a range itself.
+slot_budgets:
+  - {slot: breakfast, kcal_min: "395", kcal_max: "420", protein_min: "30", protein_max: "33"}
+  - {slot: lunch, kcal_min: "515", kcal_max: "545", protein_min: "34", protein_max: "38"}
+  - {slot: snack, kcal_min: "150", kcal_max: "250", protein_min: "0", protein_max: "12"}
+  - {slot: dinner, kcal_min: "470", kcal_max: "495", protein_min: "35", protein_max: "42"}
+  - {slot: treat, kcal_min: "100", kcal_max: "150", protein_min: "0", protein_max: "5"}
+
+# Section 4. Only items that exist in the catalog are listed; the document also
+# excludes chicken breast, mussels, cabbage, corn, quinoa, fennel and skyr,
+# which were never transcribed because no module uses them.
+ingredient_rules: []
+
+# Section 7, as data rather than code: "liver at most once a week" is a row the
+# planner edits, not a branch someone has to find.
+frequency_rules:
+  - {tag: liver, max_per_week: 1}
+  - {tag: salted_fish, max_per_week: 2}
+  - {tag: treat, max_per_week: 3}
+  - {tag: alcohol, max_per_week: 1, blocked_on_templates: [training, duty_24h]}

@@ -1,0 +1,377 @@
+# Ingredient catalog for the reference plan.
+#
+# Source of truth: docs/sample-plan-6-days.md, sections 9 (per-dish portions),
+# 10 (batch quantities) and 12 (shopping list). Values are NOT taken from a
+# nutrition database: the document is the oracle every golden test compares
+# against, so a "more correct" value from elsewhere would break the thing it is
+# meant to verify.
+#
+# kcal and protein are per 100 g as purchased.
+# yield_factor is cooked weight / raw weight, back-solved from section 12's raw
+#   quantities against sections 9-10's cooked ones.
+# All numbers are quoted so PyYAML hands back strings and the loader builds
+#   exact Decimals. An unquoted 0.65 would arrive as a binary float.
+
+- slug: milk_1_2
+  name_ru: "Молоко 1–2%"
+  kcal_per_100g: "50"
+  protein_per_100g: "3.3"
+  yield_factor: "1"
+  package_size: "1000"
+  package_unit: g
+  shop_section: dairy
+
+- slug: whey_protein
+  name_ru: "Сывороточный протеин"
+  kcal_per_100g: "380"
+  protein_per_100g: "80"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: supplements
+
+- slug: yogurt_natural
+  name_ru: "Натуральный йогурт без сахара"
+  kcal_per_100g: "60"
+  protein_per_100g: "4.5"
+  yield_factor: "1"
+  package_size: "200"
+  package_unit: g
+  shop_section: dairy
+
+- slug: yogurt_pack
+  name_ru: "Готовая упаковка натурального йогурта"
+  kcal_per_100g: "60"
+  protein_per_100g: "4.5"
+  yield_factor: "1"
+  package_size: "200"
+  package_unit: pcs
+  shop_section: dairy
+
+- slug: cottage_cheese_5
+  name_ru: "Творог 5%"
+  kcal_per_100g: "110"
+  protein_per_100g: "13"
+  yield_factor: "1"
+  package_size: "250"
+  package_unit: g
+  shop_section: dairy
+
+- slug: egg
+  name_ru: "Яйца"
+  kcal_per_100g: "143"
+  protein_per_100g: "11.5"
+  yield_factor: "1"
+  package_size: "50"
+  package_unit: pcs
+  shop_section: dairy
+
+- slug: turkey_thigh
+  name_ru: "Бедро индейки без кожи"
+  kcal_per_100g: "185"
+  protein_per_100g: "25.5"
+  yield_factor: "0.65"
+  package_size: null
+  package_unit: null
+  shop_section: meat_fish
+
+- slug: chicken_thigh
+  name_ru: "Куриное бедро без кожи"
+  kcal_per_100g: "180"
+  protein_per_100g: "23"
+  yield_factor: "0.65"
+  package_size: null
+  package_unit: null
+  shop_section: meat_fish
+
+- slug: white_fish
+  name_ru: "Филе белой рыбы"
+  kcal_per_100g: "130"
+  protein_per_100g: "19"
+  yield_factor: "0.72"
+  package_size: null
+  package_unit: null
+  shop_section: meat_fish
+
+- slug: shrimp
+  name_ru: "Креветки очищенные"
+  kcal_per_100g: "99"
+  protein_per_100g: "20"
+  yield_factor: "0.58"
+  package_size: null
+  package_unit: null
+  shop_section: meat_fish
+
+- slug: squid
+  name_ru: "Кальмар очищенный"
+  kcal_per_100g: "110"
+  protein_per_100g: "15"
+  yield_factor: "0.62"
+  package_size: null
+  package_unit: null
+  shop_section: meat_fish
+
+- slug: salted_salmon
+  name_ru: "Красная соленая рыба"
+  kcal_per_100g: "200"
+  protein_per_100g: "22"
+  yield_factor: "0.9"
+  package_size: null
+  package_unit: null
+  shop_section: meat_fish
+
+- slug: herring_fillet
+  name_ru: "Филе сельди"
+  kcal_per_100g: "210"
+  protein_per_100g: "18"
+  yield_factor: "0.83"
+  package_size: null
+  package_unit: null
+  shop_section: meat_fish
+
+- slug: spinach
+  name_ru: "Шпинат"
+  kcal_per_100g: "23"
+  protein_per_100g: "2.9"
+  yield_factor: "0.82"
+  package_size: null
+  package_unit: null
+  shop_section: produce
+
+- slug: napa_cabbage
+  name_ru: "Пекинская капуста"
+  kcal_per_100g: "16"
+  protein_per_100g: "1.2"
+  yield_factor: "1"
+  package_size: "400"
+  package_unit: pcs
+  shop_section: produce
+
+- slug: bell_pepper
+  name_ru: "Сладкий перец"
+  kcal_per_100g: "38"
+  protein_per_100g: "1.2"
+  yield_factor: "0.6"
+  package_size: "130"
+  package_unit: pcs
+  shop_section: produce
+
+- slug: carrot
+  name_ru: "Морковь"
+  kcal_per_100g: "41"
+  protein_per_100g: "0.9"
+  yield_factor: "0.77"
+  package_size: null
+  package_unit: null
+  shop_section: produce
+
+- slug: pumpkin
+  name_ru: "Тыква"
+  kcal_per_100g: "45"
+  protein_per_100g: "1"
+  yield_factor: "0.55"
+  package_size: null
+  package_unit: null
+  shop_section: produce
+
+- slug: cucumber
+  name_ru: "Огурцы"
+  kcal_per_100g: "15"
+  protein_per_100g: "0.7"
+  yield_factor: "1"
+  package_size: "120"
+  package_unit: pcs
+  shop_section: produce
+
+- slug: tomato
+  name_ru: "Помидоры"
+  kcal_per_100g: "18"
+  protein_per_100g: "0.9"
+  yield_factor: "1"
+  package_size: "100"
+  package_unit: pcs
+  shop_section: produce
+
+- slug: tomato_passata
+  name_ru: "Томатная пассата"
+  kcal_per_100g: "35"
+  protein_per_100g: "1.5"
+  yield_factor: "1"
+  package_size: "400"
+  package_unit: g
+  shop_section: produce
+
+- slug: avocado
+  name_ru: "Авокадо"
+  kcal_per_100g: "160"
+  protein_per_100g: "2"
+  yield_factor: "0.5"
+  package_size: "170"
+  package_unit: pcs
+  shop_section: produce
+
+- slug: banana
+  name_ru: "Бананы"
+  kcal_per_100g: "89"
+  protein_per_100g: "1.1"
+  yield_factor: "1"
+  package_size: "100"
+  package_unit: pcs
+  shop_section: fruit
+
+- slug: strawberry
+  name_ru: "Клубника"
+  kcal_per_100g: "33"
+  protein_per_100g: "0.7"
+  yield_factor: "1"
+  package_size: "300"
+  package_unit: g
+  shop_section: fruit
+
+- slug: pineapple
+  name_ru: "Ананас"
+  kcal_per_100g: "50"
+  protein_per_100g: "0.5"
+  yield_factor: "1"
+  package_size: "200"
+  package_unit: g
+  shop_section: fruit
+
+- slug: kiwi
+  name_ru: "Киви"
+  kcal_per_100g: "61"
+  protein_per_100g: "1.1"
+  yield_factor: "1"
+  package_size: "75"
+  package_unit: pcs
+  shop_section: fruit
+
+- slug: rice_noodles
+  name_ru: "Рисовая лапша"
+  kcal_per_100g: "109"
+  protein_per_100g: "0.9"
+  yield_factor: "2.85"
+  package_size: null
+  package_unit: null
+  shop_section: grains
+
+- slug: oats
+  name_ru: "Овсяные хлопья"
+  kcal_per_100g: "380"
+  protein_per_100g: "13"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: grains
+
+- slug: tortilla_wholegrain
+  name_ru: "Цельнозерновая лепешка"
+  kcal_per_100g: "320"
+  protein_per_100g: "9"
+  yield_factor: "1"
+  package_size: "75"
+  package_unit: pcs
+  shop_section: grains
+
+- slug: crispbread
+  name_ru: "Цельнозерновые хлебцы"
+  kcal_per_100g: "360"
+  protein_per_100g: "10"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: grains
+
+- slug: nuts
+  name_ru: "Несоленые орехи"
+  kcal_per_100g: "620"
+  protein_per_100g: "15"
+  yield_factor: "1"
+  package_size: "150"
+  package_unit: g
+  shop_section: nuts_pastes
+
+- slug: nut_butter
+  name_ru: "Арахисовая или миндальная паста"
+  kcal_per_100g: "640"
+  protein_per_100g: "22"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: nuts_pastes
+
+- slug: tahini
+  name_ru: "Тахини"
+  kcal_per_100g: "550"
+  protein_per_100g: "15"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: nuts_pastes
+
+- slug: cocoa
+  name_ru: "Какао без сахара"
+  kcal_per_100g: "230"
+  protein_per_100g: "20"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: nuts_pastes
+  is_staple: true
+
+- slug: olive_oil
+  name_ru: "Оливковое масло"
+  kcal_per_100g: "884"
+  protein_per_100g: "0"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: oils_sauces
+  is_staple: true
+
+- slug: sesame_oil
+  name_ru: "Кунжутное масло"
+  kcal_per_100g: "884"
+  protein_per_100g: "0"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: oils_sauces
+  is_staple: true
+
+- slug: soy_sauce
+  name_ru: "Соевый соус"
+  kcal_per_100g: "53"
+  protein_per_100g: "8"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: oils_sauces
+  is_staple: true
+
+- slug: dry_wine
+  name_ru: "Сухое вино"
+  kcal_per_100g: "85"
+  protein_per_100g: "0"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: treats
+
+- slug: dark_chocolate
+  name_ru: "Темный шоколад"
+  kcal_per_100g: "550"
+  protein_per_100g: "6"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: treats
+
+- slug: ice_cream
+  name_ru: "Мороженое"
+  kcal_per_100g: "210"
+  protein_per_100g: "4"
+  yield_factor: "1"
+  package_size: null
+  package_unit: null
+  shop_section: treats

@@ -1,0 +1,72 @@
+# The six-day pilot from section 8 of docs/sample-plan-6-days.md, seeded as a
+# seven-day plan with day 6 left unplanned.
+#
+# That gap is deliberate: a plan is always seven days (PRD 3.6), and an
+# in-progress week is the normal state. It makes the fixture exercise the
+# partial-week case at the same time as the arithmetic.
+#
+# Day 1 of the document is Monday, so day_index 0 is Monday. Training falls on
+# days 0 and 3; day 2 is the long shift.
+
+id: reference_week_1
+name: "Пилотная неделя 1"
+profile_id: reference
+start_date: "2026-10-12"
+status: active
+
+days:
+  - day_index: 0
+    day_template: training
+    entries:
+      - {slot: breakfast, module: shake_strawberry_banana}
+      - {slot: lunch, module: lunch_rice_noodles_turkey}
+      - {slot: snack, module: snack_banana_nuts}
+      - {slot: dinner, module: dinner_fish_pumpkin_carrot}
+
+  - day_index: 1
+    day_template: normal
+    entries:
+      - {slot: breakfast, module: oats_strawberry}
+      - {slot: lunch, module: lunch_rice_noodles_turkey}
+      - {slot: snack, module: snack_yogurt_nuts}
+      - {slot: dinner, module: dinner_shrimp_asian}
+      - {slot: treat, module: treat_wine}
+
+  - day_index: 2
+    day_template: long_shift
+    entries:
+      - {slot: breakfast, module: egg_muffins}
+      - {slot: lunch, module: lunch_rice_noodles_turkey}
+      - {slot: snack, module: snack_banana_nuts}
+      - {slot: dinner, module: dinner_squid_pepper}
+
+  - day_index: 3
+    day_template: training
+    entries:
+      - {slot: breakfast, module: shake_pineapple_kiwi}
+      - {slot: lunch, module: lunch_roll_chicken}
+      - {slot: snack, module: snack_banana_nuts}
+      - {slot: dinner, module: dinner_fish_tomato_spinach}
+
+  - day_index: 4
+    day_template: normal
+    entries:
+      - {slot: breakfast, module: oats_banana_cocoa}
+      - {slot: lunch, module: lunch_roll_chicken}
+      - {slot: snack, module: snack_yogurt_nuts}
+      - {slot: dinner, module: dinner_salted_salmon_eggs}
+      - {slot: treat, module: treat_dark_chocolate}
+
+  - day_index: 5
+    day_template: normal
+    entries:
+      - {slot: breakfast, module: cottage_cheese_box}
+      - {slot: lunch, module: lunch_roll_chicken}
+      - {slot: snack, module: snack_yogurt_nuts}
+      - {slot: dinner, module: dinner_herring_cottage}
+      - {slot: treat, module: treat_ice_cream}
+
+  # Day 6 is intentionally unplanned. The document's pilot ran six days.
+  - day_index: 6
+    day_template: normal
+    entries: []

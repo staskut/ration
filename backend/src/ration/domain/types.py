@@ -31,6 +31,10 @@ DAYS_PER_PLAN = 7
 
 HUNDRED_GRAMS = Decimal(100)
 
+# Dry goods absorb water: rice noodles roughly triple, oats more. The ceiling is a
+# sanity bound against a transcription slip, not a statement about cooking.
+MAX_YIELD_FACTOR = Decimal(5)
+
 
 @dataclass(frozen=True, slots=True)
 class Totals:
@@ -53,9 +57,11 @@ ZERO_TOTALS = Totals()
 class Ingredient:
     """A catalog item, with the nutrition and shopping facts the engines need.
 
-    ``yield_factor`` is cooked weight divided by raw weight — 0.67 for turkey
-    thigh, 1.0 for anything eaten as purchased. The shopping engine divides by
-    it to turn a cooked portion back into something buyable.
+    ``yield_factor`` is cooked weight divided by raw weight. Meat and fish lose
+    water and land below 1 (turkey thigh is 0.65); anything eaten as purchased is
+    1.0; dry goods that absorb water go well above 1 (rice noodles are about
+    2.85, since 180 g dry yields 510 g cooked). The shopping engine divides by it
+    to turn a cooked portion back into something buyable.
     """
 
     id: str
@@ -66,12 +72,14 @@ class Ingredient:
     package_size: Decimal | None = None
     package_unit: str | None = None
     shop_section: str = "other"
+    is_staple: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "names", MappingProxyType(dict(self.names)))
-        if not Decimal(0) < self.yield_factor <= Decimal(2):
+        if not Decimal(0) < self.yield_factor <= MAX_YIELD_FACTOR:
             raise ValueError(
-                f"yield_factor for {self.id} must be in (0, 2], got {self.yield_factor}"
+                f"yield_factor for {self.id} must be in (0, {MAX_YIELD_FACTOR}], "
+                f"got {self.yield_factor}"
             )
         if self.package_size is not None and self.package_size <= 0:
             raise ValueError(f"package_size for {self.id} must be positive")

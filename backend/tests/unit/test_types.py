@@ -96,13 +96,17 @@ class TestNoFloats:
 
 
 class TestInvariants:
-    @pytest.mark.parametrize("bad", [Decimal(0), Decimal("-0.5"), Decimal("2.5")])
+    @pytest.mark.parametrize("bad", [Decimal(0), Decimal("-0.5"), Decimal("5.5")])
     def test_yield_factor_must_be_in_range(self, bad: Decimal) -> None:
         with pytest.raises(ValueError, match="yield_factor"):
             ingredient(yield_factor=bad)
 
     def test_yield_factor_of_one_is_allowed_for_uncooked_items(self) -> None:
         assert ingredient(yield_factor=Decimal(1)).yield_factor == Decimal(1)
+
+    def test_dry_goods_may_gain_weight_when_cooked(self) -> None:
+        """Rice noodles are ~2.85: 180 g dry becomes 510 g cooked."""
+        assert ingredient(yield_factor=Decimal("2.85")).yield_factor == Decimal("2.85")
 
     def test_module_line_must_have_a_positive_weight(self) -> None:
         with pytest.raises(ValueError, match="grams_cooked"):

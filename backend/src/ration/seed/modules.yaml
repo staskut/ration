@@ -1,0 +1,291 @@
+# Meal modules for the reference plan, transcribed from section 9 of
+# docs/sample-plan-6-days.md.
+#
+# Quantities are COOKED grams, exactly as the document states them, because that
+# is what gets weighed when packing a container (PRD 6.1).
+#
+# Dinners are transcribed as single `main` modules: the document states them as
+# whole dishes. Splitting protein from side is a capability the model supports
+# (PRD 3.6) and a follow-up for the planner, not a change to this transcription.
+
+# ---------------------------------------------------------------- breakfasts
+- slug: shake_strawberry_banana
+  name: "Клубнично-банановый коктейль"
+  slot: breakfast
+  role: main
+  batch_portions: 1
+  tags: [shake]
+  stated_kcal: 405
+  stated_protein: 31
+  lines:
+    - {ingredient: milk_1_2, grams_cooked: "200"}
+    - {ingredient: whey_protein, grams_cooked: "25"}
+    - {ingredient: strawberry, grams_cooked: "120"}
+    - {ingredient: banana, grams_cooked: "90"}
+    - {ingredient: spinach, grams_cooked: "30"}
+    - {ingredient: nut_butter, grams_cooked: "12"}
+
+- slug: shake_pineapple_kiwi
+  name: "Коктейль с ананасом и киви"
+  slot: breakfast
+  role: main
+  batch_portions: 1
+  tags: [shake]
+  stated_kcal: 400
+  stated_protein: 31
+  lines:
+    - {ingredient: milk_1_2, grams_cooked: "200"}
+    - {ingredient: whey_protein, grams_cooked: "25"}
+    - {ingredient: pineapple, grams_cooked: "130"}
+    - {ingredient: kiwi, grams_cooked: "80"}
+    - {ingredient: spinach, grams_cooked: "30"}
+    - {ingredient: nut_butter, grams_cooked: "14"}
+
+- slug: oats_strawberry
+  name: "Ночная овсянка с клубникой"
+  slot: breakfast
+  role: main
+  batch_portions: 1
+  tags: [overnight_oats]
+  stated_kcal: 410
+  stated_protein: 32
+  lines:
+    - {ingredient: yogurt_natural, grams_cooked: "200"}
+    - {ingredient: oats, grams_cooked: "32"}
+    - {ingredient: whey_protein, grams_cooked: "22"}
+    - {ingredient: strawberry, grams_cooked: "120"}
+    - {ingredient: nuts, grams_cooked: "8"}
+
+- slug: oats_banana_cocoa
+  name: "Ночная овсянка с бананом и какао"
+  slot: breakfast
+  role: main
+  batch_portions: 1
+  tags: [overnight_oats]
+  stated_kcal: 410
+  stated_protein: 31
+  lines:
+    - {ingredient: yogurt_natural, grams_cooked: "200"}
+    - {ingredient: oats, grams_cooked: "30"}
+    - {ingredient: whey_protein, grams_cooked: "22"}
+    - {ingredient: banana, grams_cooked: "80"}
+    - {ingredient: cocoa, grams_cooked: "5"}
+
+- slug: egg_muffins
+  name: "Яичные маффины"
+  slot: breakfast
+  role: main
+  batch_portions: 1
+  tags: [eggs]
+  stated_kcal: 410
+  stated_protein: 32
+  lines:
+    - {ingredient: egg, grams_cooked: "150"}
+    - {ingredient: cottage_cheese_5, grams_cooked: "80"}
+    - {ingredient: spinach, grams_cooked: "40"}
+    - {ingredient: bell_pepper, grams_cooked: "70"}
+    - {ingredient: carrot, grams_cooked: "40"}
+    - {ingredient: olive_oil, grams_cooked: "3"}
+    - {ingredient: crispbread, grams_cooked: "10"}
+
+- slug: cottage_cheese_box
+  name: "Творожная коробка"
+  slot: breakfast
+  role: main
+  batch_portions: 1
+  tags: [cottage_box]
+  stated_kcal: 410
+  stated_protein: 32
+  lines:
+    - {ingredient: cottage_cheese_5, grams_cooked: "230"}
+    - {ingredient: banana, grams_cooked: "100"}
+    - {ingredient: nuts, grams_cooked: "12"}
+
+# -------------------------------------------------------------------- lunches
+# Both are cooked once for three days (section 10), hence batch_portions: 3.
+- slug: lunch_rice_noodles_turkey
+  name: "Рисовая лапша с индейкой"
+  slot: lunch
+  role: main
+  batch_portions: 3
+  tags: [batch]
+  stated_kcal: 525
+  stated_protein: 35
+  lines:
+    - {ingredient: rice_noodles, grams_cooked: "170"}
+    - {ingredient: turkey_thigh, grams_cooked: "120"}
+    - {ingredient: carrot, grams_cooked: "80"}
+    - {ingredient: spinach, grams_cooked: "50"}
+    - {ingredient: sesame_oil, grams_cooked: "9"}
+    - {ingredient: soy_sauce, grams_cooked: "10"}
+
+- slug: lunch_roll_chicken
+  name: "Ролл с куриным бедром"
+  slot: lunch
+  role: main
+  batch_portions: 3
+  tags: [batch]
+  stated_kcal: 530
+  stated_protein: 38
+  prep_notes: >-
+    Лепешка должна быть 70–80 г. На лепешке 45 г начинка не заворачивается
+    (раздел 14). Собирать ролл вечером перед рабочим днем.
+  lines:
+    - {ingredient: tortilla_wholegrain, grams_cooked: "75", size_is_critical: true}
+    - {ingredient: chicken_thigh, grams_cooked: "120"}
+    - {ingredient: bell_pepper, grams_cooked: "80"}
+    - {ingredient: cucumber, grams_cooked: "50"}
+    - {ingredient: napa_cabbage, grams_cooked: "30"}
+    - {ingredient: yogurt_natural, grams_cooked: "30"}
+
+# --------------------------------------------------------------------- snacks
+- slug: snack_banana_nuts
+  name: "Банан и орехи"
+  slot: snack
+  role: main
+  batch_portions: 1
+  tags: [snack]
+  stated_kcal: 240
+  stated_protein: 6
+  lines:
+    - {ingredient: banana, grams_cooked: "100"}
+    - {ingredient: nuts, grams_cooked: "25"}
+
+- slug: snack_yogurt_nuts
+  name: "Йогурт и орехи"
+  slot: snack
+  role: main
+  batch_portions: 1
+  tags: [snack]
+  stated_kcal: 200
+  stated_protein: 12
+  lines:
+    - {ingredient: yogurt_pack, grams_cooked: "200"}
+    - {ingredient: nuts, grams_cooked: "10"}
+
+# -------------------------------------------------------------------- dinners
+- slug: dinner_fish_pumpkin_carrot
+  name: "Белая рыба с тыквой и морковью"
+  slot: dinner
+  role: main
+  batch_portions: 1
+  tags: [fish, home_only]
+  stated_kcal: 480
+  stated_protein: 40
+  lines:
+    - {ingredient: white_fish, grams_cooked: "170"}
+    - {ingredient: pumpkin, grams_cooked: "180"}
+    - {ingredient: carrot, grams_cooked: "100"}
+    - {ingredient: yogurt_natural, grams_cooked: "50"}
+    - {ingredient: olive_oil, grams_cooked: "12"}
+
+- slug: dinner_fish_tomato_spinach
+  name: "Белая рыба в томате со шпинатом"
+  slot: dinner
+  role: main
+  batch_portions: 1
+  tags: [fish, home_only]
+  stated_kcal: 480
+  stated_protein: 39
+  lines:
+    - {ingredient: white_fish, grams_cooked: "170"}
+    - {ingredient: tomato_passata, grams_cooked: "180"}
+    - {ingredient: spinach, grams_cooked: "100"}
+    - {ingredient: tahini, grams_cooked: "25"}
+    - {ingredient: olive_oil, grams_cooked: "5"}
+
+- slug: dinner_shrimp_asian
+  name: "Креветки по-азиатски"
+  slot: dinner
+  role: main
+  batch_portions: 1
+  tags: [seafood, home_only]
+  stated_kcal: 485
+  stated_protein: 41
+  lines:
+    - {ingredient: shrimp, grams_cooked: "175"}
+    - {ingredient: bell_pepper, grams_cooked: "120"}
+    - {ingredient: carrot, grams_cooked: "80"}
+    - {ingredient: spinach, grams_cooked: "80"}
+    - {ingredient: avocado, grams_cooked: "90"}
+    - {ingredient: sesame_oil, grams_cooked: "9"}
+
+- slug: dinner_squid_pepper
+  name: "Кальмар с печеным перцем"
+  slot: dinner
+  role: main
+  batch_portions: 1
+  tags: [seafood, home_only]
+  stated_kcal: 485
+  stated_protein: 39
+  lines:
+    - {ingredient: squid, grams_cooked: "200"}
+    - {ingredient: bell_pepper, grams_cooked: "150"}
+    - {ingredient: tomato, grams_cooked: "150"}
+    - {ingredient: spinach, grams_cooked: "50"}
+    - {ingredient: tahini, grams_cooked: "32"}
+
+- slug: dinner_salted_salmon_eggs
+  name: "Соленая красная рыба с яйцами"
+  slot: dinner
+  role: main
+  batch_portions: 1
+  tags: [fish, salted_fish, home_only]
+  stated_kcal: 480
+  stated_protein: 38
+  prep_notes: "Дополнительную соль не добавлять."
+  lines:
+    - {ingredient: salted_salmon, grams_cooked: "90"}
+    - {ingredient: egg, grams_cooked: "150"}
+    - {ingredient: cucumber, grams_cooked: "100"}
+    - {ingredient: spinach, grams_cooked: "50"}
+    - {ingredient: avocado, grams_cooked: "35"}
+
+- slug: dinner_herring_cottage
+  name: "Сельдь с творогом и овощами"
+  slot: dinner
+  role: main
+  batch_portions: 1
+  tags: [fish, salted_fish, home_only]
+  stated_kcal: 485
+  stated_protein: 39
+  lines:
+    - {ingredient: herring_fillet, grams_cooked: "100"}
+    - {ingredient: cottage_cheese_5, grams_cooked: "150"}
+    - {ingredient: cucumber, grams_cooked: "100"}
+    - {ingredient: tomato, grams_cooked: "100"}
+    - {ingredient: avocado, grams_cooked: "45"}
+
+# --------------------------------------------------------------------- treats
+- slug: treat_wine
+  name: "Сухое вино 125 мл"
+  slot: treat
+  role: main
+  batch_portions: 1
+  tags: [treat, alcohol]
+  stated_kcal: 105
+  stated_protein: 0
+  lines:
+    - {ingredient: dry_wine, grams_cooked: "125"}
+
+- slug: treat_dark_chocolate
+  name: "Темный шоколад 20 г"
+  slot: treat
+  role: main
+  batch_portions: 1
+  tags: [treat]
+  stated_kcal: 110
+  stated_protein: 1
+  lines:
+    - {ingredient: dark_chocolate, grams_cooked: "20"}
+
+- slug: treat_ice_cream
+  name: "Мороженое 50 г"
+  slot: treat
+  role: main
+  batch_portions: 1
+  tags: [treat]
+  stated_kcal: 110
+  stated_protein: 2
+  lines:
+    - {ingredient: ice_cream, grams_cooked: "50"}

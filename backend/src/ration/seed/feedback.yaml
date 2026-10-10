@@ -1,0 +1,32 @@
+# Pilot feedback, from section 14 of docs/sample-plan-6-days.md.
+#
+# Keyed by module rather than by plan entry: the follower reported per module
+# ("I ate the cottage cheese box every day and liked it"), not per day.
+#
+# Note what is NOT here. Bloating and satiety were never reported, across a
+# whole week — which is why the model leads with status and rating (PRD 3.7).
+# Nine of nineteen modules were never tried at all, and `not_tried` is a state
+# rather than missing data because "untried" and "rejected" are different facts.
+
+- {module: cottage_cheese_box, status: tried, rating: liked,
+   note: "Использовалась все дни пилота."}
+- {module: lunch_rice_noodles_turkey, status: tried, rating: liked}
+- {module: lunch_roll_chicken, status: tried, rating: liked,
+   note: "Лепешки куплены 45 г вместо 75 г, начинка не заворачивалась."}
+- {module: snack_banana_nuts, status: tried, rating: liked,
+   note: "Основной перекус."}
+- {module: dinner_fish_pumpkin_carrot, status: tried, rating: liked,
+   note: "Гарнир заменялся самостоятельно."}
+- {module: dinner_fish_tomato_spinach, status: tried, rating: liked,
+   note: "Гарнир заменялся самостоятельно."}
+- {module: dinner_shrimp_asian, status: tried, rating: liked}
+
+- {module: shake_strawberry_banana, status: not_tried}
+- {module: shake_pineapple_kiwi, status: not_tried}
+- {module: oats_strawberry, status: not_tried}
+- {module: oats_banana_cocoa, status: not_tried}
+- {module: egg_muffins, status: not_tried}
+- {module: snack_yogurt_nuts, status: not_tried}
+- {module: dinner_squid_pepper, status: not_tried}
+- {module: dinner_salted_salmon_eggs, status: not_tried}
+- {module: dinner_herring_cottage, status: not_tried}
