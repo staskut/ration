@@ -43,6 +43,8 @@ def validate(plan: Plan, profile: Profile, catalog: Catalog) -> tuple[Finding, .
         findings.extend(_check_slot_budgets(day, profile, catalog))
         findings.extend(_check_excluded_ingredients(day, profile, catalog))
         findings.extend(_check_caution_thresholds(day, profile, catalog))
+        findings.extend(_check_template_gates(day, profile, catalog))
+    findings.extend(_check_frequency_limits(plan, profile, catalog))
     return _sorted(findings)
 
 
@@ -205,6 +207,75 @@ def _check_caution_thresholds(day: PlanDay, profile: Profile, catalog: Catalog) 
                     "ingredient": ingredient_id,
                     "actual": _n(grams),
                     "threshold": _n(rule.threshold_g),
+                },
+            )
+        )
+
+    return findings
+
+
+def _check_template_gates(day: PlanDay, profile: Profile, catalog: Catalog) -> list[Finding]:
+    """A tag the day's template forbids, such as wine on a training day.
+
+    This is a rule about the *context* of a day rather than its contents, which
+    is why day templates are real entities and not a display preference.
+    """
+    findings: list[Finding] = []
+
+    for entry in day.entries:
+        module = catalog.module(entry.module_id)
+        for rule in profile.frequency_rules:
+            if rule.tag not in module.tags:
+                continue
+            if day.day_template not in rule.blocked_on_templates:
+                continue
+            findings.append(
+                Finding(
+                    level="error",
+                    code="TEMPLATE_GATE_VIOLATED",
+                    message_key="validation.template_gate_violated",
+                    day_index=day.day_index,
+                    slot=entry.slot,
+                    entry_id=entry.id,
+                    params={
+                        "tag": rule.tag,
+                        "template": day.day_template,
+                        "module": module.id,
+                    },
+                )
+            )
+
+    return findings
+
+
+def _check_frequency_limits(plan: Plan, profile: Profile, catalog: Catalog) -> list[Finding]:
+    """Weekly tag counts across exactly one seven-day plan.
+
+    A plan is always seven days (PRD 3.6), so "per week" is "per plan" and no
+    rolling-window arithmetic is needed anywhere. A module carrying several tags
+    counts once under each matching rule.
+    """
+    counts: dict[str, int] = defaultdict(int)
+    for entry in plan.all_entries:
+        for tag in catalog.module(entry.module_id).tags:
+            counts[tag] += 1
+
+    findings: list[Finding] = []
+    for rule in profile.frequency_rules:
+        if rule.max_per_week is None:
+            continue
+        used = counts.get(rule.tag, 0)
+        if used <= rule.max_per_week:
+            continue
+        findings.append(
+            Finding(
+                level="error",
+                code="FREQUENCY_EXCEEDED",
+                message_key="validation.frequency_exceeded",
+                params={
+                    "tag": rule.tag,
+                    "actual": str(used),
+                    "max": str(rule.max_per_week),
                 },
             )
         )
