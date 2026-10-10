@@ -11,6 +11,7 @@ opinion about whether a plan is healthy, and says nothing of the kind (PRD 7).
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -40,6 +41,8 @@ def validate(plan: Plan, profile: Profile, catalog: Catalog) -> tuple[Finding, .
     for day in plan.days:
         findings.extend(_check_day_budgets(day, profile, catalog))
         findings.extend(_check_slot_budgets(day, profile, catalog))
+        findings.extend(_check_excluded_ingredients(day, profile, catalog))
+        findings.extend(_check_caution_thresholds(day, profile, catalog))
     return _sorted(findings)
 
 
@@ -136,6 +139,75 @@ def _check_slot_budgets(day: PlanDay, profile: Profile, catalog: Catalog) -> lis
                     },
                 )
             )
+
+    return findings
+
+
+def _check_excluded_ingredients(day: PlanDay, profile: Profile, catalog: Catalog) -> list[Finding]:
+    """Any excluded ingredient anywhere in the day is an error.
+
+    The rule lives on the profile, not on the ingredient: the same catalog could
+    serve a second person who tolerates it.
+    """
+    findings: list[Finding] = []
+
+    for entry in day.entries:
+        module = catalog.module(entry.module_id)
+        for line in module.lines:
+            rule = profile.rule_for(line.ingredient_id)
+            if rule is None or rule.rule != "excluded":
+                continue
+            findings.append(
+                Finding(
+                    level="error",
+                    code="EXCLUDED_INGREDIENT",
+                    message_key="validation.excluded_ingredient",
+                    day_index=day.day_index,
+                    slot=entry.slot,
+                    entry_id=entry.id,
+                    params={
+                        "ingredient": line.ingredient_id,
+                        "module": module.id,
+                    },
+                )
+            )
+
+    return findings
+
+
+def _check_caution_thresholds(day: PlanDay, profile: Profile, catalog: Catalog) -> list[Finding]:
+    """Caution ingredients are summed across the whole day before comparing.
+
+    Two modules can each stay under the threshold and clear it together — a
+    per-module check would wave that through, which is the failure this guards.
+    Thresholds do not carry over between days.
+    """
+    consumed: dict[str, Decimal] = defaultdict(Decimal)
+
+    for entry in day.entries:
+        for line in catalog.module(entry.module_id).lines:
+            rule = profile.rule_for(line.ingredient_id)
+            if rule is not None and rule.rule == "caution":
+                consumed[line.ingredient_id] += line.grams_cooked * entry.portion_factor
+
+    findings: list[Finding] = []
+    for ingredient_id, grams in consumed.items():
+        rule = profile.rule_for(ingredient_id)
+        if rule is None or rule.threshold_g is None or grams <= rule.threshold_g:
+            continue
+        findings.append(
+            Finding(
+                level="warning",
+                code="CAUTION_THRESHOLD_EXCEEDED",
+                message_key="validation.caution_threshold_exceeded",
+                day_index=day.day_index,
+                params={
+                    "ingredient": ingredient_id,
+                    "actual": _n(grams),
+                    "threshold": _n(rule.threshold_g),
+                },
+            )
+        )
 
     return findings
 
