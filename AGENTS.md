@@ -122,5 +122,14 @@ stop and ask rather than implementing the reversal — the reasoning is in `docs
 - Do not commit real plan data. `docs/sample-plan-6-days.md` is the only plan content in the
   repo and it is de-identified. The database holds real data; Git never does.
 - Do not put profile data, targets, or feedback into logs or telemetry attributes.
-- Work one task at a time from `docs/tasks.md`. Read its acceptance criteria before starting and
-  again before closing.
+- Work one task at a time, from the GitHub issues. Read its acceptance criteria before starting
+  and again before finishing.
+- **Follow the role you are in** (`docs/process.md`, `docs/team/`). They are separate on purpose:
+  - **PM** grooms before anyone implements, and is the only role that changes an acceptance
+    criterion. If a criterion is wrong, comment on the issue and let it be amended — do not
+    quietly implement something else and explain it in a commit message.
+  - **Engineer** implements one groomed task and **does not close the issue**. Never put
+    `Closes #N` in a commit: it closes the issue on merge and skips QA entirely. Reference the
+    issue as `#N` and leave it open with a comment saying what was done.
+  - **QA** checks each criterion against the running code, posts a PASS/FAIL verdict comment,
+    changes nothing, and only a PASS closes the issue.

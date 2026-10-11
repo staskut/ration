@@ -71,7 +71,7 @@ class Quantity:
 
 
 def grams(amount: Decimal | int | str) -> Quantity:
-    """Build a mass quantity. Accepts str/int to avoid float precision loss."""
+    """Build a mass quantity. Accepts str/int so binary rounding never enters a value."""
     return Quantity(Decimal(amount), Dimension.MASS)
 
 

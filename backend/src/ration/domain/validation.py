@@ -387,5 +387,5 @@ def _sorted(findings: Sequence[Finding]) -> tuple[Finding, ...]:
 
 
 def _n(value: Decimal) -> str:
-    """Numbers travel as strings so no float ever reaches the API layer."""
+    """Numbers travel as strings, so binary rounding never reaches the API layer."""
     return str(value.quantize(Decimal("0.1")))
