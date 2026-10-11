@@ -1,19 +1,43 @@
 # Ration — Backlog
 
-Tasks are worked one at a time (`process.md`). Each is sized for a single session and written to
-be handed to someone who has read `AGENTS.md` and the documents a task names, but not the other
-tasks.
+> [!IMPORTANT]
+> **The GitHub issues are the source of truth.** Every task below exists as an
+> issue at https://github.com/staskut/ration/issues with the same number, groomed
+> to the four-section template in [`task-template.md`](task-template.md):
+> goal, checkable acceptance criteria, out of scope with links, and constraints.
+>
+> This file is the planning snapshot that produced them. It is kept for the
+> record and is not updated as work proceeds — read the issue, not this.
 
-Scope and rationale live in `product-spec.md` (PRD), `hld.md`, and `lld.md`. A task never
-re-argues a decision made there; it links to it.
+Tasks are worked one at a time ([`process.md`](process.md)). Each is sized for a
+single session and written to be handed to someone who has read `AGENTS.md` and
+the documents a task names, but not the other tasks.
 
-**Status legend** — `groomed` tasks have acceptance criteria and are ready to implement.
-`draft` tasks carry a goal and a description only, and are groomed before someone picks them up.
+Scope and rationale live in [`product-spec.md`](product-spec.md) (PRD),
+[`hld.md`](hld.md), and [`lld.md`](lld.md). A task never re-argues a decision
+made there; it links to it.
+
+## What grooming changed
+
+Grooming all 52 surfaced three acceptance criteria that were wrong because they
+were written before the data they described existed:
+
+- `yield_factor` was bounded to `(0, 2]`, which assumes cooking only ever removes
+  water. Rice noodles are about 2.85. Now `(0, 5]`.
+- The golden shopping tolerance was 5%, which is unachievable against a list that
+  says "около 30 г" and "не менее 125 мл". Now 15%, with staples compared on
+  presence rather than quantity.
+- The module count was 14, taken from section 14's feedback table, which groups
+  the shakes and the overnight oats. Section 8 has 19.
+
+The lesson is recorded here because it will recur: **grooming a data-dependent
+task before looking at the data produces confident, wrong criteria.** Transcribe
+first, then write the criteria.
 
 ---
 
 ## 1. Empty backend project with a passing test
-Status: groomed
+Status: see the issue
 
 ### Goal
 A backend project that installs, lints, and runs one passing test on a clean checkout.
@@ -44,7 +68,7 @@ A backend project that installs, lints, and runs one passing test on a clean che
 ---
 
 ## 2. Frontend scaffold with a passing test
-Status: groomed
+Status: see the issue
 
 ### Goal
 A frontend project that builds, typechecks, and runs one passing test.
@@ -72,7 +96,7 @@ A frontend project that builds, typechecks, and runs one passing test.
 ---
 
 ## 3. CI pipeline for lint and tests
-Status: groomed
+Status: see the issue
 
 ### Goal
 Every pull request runs lint, typecheck, and tests for both projects, and fails when they fail.
@@ -99,7 +123,7 @@ Every pull request runs lint, typecheck, and tests for both projects, and fails 
 ---
 
 ## 4. Domain purity guard
-Status: groomed
+Status: see the issue
 
 ### Goal
 CI fails if the domain layer imports a framework, so HLD AD-1 is enforced rather than hoped for.
@@ -123,7 +147,7 @@ CI fails if the domain layer imports a framework, so HLD AD-1 is enforced rather
 ---
 
 ## 5. Domain types and unit handling
-Status: groomed
+Status: see the issue
 
 ### Goal
 The frozen dataclasses and unit handling that every engine operates on.
@@ -150,7 +174,7 @@ The frozen dataclasses and unit handling that every engine operates on.
 ---
 
 ## 6. Nutrition totals
-Status: groomed
+Status: see the issue
 
 ### Goal
 Calories and protein computed from a single module line up to a whole day.
@@ -179,7 +203,7 @@ Calories and protein computed from a single module line up to a whole day.
 ---
 
 ## 7. Reference fixture: ingredient catalog
-Status: groomed
+Status: see the issue
 
 ### Goal
 Every ingredient in the reference plan, as checked-in fixture data with nutrition and yield factors.
@@ -209,7 +233,7 @@ Every ingredient in the reference plan, as checked-in fixture data with nutritio
 ---
 
 ## 8. Reference fixture: modules
-Status: groomed
+Status: see the issue
 
 ### Goal
 The reference plan's fourteen meal modules as fixture data whose computed totals match the document.
@@ -235,7 +259,7 @@ The reference plan's fourteen meal modules as fixture data whose computed totals
 ---
 
 ## 9. Reference fixture: profile, rules, plan, and feedback — with a loader
-Status: groomed
+Status: see the issue
 
 ### Goal
 The remaining reference data as fixtures, loadable into the domain types from #5.
@@ -262,7 +286,7 @@ The remaining reference data as fixtures, loadable into the domain types from #5
 ---
 
 ## 10. Shopping list engine
-Status: groomed
+Status: see the issue
 
 ### Goal
 A plan becomes a grouped, package-rounded shopping list in raw weights.
@@ -295,7 +319,7 @@ A plan becomes a grouped, package-rounded shopping list in raw weights.
 ---
 
 ## 11. Golden test: shopping list
-Status: groomed
+Status: see the issue
 
 ### Goal
 Prove the engine reproduces the shopping list a human wrote before the code existed.
@@ -322,206 +346,206 @@ Prove the engine reproduces the shopping list a human wrote before the code exis
 ---
 
 ## 12. Validation: daily and slot budgets
-Status: draft
+Status: see the issue
 Goal: Days and slots are checked against the profile's budgets.
 Description: Implement the budget checks in `domain/validation.py` — daily calories within target and tolerance, daily protein at or above the minimum, and each slot's summed total within its budget. Emit findings with stable codes and parameters, never formatted sentences.
 
 ## 13. Validation: ingredient exclusions and cautions
-Status: draft
+Status: see the issue
 Goal: Excluded and over-threshold ingredients are reported.
 Description: Add the ingredient checks — any excluded ingredient in any module line is an error; a caution ingredient whose total across a whole day exceeds its threshold is a warning. Rules come from the profile, not from the ingredient.
 
 ## 14. Validation: frequency rules and template gates
-Status: draft
+Status: see the issue
 Goal: Weekly limits and day-type restrictions are enforced.
 Description: Add the rule checks — a tag used more than its weekly maximum across the plan is an error, and a tag blocked on a day's template is an error. Frequency counts scope to exactly one seven-day plan.
 
 ## 15. Validation: structural findings
-Status: draft
+Status: see the issue
 Goal: Structural problems and incomplete weeks are reported at the right level.
 Description: Add the remaining checks — a batch module on non-consecutive days, more than one main entry in a slot, an empty slot, and an unplanned day. Empty slots and unplanned days are informational, never errors.
 
 ## 16. Golden test: validation on the reference plan
-Status: draft
+Status: see the issue
 Goal: The reference plan validates cleanly.
 Description: Assert that validating the reference plan produces no errors and no warnings, and exactly the informational findings expected for the unplanned seventh day.
 
 ## 17. OpenAPI contract: auth and catalog
-Status: draft
+Status: see the issue
 Goal: The contract for authentication, ingredients, and modules.
 Description: Hand-write the first half of `openapi.yaml` covering the auth, ingredient, module, profile, and rule endpoints in LLD §4, with the shared error schema. Written before any handler exists.
 
 ## 18. OpenAPI contract: plans and derived resources
-Status: draft
+Status: see the issue
 Goal: The contract for plans and everything computed from them.
 Description: Extend `openapi.yaml` with plans, days, entries, validation, shopping list and check-off, feedback, today, and the WebSocket message shape.
 
 ## 19. Database models and initial migration
-Status: draft
+Status: see the issue
 Goal: The schema exists and migrates on a clean database.
 Description: Implement the SQLAlchemy models in LLD §2 and generate the initial Alembic migration. Portable types only — the same schema must run on SQLite and Postgres.
 
 ## 20. Repositories and domain mappers
-Status: draft
+Status: see the issue
 Goal: Database rows become domain types and back again.
 Description: Implement repositories that load a catalog and a whole plan aggregate into the frozen domain types from task 5, and persist entry changes. No business rules here.
 
 ## 21. Seed command
-Status: draft
+Status: see the issue
 Goal: A command loads the reference data into a database.
 Description: Add a seed command that loads the fixture YAML from tasks 7–9 into the database, keyed by stable slugs so it is idempotent and re-runnable. Available in development, compose, and tests; never in production.
 
 ## 22. Authentication and roles
-Status: draft
+Status: see the issue
 Goal: A planner and a follower can sign in and are told apart.
 Description: Implement session cookie authentication with the two roles, the `/auth` routes, and the dependency that authorises a request against a profile pairing. A request for another profile's data returns 404, not 403.
 
 ## 23. Ingredient endpoints
-Status: draft
+Status: see the issue
 Goal: The planner manages the ingredient catalog over HTTP.
 Description: Implement the ingredient routes from the contract, including alias-aware search by locale. Deleting an ingredient that a module references is refused.
 
 ## 24. Module endpoints
-Status: draft
+Status: see the issue
 Goal: The planner manages the module library over HTTP.
 Description: Implement the module routes, with calories and protein computed in the response rather than stored. Support filtering by slot, role, and tag.
 
 ## 25. Profile, budget, and rule endpoints
-Status: draft
+Status: see the issue
 Goal: The planner edits targets, budgets, and rules.
 Description: Implement the profile routes and the full-replace endpoints for slot budgets, frequency rules, and ingredient rules.
 
 ## 26. Plan and day endpoints
-Status: draft
+Status: see the issue
 Goal: Plans exist over HTTP and always have seven days.
 Description: Implement plan creation — which creates exactly seven days — listing, update, delete, and the day endpoint that sets a template and notes. Optionally copy from a previous plan.
 
 ## 27. Plan entry endpoints
-Status: draft
+Status: see the issue
 Goal: The planner fills slots, and sees validation immediately.
 Description: Implement create, update, and delete for plan entries. A second main entry in one slot is a conflict. Each mutation returns the fresh validation report alongside the entry.
 
 ## 28. Validation and shopping list endpoints
-Status: draft
+Status: see the issue
 Goal: The computed outputs are available over HTTP.
 Description: Implement the validation and shopping list routes, calling the domain engines and merging in the follower's check-off state. Handlers contain no arithmetic.
 
 ## 29. Shopping check-off endpoint
-Status: draft
+Status: see the issue
 Goal: Ticking an item in a shop persists.
 Description: Implement the check-off endpoint, writing per-plan, per-ingredient state server-side so it survives a reload and follows the follower across devices.
 
 ## 30. Feedback endpoint
-Status: draft
+Status: see the issue
 Goal: The follower rates a meal in one request.
 Description: Implement the feedback upsert. A rating marks the entry tried; the follower never sets status directly. Bloating and satiety are optional.
 
 ## 31. Today endpoint
-Status: draft
+Status: see the issue
 Goal: One request returns everything the follower needs for today.
 Description: Resolve the active plan and the current date, and return the day's slots with their times, modules, portion weights, totals, home-only marks, and any existing feedback.
 
 ## 32. WebSocket invalidation hub
-Status: draft
+Status: see the issue
 Goal: A change to a plan reaches everyone watching it.
 Description: Implement the per-plan WebSocket hub that broadcasts which resources changed, carrying no payload per HLD AD-6. Subscriptions are authorised on connect and scoped to one plan.
 
 ## 33. Integration tests: auth and role boundaries
-Status: draft
+Status: see the issue
 Goal: The role boundaries are proven, not assumed.
 Description: Add integration tests against a real database covering sign-in, session handling, every planner-only route rejecting a follower, and another profile's plan returning 404.
 
 ## 34. Integration tests: plans and derived resources
-Status: draft
+Status: see the issue
 Goal: The main workflows are covered end to end at the API level.
 Description: Add integration tests for plan creation, entry mutation, validation and shopping list responses, feedback, check-off persistence, WebSocket fan-out, and migrations running on an empty database.
 
 ## 35. Generated API client and drift gate
-Status: draft
+Status: see the issue
 Goal: The frontend talks to the backend through a generated client, and drift fails the build.
 Description: Generate the TypeScript client from `openapi.yaml`, commit it, and add a CI step that regenerates and fails on any difference. The client is never edited by hand.
 
 ## 36. Query layer and import rule
-Status: draft
+Status: see the issue
 Goal: Backend communication is centralised and the rule is enforced.
 Description: Implement `lib/queries.ts` with TanStack Query hooks over the generated client, and an ESLint rule forbidding any import of `src/api/` outside that file.
 
 ## 37. Localisation
-Status: draft
+Status: see the issue
 Goal: Follower-facing text is Russian, and validation findings become sentences.
 Description: Add an i18n layer with Russian and English catalogs, including the mapping from validation message keys and parameters to readable sentences.
 
 ## 38. Planner: ingredient catalog screen
-Status: draft
+Status: see the issue
 Goal: The planner manages ingredients in the browser.
 Description: Build the catalog screen — search, create, edit, delete — with validation on yield factor and the fields the shopping list depends on.
 
 ## 39. Planner: module editor
-Status: draft
+Status: see the issue
 Goal: The planner composes a module and sees its totals update.
 Description: Build the module editor with ingredient line entry in cooked grams, computed calories and protein shown read-only, role, batch portions, tags, and the critical-size mark on a line.
 
 ## 40. Planner: plan builder
-Status: draft
+Status: see the issue
 Goal: The planner assembles a week.
 Description: Build the seven-day board with slots per day, supporting several entries in one slot, portion factor, and day templates. Changes save immediately.
 
 ## 41. Planner: validation panel
-Status: draft
+Status: see the issue
 Goal: Every rule violation is visible in one place.
 Description: Build the validation panel, grouping findings by day, sorting errors before warnings, and rendering an explicit no-findings state. Findings are localised through task 37.
 
 ## 42. Follower: Today screen
-Status: draft
+Status: see the issue
 Goal: The follower learns what to eat and pack in seconds.
 Description: Build the Today screen — the day's slot times, each module with its portion weight and totals, home-only items marked. It must be readable on a phone and load in under two seconds.
 
 ## 43. Follower: shopping list screen
-Status: draft
+Status: see the issue
 Goal: The shopping list is usable in a shop.
 Description: Build the shopping list screen — grouped by section, raw weights rounded to packages, critical sizes called out, each line tappable to check off with state persisting through task 29.
 
 ## 44. Follower: one-tap rating
-Status: draft
+Status: see the issue
 Goal: Rating a meal costs one tap.
 Description: Add the rating control to Today — liked, neutral, or disliked in a single tap with no form and no submit button. Bloating and satiety sit behind one optional extra tap.
 
 ## 45. Realtime wiring
-Status: draft
+Status: see the issue
 Goal: Both surfaces update without a reload.
 Description: Connect the WebSocket to the query layer so an invalidation message refetches exactly the affected queries.
 
 ## 46. Frontend unit tests
-Status: draft
+Status: see the issue
 Goal: The frontend's own logic is tested.
 Description: Add Vitest coverage for finding localisation, shopping list grouping and rounding display, and the Today screen's assembly of a day from the API response.
 
 ## 47. Production Dockerfile
-Status: draft
+Status: see the issue
 Goal: One image serves the whole application.
 Description: Write a multi-stage Dockerfile that builds the frontend to static assets and serves them from the FastAPI process, per HLD AD-5.
 
 ## 48. Docker Compose with Postgres
-Status: draft
+Status: see the issue
 Goal: The full system runs with one command.
 Description: Add a compose file running the application image against Postgres, applying migrations on start and seeding the reference data. Document the command in the README.
 
 ## 49. End-to-end collaborative test
-Status: draft
+Status: see the issue
 Goal: The two-person workflow is proven in a real browser.
 Description: Add Playwright tests with two browser contexts — a planner change appears in the follower's open view, a follower rating appears for the planner, and a shopping check-off survives a reload.
 
 ## 50. Deploy to Fly.io with Neon
-Status: draft
+Status: see the issue
 Goal: The application is reachable at a public URL.
 Description: Deploy the image to Fly.io with a Neon Postgres database and migrations running on release, with separate staging and production environments.
 
 ## 51. Continuous delivery
-Status: draft
+Status: see the issue
 Goal: Merging to main deploys, but only when tests pass.
 Description: Extend the workflow so a green pipeline builds, migrates, and redeploys, followed by a post-deploy smoke test. Document the rollback path.
 
 ## 52. README and run instructions
-Status: draft
+Status: see the issue
 Goal: A stranger can clone the repository and run the system.
 Description: Write the README covering the problem, the architecture, local setup, running tests, the compose command, deployment, and the public URL.
