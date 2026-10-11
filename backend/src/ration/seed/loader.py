@@ -107,6 +107,7 @@ def _load_modules(path: Path) -> dict[str, Module]:
                     ingredient_id=line["ingredient"],
                     grams_cooked=_dec(line["grams_cooked"]),
                     size_is_critical=bool(line.get("size_is_critical", False)),
+                    yield_factor_override=_opt_dec(line.get("yield_factor_override")),
                 )
                 for line in entry["lines"]
             ),
@@ -131,7 +132,7 @@ def _load_profile(path: Path) -> Profile:
                 kcal_min=_dec(b["kcal_min"]),
                 kcal_max=_dec(b["kcal_max"]),
                 protein_min=_dec(b["protein_min"]),
-                protein_max=_dec(b["protein_max"]),
+                protein_max=_opt_dec(b.get("protein_max")),
                 optional=bool(b.get("optional", False)),
             )
             for b in raw.get("slot_budgets", [])

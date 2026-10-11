@@ -127,7 +127,8 @@ def _check_slot_budgets(day: PlanDay, profile: Profile, catalog: Catalog) -> lis
                 )
             )
 
-        if not budget.protein_min <= totals.protein_g <= budget.protein_max:
+        over_ceiling = budget.protein_max is not None and totals.protein_g > budget.protein_max
+        if totals.protein_g < budget.protein_min or over_ceiling:
             findings.append(
                 Finding(
                     level="warning",
@@ -138,7 +139,7 @@ def _check_slot_budgets(day: PlanDay, profile: Profile, catalog: Catalog) -> lis
                     params={
                         "actual": _n(totals.protein_g),
                         "min": _n(budget.protein_min),
-                        "max": _n(budget.protein_max),
+                        "max": "" if budget.protein_max is None else _n(budget.protein_max),
                         "metric": "protein_g",
                     },
                 )

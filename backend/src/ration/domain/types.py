@@ -96,15 +96,30 @@ class ModuleLine:
     ``size_is_critical`` marks a line where the package size is structural rather
     than a shopping convenience: a module built on a 75 g flatbread does not work
     with a 45 g one, because the filling will not wrap (PRD 6.7).
+
+    ``yield_factor_override`` exists because yield is a property of an ingredient
+    *and a preparation*, not of an ingredient alone. The same pepper is bought
+    whole and used raw in one dish and roasted in another; roasting costs about a
+    third of its weight and being raw costs nothing. One factor per ingredient
+    cannot express both, and averaging them is wrong in both directions. Null
+    means "use the ingredient's own factor", which covers almost every line.
     """
 
     ingredient_id: str
     grams_cooked: Decimal
     size_is_critical: bool = False
+    yield_factor_override: Decimal | None = None
 
     def __post_init__(self) -> None:
         if self.grams_cooked <= 0:
             raise ValueError(f"grams_cooked for {self.ingredient_id} must be positive")
+        if self.yield_factor_override is not None and not (
+            Decimal(0) < self.yield_factor_override <= MAX_YIELD_FACTOR
+        ):
+            raise ValueError(
+                f"yield_factor_override for {self.ingredient_id} must be in "
+                f"(0, {MAX_YIELD_FACTOR}], got {self.yield_factor_override}"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -141,13 +156,18 @@ class SlotBudget:
     ``optional`` marks a slot that is not expected every day. The treat slot is
     the case: the profile allows three treats a week, so a day without one is
     correct rather than incomplete, and reporting it would be noise.
+
+    ``protein_max`` is nullable because for this kind of plan protein is a floor,
+    not a band. Calories need an upper bound — exceeding them defeats the goal.
+    Exceeding a protein target does not, so a ceiling would flag a plan for being
+    better than asked. Null means no ceiling. See docs/decisions.md D2.
     """
 
     slot: Slot
     kcal_min: Decimal
     kcal_max: Decimal
     protein_min: Decimal
-    protein_max: Decimal
+    protein_max: Decimal | None = None
     optional: bool = False
 
 

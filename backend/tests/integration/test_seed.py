@@ -16,6 +16,7 @@ from ration.repositories.repositories import (
 )
 from ration.seed import load_reference
 from ration.seed.command import ProductionSeedRefused, seed
+from tests.unit.test_golden_validation import EXPECTED as EXPECTED_FINDINGS
 
 pytestmark = pytest.mark.integration
 
@@ -119,7 +120,11 @@ class TestTheSeededDatabaseReproducesTheFixture:
         self, engine: Engine
     ) -> None:
         """The strongest check available: the database round trip must not
-        change a single finding."""
+        change a single finding.
+
+        The expected set is imported from the unit test rather than repeated, so
+        the two can never drift into disagreeing about the same week.
+        """
         seed(engine)
         reference = load_reference()
         with Session(engine) as session:
@@ -130,8 +135,8 @@ class TestTheSeededDatabaseReproducesTheFixture:
 
         assert profile is not None
         findings = validate(plan, profile, catalog)
-        assert [f.code for f in findings] == ["DAY_UNPLANNED"]
-        assert findings[0].day_index == 6
+        actual = {(f.level, f.code, f.day_index, f.slot) for f in findings}
+        assert actual == EXPECTED_FINDINGS
 
 
 class TestProductionIsRefused:

@@ -73,7 +73,10 @@ def _accumulate_raw_grams(plan: Plan, catalog: Catalog) -> tuple[dict[str, Decim
         for line in module.lines:
             ingredient = catalog.ingredient(line.ingredient_id)
             cooked = line.grams_cooked * entry.portion_factor
-            needed[line.ingredient_id] += cooked / ingredient.yield_factor
+            # A line may override the ingredient's yield when its preparation
+            # differs — raw pepper against roasted pepper, for example.
+            yield_factor = line.yield_factor_override or ingredient.yield_factor
+            needed[line.ingredient_id] += cooked / yield_factor
             if line.size_is_critical:
                 critical.add(line.ingredient_id)
 

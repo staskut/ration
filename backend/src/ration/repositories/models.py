@@ -99,7 +99,8 @@ class SlotBudget(Base):
     kcal_min: Mapped[Decimal] = mapped_column(MONEYLIKE, nullable=False)
     kcal_max: Mapped[Decimal] = mapped_column(MONEYLIKE, nullable=False)
     protein_min: Mapped[Decimal] = mapped_column(MONEYLIKE, nullable=False)
-    protein_max: Mapped[Decimal] = mapped_column(MONEYLIKE, nullable=False)
+    # Nullable: protein is a floor, not a band (docs/decisions.md D2).
+    protein_max: Mapped[Decimal | None] = mapped_column(MONEYLIKE)
     optional: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     profile: Mapped[Profile] = relationship(back_populates="slot_budgets")
@@ -241,6 +242,10 @@ class ModuleLine(Base):
     # Cooked weight (PRD 6.1): what gets weighed when packing a container.
     grams_cooked: Mapped[Decimal] = mapped_column(MONEYLIKE, nullable=False)
     size_is_critical: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Yield is a property of an ingredient AND a preparation: the same pepper is
+    # raw in one dish and roasted in another. Null means use the ingredient's own
+    # factor, which covers almost every line (docs/decisions.md D4).
+    yield_factor_override: Mapped[Decimal | None] = mapped_column(MONEYLIKE)
     position: Mapped[int] = mapped_column(SmallInteger, nullable=False)
 
     module: Mapped[Module] = relationship(back_populates="lines")

@@ -4,6 +4,10 @@
 # Quantities are COOKED grams, exactly as the document states them, because that
 # is what gets weighed when packing a container (PRD 6.1).
 #
+# Peppers that are roasted carry yield_factor_override: 0.65 — trimming the core
+# and seeds costs about a fifth and roasting another fifth. The raw pepper in the
+# shrimp dish uses the ingredient's own 1.0. See docs/decisions.md D4.
+#
 # Dinners are transcribed as single `main` modules: the document states them as
 # whole dishes. Splitting protein from side is a capability the model supports
 # (PRD 3.6) and a follow-up for the planner, not a change to this transcription.
@@ -83,7 +87,7 @@
     - {ingredient: egg, grams_cooked: "150"}
     - {ingredient: cottage_cheese_5, grams_cooked: "80"}
     - {ingredient: spinach, grams_cooked: "40"}
-    - {ingredient: bell_pepper, grams_cooked: "70"}
+    - {ingredient: bell_pepper, grams_cooked: "70", yield_factor_override: "0.65"}
     - {ingredient: carrot, grams_cooked: "40"}
     - {ingredient: olive_oil, grams_cooked: "3"}
     - {ingredient: crispbread, grams_cooked: "10"}
@@ -133,7 +137,7 @@
   lines:
     - {ingredient: tortilla_wholegrain, grams_cooked: "75", size_is_critical: true}
     - {ingredient: chicken_thigh, grams_cooked: "120"}
-    - {ingredient: bell_pepper, grams_cooked: "80"}
+    - {ingredient: bell_pepper, grams_cooked: "80", yield_factor_override: "0.65"}
     - {ingredient: cucumber, grams_cooked: "50"}
     - {ingredient: napa_cabbage, grams_cooked: "30"}
     - {ingredient: yogurt_natural, grams_cooked: "30"}
@@ -220,7 +224,7 @@
   stated_protein: 39
   lines:
     - {ingredient: squid, grams_cooked: "200"}
-    - {ingredient: bell_pepper, grams_cooked: "150"}
+    - {ingredient: bell_pepper, grams_cooked: "150", yield_factor_override: "0.65"}
     - {ingredient: tomato, grams_cooked: "150"}
     - {ingredient: spinach, grams_cooked: "50"}
     - {ingredient: tahini, grams_cooked: "32"}

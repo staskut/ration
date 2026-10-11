@@ -14,14 +14,18 @@ daily_protein_target: "110"
 
 # Section 5. The document writes these as "около", so the bounds are the
 # document's own stated ranges, widened only where it uses a range itself.
+#
+# protein_max is null everywhere: for a weight-loss plan protein is a floor, not
+# a band. A ceiling would flag a day for containing more protein than planned,
+# which is not a problem the planner has. See docs/decisions.md D2.
 slot_budgets:
-  - {slot: breakfast, kcal_min: "395", kcal_max: "420", protein_min: "30", protein_max: "33"}
-  - {slot: lunch, kcal_min: "515", kcal_max: "545", protein_min: "34", protein_max: "38"}
-  - {slot: snack, kcal_min: "150", kcal_max: "250", protein_min: "0", protein_max: "12"}
-  - {slot: dinner, kcal_min: "470", kcal_max: "495", protein_min: "35", protein_max: "42"}
+  - {slot: breakfast, kcal_min: "395", kcal_max: "420", protein_min: "30", protein_max: null}
+  - {slot: lunch, kcal_min: "515", kcal_max: "545", protein_min: "34", protein_max: null}
+  - {slot: snack, kcal_min: "150", kcal_max: "250", protein_min: "0", protein_max: null}
+  - {slot: dinner, kcal_min: "470", kcal_max: "495", protein_min: "35", protein_max: null}
   # Optional: the frequency rule allows three treats a week, so a day without
   # one is correct rather than incomplete.
-  - {slot: treat, kcal_min: "100", kcal_max: "150", protein_min: "0", protein_max: "5",
+  - {slot: treat, kcal_min: "100", kcal_max: "150", protein_min: "0", protein_max: null,
      optional: true}
 
 # Section 4. Only items that exist in the catalog are listed; the document also

@@ -434,9 +434,20 @@ a quiet drift.
    swapped freely while the protein stayed on plan. The alternative — one module per dinner —
    would require a library of every protein × side combination.
 
+6. **Nutrition values are reference figures, not fitted to the document** ([`decisions.md`](decisions.md) D1),
+   **protein is a floor rather than a band** (D2), and **the reference week's findings are
+   recorded rather than designed away** (D3). A catalog tuned until the plan passes cannot
+   report a plan that fails, which is the one thing this system exists to do.
+7. **Yield may be overridden per module line** (D4). Yield is a property of an ingredient
+   *and a preparation*: the same pepper is raw in one dish and roasted in another.
+8. **A new week copies the previous one by default** (D7).
+9. **`size_is_critical` lives on the module line** (D8), not the ingredient — the 75 g
+   flatbread matters in the roll and nowhere else.
+
 ## 11. Still open
 
-- **Whether week N+1 copies week N by default**, or starts empty with the library to hand. The
-  first answer is better for adoption, the second is simpler. Decide when S4 is built, not now.
-- **A `critical` flag on module lines** (§6.7) — whether it belongs on the line, on the
-  ingredient, or is just a `prep_notes` convention. Decide when S2 is built.
+- **Yield factors are estimates**, back-solved from the document's own ratios rather than
+  measured ([`decisions.md`](decisions.md) D9). Six ingredients carry nearly all of it.
+  Tracked as its own issue.
+- **Nutrition values are reference figures, not label readings.** Better than fitted, not
+  authoritative. Replacing them with the actual products' labels is the real end state.

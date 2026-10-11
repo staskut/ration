@@ -1,13 +1,25 @@
-"""The reference plan validates cleanly.
+"""What the reference plan actually reports, and why that is not nothing.
 
-A real week, built by a person against the rules in sections 1, 4, 5 and 7 of
-docs/sample-plan-6-days.md, should produce no errors and no warnings. If it
-does, either the engine is wrong or the week was — and since the week was eaten,
-the engine is the first suspect.
+This test used to assert the reference week validated cleanly. It no longer
+does, and the change is the point.
 
-The perturbation tests below matter as much as the clean one. A validator that
-reports nothing is indistinguishable from a validator that checks nothing, so
-each rule is shown to fire when the fixture is bent to break it.
+The catalog previously carried nutrition values tuned until every dish matched
+the figure section 9 states for it. Under those values the week could not fail,
+because the instrument had been bent to agree with the thing it was measuring.
+Switching to reference values (docs/decisions.md D1) removed that, and the week
+now reports two errors and eleven warnings — all of them true.
+
+The most useful one is structural: days 0 and 3 fall about 100 kcal short, and
+both are training days. The plan feeds least on the days that end with
+resistance training. Nothing in a self-consistent fixture could have surfaced
+that.
+
+The expected set below is therefore an assertion about a real week, not a
+regression lock. If the catalog improves and a finding disappears, that is
+progress — update this list and say so in the commit.
+
+The perturbation tests still matter as much as the rest: a validator that
+reports nothing is indistinguishable from one that checks nothing.
 """
 
 from dataclasses import replace
@@ -51,23 +63,70 @@ def move_entry(module_id: str, to_day: int) -> Plan:
     return replace(REFERENCE.plan, days=tuple(days))
 
 
-class TestTheReferenceWeekIsClean:
-    def test_no_errors(self) -> None:
-        errors = [f for f in findings() if f.level == "error"]
-        assert errors == [], f"unexpected errors: {[(f.code, f.day_index) for f in errors]}"
+# Every finding the reference week produces, as (level, code, day, slot).
+EXPECTED = {
+    # Both training days come in about 100 kcal short.
+    ("error", "DAY_KCAL_OUT_OF_RANGE", 0, None),
+    ("error", "DAY_KCAL_OUT_OF_RANGE", 3, None),
+    ("warning", "SLOT_OUT_OF_BUDGET", 0, "breakfast"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 0, "dinner"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 2, "breakfast"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 2, "dinner"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 3, "breakfast"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 3, "dinner"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 3, "lunch"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 4, "lunch"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 5, "breakfast"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 5, "dinner"),
+    ("warning", "SLOT_OUT_OF_BUDGET", 5, "lunch"),
+    ("info", "DAY_UNPLANNED", 6, None),
+}
 
-    def test_no_warnings(self) -> None:
-        warnings = [f for f in findings() if f.level == "warning"]
-        assert warnings == [], f"unexpected warnings: {[(f.code, f.day_index) for f in warnings]}"
 
-    def test_the_only_finding_is_the_unplanned_seventh_day(self) -> None:
-        """Asserts the full set, so a new finding type appearing cannot pass
-        unnoticed the way a 'no errors' check would let it."""
-        result = findings()
-        assert len(result) == 1
-        assert result[0].code == "DAY_UNPLANNED"
-        assert result[0].day_index == 6
-        assert result[0].level == "info"
+class TestWhatTheReferenceWeekReports:
+    def test_the_finding_set_is_exactly_as_expected(self) -> None:
+        """The full set, so a new finding type cannot slip in unnoticed the way
+        a 'no errors' check would let it."""
+        actual = {(f.level, f.code, f.day_index, f.slot) for f in findings()}
+        assert actual == EXPECTED
+
+    def test_the_only_errors_are_the_two_short_days(self) -> None:
+        errors = [(f.code, f.day_index) for f in findings() if f.level == "error"]
+        assert errors == [("DAY_KCAL_OUT_OF_RANGE", 0), ("DAY_KCAL_OUT_OF_RANGE", 3)]
+
+    def test_both_short_days_are_training_days(self) -> None:
+        """The finding worth acting on: the week feeds least on the two days
+        that end with resistance training."""
+        short = {f.day_index for f in findings() if f.code == "DAY_KCAL_OUT_OF_RANGE"}
+        templates = {REFERENCE.plan.days[i].day_template for i in short}
+        assert templates == {"training"}
+
+    def test_no_day_falls_below_the_protein_floor(self) -> None:
+        """Calories drift; protein does not. The plan's actual purpose holds."""
+        assert "DAY_PROTEIN_BELOW_MIN" not in codes_of(findings())
+
+    def test_protein_ceilings_produce_no_findings(self) -> None:
+        """Protein is a floor, not a band (docs/decisions.md D2). Several days
+        run well above the stated 110 g; none of that is a problem."""
+        protein_findings = [
+            f
+            for f in findings()
+            if f.code == "SLOT_OUT_OF_BUDGET" and f.params.get("metric") == "protein_g"
+        ]
+        assert protein_findings == []
+
+    def test_no_rule_violations_only_budget_drift(self) -> None:
+        """Nothing is excluded, over-frequent, or on a forbidden day. The week is
+        structurally sound; it just misses its calorie bands."""
+        structural = {
+            "EXCLUDED_INGREDIENT",
+            "CAUTION_THRESHOLD_EXCEEDED",
+            "FREQUENCY_EXCEEDED",
+            "TEMPLATE_GATE_VIOLATED",
+            "MULTIPLE_MAIN_ENTRIES",
+            "BATCH_NOT_CONSECUTIVE",
+        }
+        assert structural.isdisjoint(set(codes_of(findings())))
 
     def test_the_unplanned_day_is_not_also_reported_slot_by_slot(self) -> None:
         assert "SLOT_EMPTY" not in codes_of(findings())
@@ -152,9 +211,8 @@ class TestTheValidatorActuallyBites:
 
 
 @pytest.mark.parametrize("day_index", range(6))
-def test_every_planned_day_is_individually_clean(day_index: int) -> None:
-    """Names the day that broke, rather than reporting one failure for the week."""
-    problems = [
-        f for f in findings() if f.day_index == day_index and f.level in {"error", "warning"}
-    ]
-    assert problems == [], f"day {day_index}: {[f.code for f in problems]}"
+def test_each_day_reports_only_what_is_expected(day_index: int) -> None:
+    """Names the day that changed, rather than one failure for the whole week."""
+    actual = {(f.level, f.code, f.slot) for f in findings() if f.day_index == day_index}
+    expected = {(lvl, code, slot) for lvl, code, day, slot in EXPECTED if day == day_index}
+    assert actual == expected

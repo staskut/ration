@@ -12,6 +12,7 @@ Read these before changing anything they cover.
 - `docs/product-spec.md` — the PRD. What and why. **Owns scope.**
 - `docs/hld.md` — architecture, component boundaries, eight numbered decisions (AD-1…AD-8)
 - `docs/lld.md` — schema, domain signatures, endpoints, test plan
+- `docs/decisions.md` — decisions closed during implementation (D1…D10), with their cost
 - `docs/mvp-plan.md` — milestones and sequencing
 - `docs/tasks.md` — the backlog
 - `docs/process.md` — how work is organized
@@ -85,6 +86,14 @@ stop and ask rather than implementing the reversal — the reasoning is in `docs
    No "healthy", "safe", or "balanced" labels anywhere in the UI.
 9. **The follower's daily interaction stays under 30 seconds**, and rating a meal is one tap.
    This is an acceptance criterion, not an aspiration.
+10. **Nutrition values are reference figures for the preparation a line describes, never
+    tuned to make a plan pass.** Meat and fish use *cooked* values, because module lines
+    carry cooked weight. A catalog fitted to the plan cannot report a plan that fails,
+    which is the one thing this system is for. See `docs/decisions.md` D1.
+11. **Protein is a floor, not a band.** `protein_max` may be null. Exceeding a calorie
+    target defeats the goal; exceeding a protein target does not (D2).
+12. **Yield may be overridden per module line** (D4). Null means use the ingredient's own
+    factor. Yield belongs to an ingredient *and a preparation*.
 
 ## Conventions
 

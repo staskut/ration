@@ -158,6 +158,7 @@ def _upsert_modules(
                     ingredient_id=ingredient_ids[line.ingredient_id],
                     grams_cooked=line.grams_cooked,
                     size_is_critical=line.size_is_critical,
+                    yield_factor_override=line.yield_factor_override,
                     position=position,
                 )
                 for position, line in enumerate(module.lines)

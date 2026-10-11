@@ -77,6 +77,7 @@ def module_to_domain(row: models.Module, ingredient_slugs: dict[str, str]) -> Mo
                 ingredient_id=ingredient_slugs[line.ingredient_id],
                 grams_cooked=to_decimal(line.grams_cooked),
                 size_is_critical=line.size_is_critical,
+                yield_factor_override=optional_decimal(line.yield_factor_override),
             )
             for line in row.lines
         ),
@@ -98,7 +99,7 @@ def profile_to_domain(row: models.Profile, ingredient_slugs: dict[str, str]) -> 
                 kcal_min=to_decimal(budget.kcal_min),
                 kcal_max=to_decimal(budget.kcal_max),
                 protein_min=to_decimal(budget.protein_min),
-                protein_max=to_decimal(budget.protein_max),
+                protein_max=optional_decimal(budget.protein_max),
                 optional=budget.optional,
             )
             for budget in sorted(row.slot_budgets, key=lambda b: b.slot)
