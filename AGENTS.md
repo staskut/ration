@@ -13,6 +13,7 @@ Read these before changing anything they cover.
 - `docs/hld.md` — architecture, component boundaries, eight numbered decisions (AD-1…AD-8)
 - `docs/lld.md` — schema, domain signatures, endpoints, test plan
 - `docs/decisions.md` — decisions closed during implementation (D1…D10), with their cost
+- `docs/acceptance-audit.md` — closed issues checked against their own criteria
 - `docs/mvp-plan.md` — milestones and sequencing
 - `docs/tasks.md` — the backlog
 - `docs/process.md` — how work is organized
