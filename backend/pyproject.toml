@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 ration-seed = "ration.seed.command:main"
+ration-yields = "ration.seed.yields:main"
 
 [dependency-groups]
 dev = [

@@ -55,6 +55,7 @@ def ingredient_to_domain(row: models.Ingredient) -> Ingredient:
         package_unit=row.package_unit,
         shop_section=row.shop_section,
         is_staple=row.is_staple,
+        yield_source=cast(str, row.yield_source),  # type: ignore[arg-type]
     )
 
 

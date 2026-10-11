@@ -18,6 +18,9 @@
 #   Leafy greens are 1.0: section 12's 650 g of spinach is only consistent with
 #   the stated amounts being as-purchased. A wilting yield of ~0.25 would demand
 #   nearly two kilograms. See docs/decisions.md D5.
+# yield_source is `estimated` until somebody weighs it. Only the six ingredients
+#   carrying real loss are marked; everything else is 1.0 by definition and needs
+#   no calibration. Run `uv run ration-yields` for the worksheet. See #54.
 # All numbers are quoted so PyYAML hands back strings and the loader builds
 #   exact Decimals. An unquoted 0.65 would arrive as a binary float.
 
@@ -80,6 +83,7 @@
   kcal_per_100g: "185"
   protein_per_100g: "28"
   yield_factor: "0.65"
+  yield_source: estimated
   package_size: null
   package_unit: null
   shop_section: meat_fish
@@ -89,6 +93,7 @@
   kcal_per_100g: "185"
   protein_per_100g: "26"
   yield_factor: "0.65"
+  yield_source: estimated
   package_size: null
   package_unit: null
   shop_section: meat_fish
@@ -98,6 +103,7 @@
   kcal_per_100g: "105"
   protein_per_100g: "23"
   yield_factor: "0.72"
+  yield_source: estimated
   package_size: null
   package_unit: null
   shop_section: meat_fish
@@ -107,6 +113,7 @@
   kcal_per_100g: "99"
   protein_per_100g: "24"
   yield_factor: "0.58"
+  yield_source: estimated
   package_size: null
   package_unit: null
   shop_section: meat_fish
@@ -116,6 +123,7 @@
   kcal_per_100g: "130"
   protein_per_100g: "18"
   yield_factor: "0.62"
+  yield_source: estimated
   package_size: null
   package_unit: null
   shop_section: meat_fish
@@ -260,6 +268,7 @@
   kcal_per_100g: "109"
   protein_per_100g: "0.9"
   yield_factor: "2.85"
+  yield_source: estimated
   package_size: null
   package_unit: null
   shop_section: grains

@@ -25,6 +25,11 @@ Level = Literal["error", "warning", "info"]
 FeedbackStatus = Literal["not_tried", "tried"]
 Rating = Literal["liked", "neutral", "disliked"]
 Satiety = Literal["too_little", "right", "too_much"]
+# `as_purchased` is not a weak `estimated`: a yield of 1.0 means the item is eaten
+# as bought, which is definitional rather than approximate. Separating the two is
+# what makes the calibration backlog the six ingredients that matter rather than
+# all forty.
+YieldSource = Literal["as_purchased", "estimated", "measured"]
 
 SLOTS: tuple[Slot, ...] = ("breakfast", "lunch", "snack", "dinner", "treat")
 DAYS_PER_PLAN = 7
@@ -62,6 +67,13 @@ class Ingredient:
     1.0; dry goods that absorb water go well above 1 (rice noodles are about
     2.85, since 180 g dry yields 510 g cooked). The shopping engine divides by it
     to turn a cooked portion back into something buyable.
+
+    It is a **parameter, not a constant**. Yield bundles trim loss, water exchange
+    during cooking, and the ice glaze on frozen seafood, so it varies with method,
+    equipment and supplier and can only really be established by weighing.
+    ``yield_source`` records whether a factor has been measured, is still an
+    estimate, or does not apply because the item is eaten as bought — so what
+    remains to review is visible rather than remembered.
     """
 
     id: str
@@ -73,9 +85,15 @@ class Ingredient:
     package_unit: str | None = None
     shop_section: str = "other"
     is_staple: bool = False
+    yield_source: YieldSource = "as_purchased"
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "names", MappingProxyType(dict(self.names)))
+        if self.yield_factor == Decimal(1) and self.yield_source == "estimated":
+            raise ValueError(
+                f"{self.id}: a yield of 1.0 is as_purchased, not estimated. "
+                "Marking it estimated would put it in the calibration backlog for no reason."
+            )
         if not Decimal(0) < self.yield_factor <= MAX_YIELD_FACTOR:
             raise ValueError(
                 f"yield_factor for {self.id} must be in (0, {MAX_YIELD_FACTOR}], "

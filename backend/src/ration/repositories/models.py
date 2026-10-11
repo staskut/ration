@@ -120,6 +120,9 @@ class Ingredient(Base):
     package_unit: Mapped[str | None] = mapped_column(String(8))
     shop_section: Mapped[str] = mapped_column(String(24), default="other", nullable=False)
     is_staple: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Whether yield_factor has been weighed or is still an estimate. Makes the
+    # calibration backlog visible instead of remembered.
+    yield_source: Mapped[str] = mapped_column(String(16), default="as_purchased", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     names: Mapped[list[IngredientName]] = relationship(

@@ -220,9 +220,9 @@ wrap.
 
 ---
 
-## D9 — Yield factors are estimates, and calibrating them is scheduled
+## D9 — Yield factors stay parameters, and are built to be adjusted
 
-**Status:** decided; tracked as a new issue.
+**Status:** decided and implemented; calibration tracked as [#54](https://github.com/staskut/ration/issues/54).
 
 Every yield factor was back-solved from ratios in the original document. They are
 estimates, and D1 does not fix that — it fixes the nutrition values beside them.
@@ -234,9 +234,42 @@ method, equipment and supplier. The only way to get it right is to weigh.
 Six ingredients carry essentially all of it — turkey thigh, chicken thigh, white
 fish, shrimp, squid, rice noodles. Everything else is 1.0 or near enough.
 
-`ingredients.yaml` now says the factors are estimates, and the work is a tracked
-issue: weigh raw in and cooked out during one batch cook, divide, update. Five
-minutes added to a session already happening.
+So the decision is not to get them right now, but to make changing one cheap.
+Three things followed:
+
+**Provenance is explicit.** `Ingredient.yield_source` is `as_purchased`,
+`estimated` or `measured`. The split matters: a factor of 1.0 is definitional,
+not approximate, so marking those `estimated` would bury the eleven that need
+review under twenty-nine that never will. A constructor check refuses a 1.0
+factor marked `estimated`, and tests refuse the reverse — provenance that can
+drift from the truth is worse than none.
+
+**There is a worksheet.** `uv run ration-yields` prints every factor needing
+review beside what the reference plan needs cooked, what the current factor says
+to buy, and how far that sits from §12:
+
+```
+ingredient              factor      source    cooked   raw now   doc §12     gap
+turkey_thigh              0.65   estimated       360       554       550     +1%
+squid                     0.62   estimated       200       323       325     -1%
+rice_noodles              2.85   estimated       510       179       180     -1%
+```
+
+`--what-if turkey_thigh=0.72` shows what a measurement would move before
+committing to it. Cooked requirement is shown separately because it does not
+depend on the factor — it is what to weigh against.
+
+**Changing one no longer fights the test suite.** The §12 comparison is a
+calibration check, not an engine regression test: the engine is covered by
+`test_shopping.py` on synthetic data that no yield factor touches. So a failure
+there now names the factor and its provenance and points at the worksheet,
+rather than sending somebody into the shopping engine. Piece counts use the
+document's stated range where it gives one, so a factor can move within it
+without breaking anything.
+
+Calibration itself still needs a kitchen scale: weigh raw in and cooked out
+during a batch cook that is happening anyway, divide, set `yield_source:
+measured`. Five minutes added to a session already underway.
 
 ---
 

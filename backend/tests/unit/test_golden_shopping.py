@@ -12,7 +12,9 @@ On tolerances. Section 12 is a shopping list, not a calculation: it says
 need against that at 5% is not achievable, so expectations below carry the kind
 the document itself uses:
 
-    Pieces   - an exact package count, because "3 cucumbers" is exact.
+    Pieces   - a package count. Where the document gives a range ("7-8 средних")
+               the computed count must land inside it; where it gives one number
+               it must match.
     Target   - a stated weight, matched within 15%. The document rounds small
                quantities generously upward (70 g of oats against a computed 62).
     Range    - a stated range, which the computed need must fall inside.
@@ -49,8 +51,9 @@ class Expect:
     count: int | None = None
 
 
-def pieces(count: int) -> Expect:
-    return Expect("pieces", count=count)
+def pieces(count: int, upto: int | None = None) -> Expect:
+    """A package count, or a range where the document gives one."""
+    return Expect("pieces", count=count, high=Decimal(upto) if upto else None)
 
 
 def target(grams: str) -> Expect:
@@ -93,9 +96,10 @@ SECTION_12: dict[str, Expect] = {
     "spinach": target("530"),
     "napa_cabbage": pieces(1),
     # "7-8 средних, около 1 кг". Roasted lines carry a 0.65 yield override and
-    # the raw line in the shrimp dish does not (docs/decisions.md D4), which
-    # lands on 7 peppers rather than the 8 a single blended factor produced.
-    "bell_pepper": pieces(7),
+    # the raw line in the shrimp dish does not (docs/decisions.md D4). The
+    # document's own range is the expectation, so adjusting that override moves
+    # the count within it without breaking the test.
+    "bell_pepper": pieces(7, upto=8),
     "carrot": target("600"),
     "pumpkin": between("300", "350"),
     "cucumber": pieces(3),
@@ -146,6 +150,26 @@ AROMATICS_WITHOUT_STATED_WEIGHTS = {
 }
 
 
+def _yield_hint(ingredient_id: str) -> str:
+    """Say so when a failure is a changed parameter rather than a broken engine.
+
+    Yield factors are parameters meant to be adjusted (docs/decisions.md D9).
+    Changing one legitimately moves the quantity this test compares, so the
+    failure should point at the knob rather than send somebody hunting through
+    the shopping engine — which is covered by test_shopping.py on synthetic data
+    and does not depend on any of these values.
+    """
+    ingredient = REFERENCE.catalog.ingredients.get(ingredient_id)
+    if ingredient is None or ingredient.yield_source == "as_purchased":
+        return ""
+    return (
+        f" This quantity depends on {ingredient_id}'s yield factor "
+        f"({ingredient.yield_factor}, {ingredient.yield_source}). If you changed it, "
+        "update the expectation here and say so in the commit. "
+        "`uv run ration-yields` shows the worksheet."
+    )
+
+
 def test_the_engine_invents_nothing() -> None:
     """Every generated line corresponds to something section 12 asks for."""
     assert set(LINES) - set(SECTION_12) == set()
@@ -167,7 +191,17 @@ def test_quantity_matches_section_12(ingredient_id: str) -> None:
 
     if expect.kind == "pieces":
         assert line.package_unit == "pcs"
-        assert line.packages == expect.count
+        assert line.packages is not None
+        if expect.high is not None:
+            assert expect.count <= line.packages <= int(expect.high), (
+                f"{ingredient_id}: {line.packages} packages, document says "
+                f"{expect.count}-{int(expect.high)}.{_yield_hint(ingredient_id)}"
+            )
+        else:
+            assert line.packages == expect.count, (
+                f"{ingredient_id}: {line.packages} packages, document says "
+                f"{expect.count}.{_yield_hint(ingredient_id)}"
+            )
         return
 
     if expect.kind == "purchase":
@@ -182,7 +216,8 @@ def test_quantity_matches_section_12(ingredient_id: str) -> None:
     assert expect.low is not None
     tolerance = expect.low * TARGET_TOLERANCE
     assert abs(line.needed_raw_g - expect.low) <= tolerance, (
-        f"{ingredient_id}: computed {line.needed_raw_g} against a stated {expect.low}"
+        f"{ingredient_id}: computed {line.needed_raw_g} against a stated "
+        f"{expect.low}.{_yield_hint(ingredient_id)}"
     )
 
 
@@ -226,3 +261,36 @@ def test_lines_are_grouped_the_way_section_12_groups_them() -> None:
         "supplements",
         "treats",
     }
+
+
+class TestYieldFactorsAreHonestlyLabelled:
+    """Provenance has to stay true or the calibration backlog is fiction."""
+
+    def test_anything_with_real_loss_is_not_marked_as_purchased(self) -> None:
+        mislabelled = [
+            i.id
+            for i in REFERENCE.catalog.ingredients.values()
+            if i.yield_factor != Decimal(1) and i.yield_source == "as_purchased"
+        ]
+        assert mislabelled == [], (
+            f"these transform during preparation but claim to be used as bought: {mislabelled}"
+        )
+
+    def test_everything_used_as_bought_has_a_yield_of_one(self) -> None:
+        wrong = [
+            i.id
+            for i in REFERENCE.catalog.ingredients.values()
+            if i.yield_source == "as_purchased" and i.yield_factor != Decimal(1)
+        ]
+        assert wrong == []
+
+    def test_the_calibration_backlog_is_visible(self) -> None:
+        """Not an assertion about the number, just that the question is tracked.
+
+        Every non-1.0 factor was back-solved from the document's own ratios
+        rather than weighed. Issue #54 closes this.
+        """
+        estimated = [
+            i.id for i in REFERENCE.catalog.ingredients.values() if i.yield_source == "estimated"
+        ]
+        assert estimated, "nothing is marked estimated, which cannot be right yet"

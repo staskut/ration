@@ -116,6 +116,7 @@ def _upsert_ingredients(session: Session, reference: ReferenceData) -> dict[str,
         row.package_unit = ingredient.package_unit
         row.shop_section = ingredient.shop_section
         row.is_staple = ingredient.is_staple
+        row.yield_source = ingredient.yield_source
 
         session.flush()
         _replace(

@@ -28,6 +28,8 @@ Backend commands run in `backend/`.
 - `uv run pytest tests/unit/test_shopping.py` — one test file
 - `uv run ruff check . && uv run ruff format --check .` — lint
 - `uv run alembic upgrade head` — migrations
+- `uv run ration-seed` — load the reference plan
+- `uv run ration-yields` — yield factor worksheet; `--what-if slug=0.7` to preview a change
 
 Frontend commands run in `frontend/`.
 
@@ -94,6 +96,10 @@ stop and ask rather than implementing the reversal — the reasoning is in `docs
     target defeats the goal; exceeding a protein target does not (D2).
 12. **Yield may be overridden per module line** (D4). Null means use the ingredient's own
     factor. Yield belongs to an ingredient *and a preparation*.
+13. **Yield factors are parameters, not constants** (D9). They are expected to change as
+    they get measured. `yield_source` records whether each is `as_purchased`, `estimated`
+    or `measured`; keep it honest. When a golden shopping expectation moves because a
+    factor changed, update the expectation and say so — that is data, not a regression.
 
 ## Conventions
 

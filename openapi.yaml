@@ -763,8 +763,8 @@ components:
     Ingredient:
       type: object
       required:
-        [id, names, kcal_per_100g, protein_per_100g, yield_factor, shop_section,
-         is_staple]
+        [id, names, kcal_per_100g, protein_per_100g, yield_factor, yield_source,
+         shop_section, is_staple]
       properties:
         id: {type: string}
         names:
@@ -783,6 +783,18 @@ components:
             Cooked weight divided by raw weight. Below 1 for meat and fish, 1.0
             for anything eaten as purchased, and above 1 for dry goods that
             absorb water — rice noodles are about 2.85.
+
+            A parameter, not a constant: it bundles trim loss, water exchange
+            during cooking, and the ice glaze on frozen seafood, so it varies
+            with method, equipment and supplier. Editable at any time; the
+            shopping list recomputes.
+        yield_source:
+          type: string
+          enum: [as_purchased, estimated, measured]
+          description: |
+            Whether the factor has been weighed, is still an estimate, or does
+            not apply because the item is eaten as bought. Lets the planner see
+            what is left to calibrate instead of remembering it.
         package_size: {oneOf: [{$ref: "#/components/schemas/Decimal"}, {type: "null"}]}
         package_unit: {type: [string, "null"], enum: [g, ml, pcs, null]}
         shop_section: {$ref: "#/components/schemas/ShopSection"}
@@ -805,6 +817,10 @@ components:
         package_unit: {type: [string, "null"], enum: [g, ml, pcs, null]}
         shop_section: {$ref: "#/components/schemas/ShopSection"}
         is_staple: {type: boolean, default: false}
+        yield_source:
+          type: string
+          enum: [as_purchased, estimated, measured]
+          default: as_purchased
 
     ModuleLine:
       type: object

@@ -87,6 +87,11 @@ def _load_ingredients(path: Path) -> dict[str, Ingredient]:
             package_unit=entry.get("package_unit"),
             shop_section=entry.get("shop_section", "other"),
             is_staple=bool(entry.get("is_staple", False)),
+            # Default by shape: anything with a yield of 1.0 is used as bought.
+            yield_source=entry.get(
+                "yield_source",
+                "as_purchased" if _dec(entry["yield_factor"]) == 1 else "estimated",
+            ),
         )
         for entry in _read(path)
     }
