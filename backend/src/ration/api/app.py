@@ -17,7 +17,7 @@ from ration.api.errors import (
     http_exception_handler,
     validation_exception_handler,
 )
-from ration.api.routers import auth
+from ration.api.routers import auth, ingredients
 from ration.config import settings
 from ration.repositories.database import make_engine, make_session_factory
 
@@ -40,6 +40,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
     app.include_router(auth.router, prefix="/api")
+    app.include_router(ingredients.router, prefix="/api")
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:
