@@ -104,6 +104,40 @@ def load(session: SessionDep, ingredient_id: str) -> models.Ingredient:
     return row
 
 
+def check_aliases(session: SessionDep, aliases: list[str], owner_id: str | None = None) -> None:
+    """Refuse an alias another ingredient already answers to.
+
+    `UNIQUE (locale, alias)` is correct — two ingredients answering to "cod"
+    would make alias search ambiguous, which is the opposite of what aliases are
+    for. But the constraint fires on flush, after the handler has returned, and
+    escapes as a 500 that tells the planner nothing. Checking here turns it into
+    a 409 naming the ingredient already holding it.
+
+    The same treatment the delete path already gave foreign keys; this is the
+    unique constraint sitting next to them.
+    """
+    if not aliases:
+        return
+
+    duplicates_in_request = {a for a in aliases if aliases.count(a) > 1}
+    if duplicates_in_request:
+        raise unprocessable(
+            "DUPLICATE_ALIAS",
+            f"Repeated alias in the request: {', '.join(sorted(duplicates_in_request))}",
+            ErrorDetail(field="aliases", code="duplicate"),
+        )
+
+    taken = session.execute(
+        select(models.IngredientAlias.alias, models.Ingredient.slug)
+        .join(models.Ingredient)
+        .where(models.IngredientAlias.alias.in_(aliases))
+    ).all()
+    clashes = [(alias, slug) for alias, slug in taken if slug != owner_id]
+    if clashes:
+        held = ", ".join(f"{alias!r} by {slug}" for alias, slug in sorted(clashes))
+        raise conflict("ALIAS_IN_USE", f"Alias already in use: {held}")
+
+
 def check_yield(factor: object, source: str | None) -> None:
     """Reject what the domain type would reject, but as a 422 rather than a 500.
 
@@ -188,6 +222,7 @@ def create_ingredient(
             ErrorDetail(field="names.ru", code="missing"),
         )
     check_yield(body.yield_factor, body.yield_source)
+    check_aliases(session, body.aliases)
 
     slug = slugify(body.names["ru"])
     if session.scalars(
@@ -257,6 +292,7 @@ def update_ingredient(
             session,
         )
     if body.aliases is not None:
+        check_aliases(session, body.aliases, owner_id=row.slug)
         _replace(
             row,
             "aliases",

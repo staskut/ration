@@ -255,3 +255,55 @@ class TestDecimalRendering:
 
     def test_a_unit_yield_renders_as_one(self, planner: TestClient) -> None:
         assert planner.get("/api/ingredients/banana").json()["yield_factor"] == "1"
+
+
+class TestAliasUniqueness:
+    """Found by QA on #23: a duplicate alias escaped as a 500.
+
+    `UNIQUE (locale, alias)` is right — two ingredients answering to "cod" make
+    alias search ambiguous. The defect was that the constraint fired on flush,
+    after the handler returned, so the planner got a 500 instead of being told
+    which ingredient already holds the alias.
+    """
+
+    def test_creating_with_an_alias_another_holds_is_409(self, planner: TestClient) -> None:
+        planner.post("/api/ingredients", json=NEW)
+        response = planner.post("/api/ingredients", json=dict(NEW, names={"ru": "Пикша"}))
+        assert response.status_code == 409
+        assert response.json()["error"]["code"] == "ALIAS_IN_USE"
+
+    def test_the_conflict_names_the_ingredient_holding_it(self, planner: TestClient) -> None:
+        planner.post("/api/ingredients", json=NEW)
+        message = planner.post("/api/ingredients", json=dict(NEW, names={"ru": "Пикша"})).json()[
+            "error"
+        ]["message"]
+        assert "treska" in message and "cod" in message
+
+    def test_patching_in_a_taken_alias_is_409(self, planner: TestClient) -> None:
+        planner.post("/api/ingredients", json=NEW)
+        assert (
+            planner.patch("/api/ingredients/banana", json={"aliases": ["cod"]}).status_code == 409
+        )
+
+    def test_keeping_your_own_alias_on_patch_is_fine(self, planner: TestClient) -> None:
+        """The check must not treat an ingredient's existing alias as a clash."""
+        planner.post("/api/ingredients", json=NEW)
+        response = planner.patch("/api/ingredients/treska", json={"aliases": ["cod", "белая рыба"]})
+        assert response.status_code == 200
+        assert set(response.json()["aliases"]) == {"cod", "белая рыба"}
+
+    def test_a_repeated_alias_within_one_request_is_422(self, planner: TestClient) -> None:
+        response = planner.post(
+            "/api/ingredients", json=dict(NEW, names={"ru": "Сайда"}, aliases=["x", "x"])
+        )
+        assert response.status_code == 422
+        assert response.json()["error"]["details"][0]["field"] == "aliases"
+
+    def test_no_mutation_can_return_a_500(self, planner: TestClient) -> None:
+        """The shape of the original defect: a constraint escaping as a 500."""
+        planner.post("/api/ingredients", json=NEW)
+        for response in (
+            planner.post("/api/ingredients", json=dict(NEW, names={"ru": "Пикша"})),
+            planner.patch("/api/ingredients/banana", json={"aliases": ["cod"]}),
+        ):
+            assert response.status_code < 500
