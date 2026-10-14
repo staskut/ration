@@ -180,3 +180,26 @@ def _split_templates(value: str | None) -> frozenset[Template]:
 
 def join_templates(templates: frozenset[Template]) -> str | None:
     return ",".join(sorted(templates)) or None
+
+
+def plan_entry_to_domain(row: models.PlanEntry, module_slugs: dict[str, str]) -> PlanEntry:
+    return PlanEntry(
+        id=row.id,
+        slot=cast(Slot, row.slot),
+        module_id=module_slugs[row.module_id],
+        portion_factor=to_decimal(row.portion_factor),
+        position=row.position,
+    )
+
+
+def plan_day_to_domain(row: models.PlanDay, module_slugs: dict[str, str]) -> PlanDay:
+    return PlanDay(
+        day_index=row.day_index,
+        date=row.date,
+        day_template=cast(Template, row.day_template),
+        notes=row.notes,
+        entries=tuple(
+            plan_entry_to_domain(e, module_slugs)
+            for e in sorted(row.entries, key=lambda e: (e.slot, e.position))
+        ),
+    )
