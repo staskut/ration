@@ -14,6 +14,7 @@ Read these before changing anything they cover.
 - `docs/lld.md` — schema, domain signatures, endpoints, test plan
 - `docs/decisions.md` — decisions closed during implementation (D1…D10), with their cost
 - `docs/acceptance-audit.md` — closed issues checked against their own criteria
+- `docs/testing.md` — the three test layers, the golden tests, and what they have caught
 - `docs/mvp-plan.md` — milestones and sequencing
 - `docs/tasks.md` — the backlog
 - `docs/process.md` — how work is organized
