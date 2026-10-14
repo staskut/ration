@@ -156,9 +156,15 @@ pay-as-you-go, with no monthly platform fee.
 | Outbound data | $0.02/GB in NA and Europe; inbound free |
 | Neon Free | $0 — 100 CU-hr and 1 GB per project, 10 branches |
 
-Two users, two apps, with machines suspending when idle: **well under
-$1/month**, most of it rootfs. The same two apps left always-on: **about
-$8–9/month**, which is the entire difference and all of it avoidable.
+Two users, two apps, with machines suspending when idle: **about $0.50/month**
+— roughly $0.35 production compute at ~60 machine-hours, $0.03 staging, and
+$0.08 rootfs. The same two apps left always-on: **about $8.50/month**, which
+is the entire difference and all of it avoidable.
+
+Compute dominates storage about 4:1, so the figure scales with **hours
+running**, not with anything in this file. The machine costs ~$0.006/hour;
+even continuously it is $4.25. Fly bills a stopped machine by its *image*
+size, not a fixed disk, and this image is ~250 MB.
 
 `auto_stop_machines = "suspend"` idles a machine that has had no requests, and
 `min_machines_running = 0` lets it actually do so. Resume is about a second.
