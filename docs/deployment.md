@@ -138,16 +138,38 @@ up-and-down cycle. That is what makes this paragraph more than a hope.
 
 ## Cost
 
+Checked against Fly's and Neon's published prices on 2026-10-14, not from
+memory. **There is no Fly free allowance** — new organisations are
+pay-as-you-go, with no monthly platform fee.
+
 | | |
 |---|---|
-| Fly `shared-cpu-1x`, 512 MB, 1 machine per app | free allowance, then ~$2/mo each |
-| Neon free tier | 0.5 GB, enough by three orders of magnitude |
-| Outbound bandwidth | negligible for two users |
+| Fly `shared-cpu-1x` / 512 MB, **always on** | $3.69/mo per machine (cheapest regions) |
+| The same machine **suspended** | $0.15/GB/mo of rootfs — pennies |
+| Outbound data | $0.02/GB in NA and Europe; inbound free |
+| Neon Free | $0 — 100 CU-hr and 1 GB per project, 10 branches |
 
-`auto_stop_machines = "suspend"` idles a machine that has had no requests.
-Resume is about a second — acceptable for two users, and the reason
-`min_machines_running = 1` is set on production only if you dislike that
-second.
+Two users, two apps, with machines suspending when idle: **well under
+$1/month**, most of it rootfs. The same two apps left always-on: **about
+$8–9/month**, which is the entire difference and all of it avoidable.
+
+`auto_stop_machines = "suspend"` idles a machine that has had no requests, and
+`min_machines_running = 0` lets it actually do so. Resume is about a second.
+If you want production warm, scale that one app — do not set
+`min_machines_running` in this file, because both apps read it:
+
+```bash
+fly scale count 1 --app ration     # ~$3.69/mo more, staging unaffected
+```
+
+Stockholm (`arn`) is not one of the cheapest regions; Fly's own figures put
+Frankfurt about 15% above Ashburn, so expect a similar premium. Moving
+`primary_region` to `iad` would shave a few cents and add latency.
+
+**Neon Free is genuinely sufficient**, not a trial: storage here is kilobytes
+against a 1 GB allowance, and compute scales to zero after 5 minutes idle, so
+two people checking a meal plan will not approach 100 CU-hours. Staging is a
+branch of the same project, also free.
 
 ## What is deliberately not here
 

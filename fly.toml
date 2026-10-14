@@ -26,7 +26,12 @@ primary_region = "arn"
   force_https = true
   auto_stop_machines = "suspend"
   auto_start_machines = true
-  min_machines_running = 1
+  # Zero, so an idle app costs only its rootfs. Setting this to 1 here would
+  # apply to *both* apps, since they share this file — and staging running
+  # 24/7 to serve nobody is the easiest money this project could waste. To
+  # keep production warm, scale that one app rather than editing this:
+  #   fly scale count 1 --app ration
+  min_machines_running = 0
 
   [[http_service.checks]]
     # A failing release does not replace a working one: Fly holds the rollout
