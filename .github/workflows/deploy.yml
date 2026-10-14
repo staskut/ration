@@ -58,6 +58,12 @@ jobs:
       - name: Check for deploy credentials
         id: creds
         run: |
+          # Echo the resolved target. The expression picking it is the
+          # `x && 'a' || 'b'` idiom, which is easy to get subtly wrong and
+          # impossible to check by reading — a mistake here deploys staging's
+          # image to production, silently and successfully.
+          echo "Target: app=$APP url=$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "Target: app=$APP url=$URL"
           if [ -n "${{ secrets.FLY_API_TOKEN }}" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
