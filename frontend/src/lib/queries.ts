@@ -67,8 +67,12 @@ export const INVALIDATES: Record<
   ChangedResource,
   (planId: string) => readonly unknown[][]
 > = {
-  entries: (id) => [["plan", id]],
-  days: (id) => [["plan", id]],
+  // ["today"] is listed separately everywhere it matters. Today is keyed by
+  // date, not by plan, so it is not under the ["plan", id] prefix — and a
+  // planner's change would reach the plan board while the follower's open
+  // screen sat stale. The end-to-end suite caught exactly that.
+  entries: (id) => [["plan", id], ["today"]],
+  days: (id) => [["plan", id], ["today"]],
   validation: (id) => [["plan", id, "validation"]],
   shopping_list: (id) => [["plan", id, "shopping-list"]],
   feedback: (id) => [["plan", id], ["today"]],

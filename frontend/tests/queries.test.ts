@@ -43,9 +43,21 @@ describe("websocket invalidation map", () => {
     expect(INVALIDATES.feedback("p")).toEqual([["plan", "p"], ["today"]]);
   });
 
-  it("maps an entry change to the whole plan subtree", () => {
+  it("maps an entry change to the plan subtree and to Today", () => {
     // ["plan", id] is a prefix of validation and shopping-list, so one
-    // invalidation reaches all three.
-    expect(INVALIDATES.entries("p")).toEqual([["plan", "p"]]);
+    // invalidation reaches all three. Today is NOT under that prefix — it is
+    // keyed by date — so it has to be named explicitly. Leaving it out meant
+    // a planner's change updated their own board while the follower's open
+    // screen stayed stale, which only the end-to-end suite noticed.
+    expect(INVALIDATES.entries("p")).toEqual([["plan", "p"], ["today"]]);
+  });
+
+  it("reaches Today for every change that can alter what is eaten", () => {
+    // The guard that would have caught the original gap: a resource that
+    // changes a day's content must reach the screen showing that day.
+    for (const resource of ["entries", "days", "feedback"] as const) {
+      const keys = INVALIDATES[resource]("p").map((key) => JSON.stringify(key));
+      expect(keys, resource).toContain(JSON.stringify(["today"]));
+    }
   });
 });

@@ -1,5 +1,6 @@
 .PHONY: help test lint format test-backend test-unit test-integration \
-        test-integration-postgres lint-backend test-frontend lint-frontend check-client
+        test-integration-postgres test-e2e lint-backend test-frontend lint-frontend \
+        check-client
 
 help:
 	@echo "make test             - everything"
@@ -52,3 +53,12 @@ check-client:
 		exit 1; \
 	fi
 	@echo "API client matches openapi.yaml"
+
+test-e2e:
+	@# Two browser contexts against the compose stack. The stack is reset
+	@# first: these write to a real database, and one of them fills the plan's
+	@# last unplanned day, so a second run has nothing left to fill.
+	docker compose down -v
+	docker compose up -d --build
+	@until curl -sf http://localhost:8000/health >/dev/null 2>&1; do sleep 2; done
+	cd e2e && npm test

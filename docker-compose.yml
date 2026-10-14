@@ -30,6 +30,10 @@ services:
       RATION_DATABASE_URL: postgresql+psycopg://ration:${POSTGRES_PASSWORD:-ration-dev}@db:5432/ration
       RATION_SESSION_SECRET: ${RATION_SESSION_SECRET:?set it in .env}
       RATION_ENV: ${RATION_ENV:-development}
+      # Gives the seeded accounts a usable password for local work and the
+      # end-to-end suite. The seed refuses to run in production at all, so
+      # this cannot reach a real deployment.
+      RATION_DEV_PASSWORD: ${RATION_DEV_PASSWORD:-correct-horse-battery}
     ports:
       - "8000:8000"
     command: >

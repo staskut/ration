@@ -11,6 +11,7 @@ database holds one real person's dietary information.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from datetime import timedelta
 
@@ -29,9 +30,15 @@ from ration.seed.loader import ReferenceData, load_reference
 PLANNER_EMAIL = "planner@ration.example"
 FOLLOWER_EMAIL = "follower@ration.example"
 
-# Development credentials for the seeded accounts. Overridden by environment in
-# any deployed environment; the seed refuses to run in production regardless.
+# The seeded accounts get a hash that cannot verify, so an unseeded or
+# half-configured deployment has no working credentials by accident.
 DEV_PASSWORD_HASH_PLACEHOLDER = "!seed-set-a-password!"
+
+# Set RATION_DEV_PASSWORD to give the seeded accounts a usable password, for
+# local work and the end-to-end suite. It is ignored unless the seed is
+# running at all, and the seed refuses to run in production — so this cannot
+# put a known password on a real deployment.
+DEV_PASSWORD_ENV = "RATION_DEV_PASSWORD"
 
 
 class ProductionSeedRefused(RuntimeError):
@@ -240,19 +247,38 @@ def _upsert_identity_and_profile(
     return profile.id, follower.id
 
 
+def _dev_password_hash() -> str | None:
+    """A usable password, only when one was asked for.
+
+    Imported lazily: the seed is a domain-adjacent command and argon2 is an API
+    concern, so paying for it on every seed would be the wrong coupling.
+    """
+    password = os.environ.get(DEV_PASSWORD_ENV)
+    if not password:
+        return None
+    from ration.api.security import hash_password
+
+    return hash_password(password)
+
+
 def _upsert_user(session: Session, email: str, display_name: str, role: str) -> models.User:
     row = session.scalars(select(models.User).where(models.User.email == email)).one_or_none()
+    dev_hash = _dev_password_hash()
+
     if row is None:
         row = models.User(
             email=email,
             display_name=display_name,
             role=role,
-            password_hash=DEV_PASSWORD_HASH_PLACEHOLDER,
+            password_hash=dev_hash or DEV_PASSWORD_HASH_PLACEHOLDER,
         )
         session.add(row)
     else:
         row.display_name = display_name
         row.role = role
+        # Only ever overwrite a password when one was explicitly supplied.
+        if dev_hash:
+            row.password_hash = dev_hash
     return row
 
 

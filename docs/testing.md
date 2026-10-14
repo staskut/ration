@@ -6,12 +6,15 @@ Three layers, each answering a question the others cannot.
 |---|---|---|---|---|
 | **Unit** | `backend/tests/unit/` | the arithmetic and the rules are right | none | ~3 s |
 | **Integration** | `backend/tests/integration/` | the API behaves as the contract says | real | ~50 s |
-| **Frontend unit** | `frontend/tests/` | the client's own logic | none | ~1 s |
+| **Frontend unit** | `frontend/tests/` | the client's own logic | none | ~2 s |
+| **End-to-end** | `e2e/` | two people, two browsers, one stack | compose | ~20 s |
 
 ```bash
-make test              # everything
-make test-unit         # domain only, no database
-make test-integration  # API and repositories, real database
+make test                       # unit and integration
+make test-unit                  # domain only, no database
+make test-integration           # API and repositories, SQLite
+make test-integration-postgres  # the same suite, on Postgres
+make test-e2e                   # two browsers against the compose stack
 ```
 
 CI runs unit and integration as separate named steps, so a red build says which
@@ -114,6 +117,11 @@ testing in general.
 - **SQLite's `lower()` is ASCII-only.** A SQL-side case-insensitive search
   matched Russian in Postgres and nothing in SQLite — the worst shape a bug can
   take.
+- **A planner's change never reached the follower's open screen.** `Today` is
+  keyed by date, not by plan, so it sits outside the `["plan", id]` prefix the
+  invalidation map used — and only the end-to-end suite could see it. The unit
+  test had checked the map was *complete* against the server's enum, which it
+  was; it had not checked each mapping was *sufficient*.
 - **A duplicate ingredient alias escaped as a 500.** Found by a QA pass, not by
   the 42 tests written alongside the feature: every one of them used distinct
   aliases, so the collision never occurred.
