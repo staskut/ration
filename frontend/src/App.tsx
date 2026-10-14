@@ -10,6 +10,7 @@ import { useState } from "react";
 import { ShoppingList } from "./features/follower/ShoppingList";
 import { Today } from "./features/follower/Today";
 import { Catalog } from "./features/planner/Catalog";
+import { ModuleEditor } from "./features/planner/ModuleEditor";
 import { PlanBuilder } from "./features/planner/PlanBuilder";
 import { Loading } from "./components/Status";
 import { useLogin, usePlans } from "./lib/queries";
@@ -101,7 +102,7 @@ function FollowerApp() {
 }
 
 function PlannerApp() {
-  const [view, setView] = useState<"plan" | "catalog">("plan");
+  const [view, setView] = useState<"plan" | "modules" | "catalog">("plan");
   const { data: plans } = usePlans();
   const active = plans?.find((plan) => plan.status === "active") ?? plans?.[0];
   const { t } = useSession();
@@ -118,6 +119,13 @@ function PlannerApp() {
         </button>
         <button
           type="button"
+          onClick={() => setView("modules")}
+          className={view === "modules" ? "font-semibold" : "text-slate-500"}
+        >
+          Модули
+        </button>
+        <button
+          type="button"
           onClick={() => setView("catalog")}
           className={view === "catalog" ? "font-semibold" : "text-slate-500"}
         >
@@ -126,6 +134,8 @@ function PlannerApp() {
       </nav>
       {view === "catalog" ? (
         <Catalog />
+      ) : view === "modules" ? (
+        <ModuleEditor />
       ) : active ? (
         <PlanBuilder planId={active.id} />
       ) : (

@@ -269,6 +269,78 @@ export function useRateMeal(
   });
 }
 
+export function useSaveIngredient(): UseMutationResult<
+  Ingredient,
+  ApiError,
+  { id?: string; body: Record<string, unknown> }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) =>
+      id
+        ? api.patch<Ingredient>(`/ingredients/${id}`, body)
+        : api.post<Ingredient>("/ingredients", body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["ingredients"] });
+      // Module totals are computed from ingredient nutrition, so a correction
+      // here changes every module that uses it.
+      void queryClient.invalidateQueries({ queryKey: ["modules"] });
+      void queryClient.invalidateQueries({ queryKey: ["plan"] });
+    },
+  });
+}
+
+export function useDeleteIngredient(): UseMutationResult<void, ApiError, string> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => api.delete<void>(`/ingredients/${id}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["ingredients"] });
+    },
+  });
+}
+
+export function useSaveModule(): UseMutationResult<
+  Module,
+  ApiError,
+  { id?: string; body: Record<string, unknown> }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) =>
+      id ? api.patch<Module>(`/modules/${id}`, body) : api.post<Module>("/modules", body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["modules"] });
+      void queryClient.invalidateQueries({ queryKey: ["plan"] });
+    },
+  });
+}
+
+export function useSetPortion(
+  planId: string,
+): UseMutationResult<
+  { validation: ValidationReport },
+  ApiError,
+  { entryId: string; portionFactor: string }
+> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ entryId, portionFactor }) =>
+      api.patch<{ validation: ValidationReport }>(`/plans/${planId}/entries/${entryId}`, {
+        portion_factor: portionFactor,
+      }),
+    onSuccess: (data) => seedValidation(queryClient, planId, data.validation),
+  });
+}
+
+export function useProfile(profileId: string | undefined): UseQueryResult<Profile, ApiError> {
+  return useQuery({
+    queryKey: keys.profile(profileId ?? ""),
+    queryFn: () => api.get<Profile>(`/profiles/${profileId}`),
+    enabled: Boolean(profileId),
+  });
+}
+
 export function useLogin(): UseMutationResult<
   void,
   ApiError,

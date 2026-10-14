@@ -12,8 +12,10 @@ import {
   useAddEntry,
   useModules,
   usePlan,
+  useProfile,
   useRemoveEntry,
   useSetDayTemplate,
+  useSetPortion,
 } from "../../lib/queries";
 import { useSession } from "../../lib/session";
 import { usePlanSocket } from "../../lib/usePlanSocket";
@@ -25,18 +27,22 @@ const TEMPLATES = ["normal", "long_shift", "training", "duty_24h"] as const;
 export function PlanBuilder({ planId }: { planId: string }) {
   const { t } = useSession();
   const { data: plan, isLoading, isError, refetch } = usePlan(planId);
+  const { data: profile } = useProfile(plan?.profile_id);
   const { data: modules } = useModules();
   const addEntry = useAddEntry(planId);
   const removeEntry = useRemoveEntry(planId);
   const setTemplate = useSetDayTemplate(planId);
+  const setPortion = useSetPortion(planId);
   const [adding, setAdding] = useState<{ day: number; slot: string } | null>(null);
+  const [highlighted, setHighlighted] = useState<number | null>(null);
 
   usePlanSocket(planId);
 
   if (isLoading) return <Loading t={t} />;
   if (isError || !plan) return <ErrorState t={t} onRetry={() => void refetch()} />;
 
-  const failure = addEntry.error ?? removeEntry.error ?? setTemplate.error;
+  const failure =
+    addEntry.error ?? removeEntry.error ?? setTemplate.error ?? setPortion.error;
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-16">
@@ -51,14 +57,38 @@ export function PlanBuilder({ planId }: { planId: string }) {
       <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
         <div className="space-y-3">
           {plan.days.map((day) => (
-            <section key={day.day_index} className="rounded-2xl border border-slate-200 p-3">
+            <section
+              key={day.day_index}
+              id={`day-${day.day_index}`}
+              className={[
+                "rounded-2xl border p-3 transition",
+                highlighted === day.day_index
+                  ? "border-slate-900 ring-2 ring-slate-900/10"
+                  : "border-slate-200",
+              ].join(" ")}
+            >
               <header className="flex items-baseline justify-between gap-2">
                 <div>
                   <h2 className="font-medium">
                     День {day.day_index + 1} · {day.date}
                   </h2>
                   <p className="text-sm text-slate-500">
-                    {t.number(day.kcal)} ккал · {t.number(day.protein_g)} г белка
+                    {t.number(day.kcal)} ккал
+                    {profile && (
+                      // Totals mean nothing without the target beside them.
+                      <span className="text-slate-400">
+                        {" "}
+                        / {t.number(profile.daily_kcal_target)} ±{" "}
+                        {t.number(profile.daily_kcal_tolerance)}
+                      </span>
+                    )}{" "}
+                    · {t.number(day.protein_g)} г белка
+                    {profile && (
+                      <span className="text-slate-400">
+                        {" "}
+                        / от {t.number(profile.daily_protein_min)}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <select
@@ -100,6 +130,29 @@ export function PlanBuilder({ planId }: { planId: string }) {
                           <span className="text-xs text-slate-400">
                             {entry.role === "side" ? "гарнир" : "основное"}
                           </span>
+                          <label className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                            <span className="sr-only">
+                              Доля порции для {entry.module_name}
+                            </span>
+                            <input
+                              type="range"
+                              min={0.5}
+                              max={1.5}
+                              step={0.1}
+                              defaultValue={Number(entry.portion_factor)}
+                              onChange={(event) =>
+                                setPortion.mutate({
+                                  entryId: entry.id,
+                                  portionFactor: event.target.value,
+                                })
+                              }
+                              className="w-full"
+                              aria-label={`Доля порции для ${entry.module_name}`}
+                            />
+                            <span className="tabular-nums">
+                              ×{t.number(entry.portion_factor)}
+                            </span>
+                          </label>
                           <button
                             type="button"
                             onClick={() => removeEntry.mutate(entry.id)}
@@ -131,6 +184,14 @@ export function PlanBuilder({ planId }: { planId: string }) {
                           <option value="">—</option>
                           {modules
                             ?.filter((module) => module.slot === slot)
+                            .filter(
+                              (module) =>
+                                // A slot takes one main. Offering a second and
+                                // then refusing it with a 409 is a worse
+                                // experience than not offering it.
+                                module.role !== "main" ||
+                                !entries.some((existing) => existing.role === "main"),
+                            )
                             .map((module) => (
                               <option key={module.id} value={module.id}>
                                 {module.name}
@@ -154,7 +215,22 @@ export function PlanBuilder({ planId }: { planId: string }) {
           ))}
         </div>
 
-        <ValidationPanel planId={planId} />
+        <div>
+          <ValidationPanel
+            planId={planId}
+            onSelect={(dayIndex) => {
+              if (dayIndex === null) return;
+              setHighlighted(dayIndex);
+              document
+                .getElementById(`day-${dayIndex}`)
+                ?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}
+          />
+          <p className="mt-3 text-xs text-slate-400">
+            Доля порции меняет количество линейно — соль и масло так не
+            масштабируются.
+          </p>
+        </div>
       </div>
     </main>
   );
