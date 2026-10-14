@@ -181,3 +181,85 @@ class TestHubHousekeeping:
         await hub.subscribe("p", socket)  # type: ignore[arg-type]
         await hub.unsubscribe("p", socket)  # type: ignore[arg-type]
         assert hub.subscriber_count("p") == 0
+
+
+class TestBroadcastHappensAfterCommit:
+    """The ordering bug a two-client end-to-end run found, and nothing else could.
+
+    ``notify`` used to send from inside the handler, but the commit happens in
+    ``get_session``'s teardown, which runs *after* the handler returns. The
+    other client therefore received "something changed" while the writing
+    transaction was still open, refetched, read the database as it was before
+    the write, and rendered stale data — permanently, since nothing would tell
+    it again. Being a race it failed about half the time.
+    """
+
+    def test_the_write_is_visible_to_a_new_session_when_the_broadcast_is_sent(
+        self, planner, engine, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from sqlalchemy.orm import Session as OrmSession
+
+        from ration.api import broadcast as broadcast_module
+        from ration.repositories import models
+
+        plans = planner.get("/api/plans").json()
+        plan_id = next(p["id"] for p in plans if p["name"] == "Пилотная неделя 1")
+
+        seen: list[int] = []
+        original = broadcast_module._send
+
+        def recording_send(request, pid, changed):  # type: ignore[no-untyped-def]
+            # A *separate* connection: it can only see committed rows, which
+            # is exactly the question being asked.
+            with OrmSession(engine) as probe:
+                seen.append(
+                    len(
+                        probe.query(models.PlanEntry)
+                        .join(models.PlanDay)
+                        .filter(models.PlanDay.plan_id == pid)
+                        .filter(models.PlanDay.day_index == 6)
+                        .all()
+                    )
+                )
+            return original(request, pid, changed)
+
+        monkeypatch.setattr(broadcast_module, "_send", recording_send)
+
+        before = planner.get(f"/api/plans/{plan_id}").json()["days"][6]["entries"]
+        response = planner.post(
+            f"/api/plans/{plan_id}/days/6/entries",
+            json={"slot": "dinner", "module_id": "dinner_squid_pepper"},
+        )
+        assert response.status_code in (200, 201), response.text
+
+        assert seen, "no broadcast was dispatched at all"
+        assert seen[0] == len(before) + 1, (
+            "the broadcast was sent before the commit: a client refetching on "
+            "this message would read the database as it was before the write"
+        )
+
+    def test_a_failed_write_broadcasts_nothing(self, planner, monkeypatch) -> None:
+        """A rolled-back request must not tell anyone something changed."""
+        from ration.api import broadcast as broadcast_module
+
+        plans = planner.get("/api/plans").json()
+        plan_id = next(p["id"] for p in plans if p["name"] == "Пилотная неделя 1")
+
+        sent: list[str] = []
+        monkeypatch.setattr(
+            broadcast_module,
+            "_send",
+            lambda request, pid, changed: sent.append(pid),
+        )
+
+        # A second main in a slot that already has one: rejected, nothing written.
+        planner.post(
+            f"/api/plans/{plan_id}/days/0/entries",
+            json={"slot": "breakfast", "module_id": "dinner_squid_pepper"},
+        )
+        bad = planner.post(
+            f"/api/plans/{plan_id}/days/0/entries",
+            json={"slot": "breakfast", "module_id": "dinner_squid_pepper"},
+        )
+        assert bad.status_code >= 400
+        assert len(sent) <= 1, "a rejected write announced a change"

@@ -15,6 +15,7 @@ from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ration.api.broadcast import dispatch_pending
 from ration.api.errors import forbidden, not_found, unauthorized
 from ration.api.security import SessionCodec
 from ration.config import SESSION_COOKIE_NAME, Settings, settings
@@ -31,6 +32,10 @@ def get_session(request: Request) -> Iterator[Session]:
     try:
         yield session
         session.commit()
+        # Only now. A broadcast sent from inside the handler races this
+        # commit: the other client refetches and reads the database as it was
+        # before the write. See ration.api.broadcast.
+        dispatch_pending(request)
     except Exception:
         session.rollback()
         raise
