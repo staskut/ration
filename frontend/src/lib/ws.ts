@@ -71,11 +71,13 @@ export function subscribeToPlan(
     socket = new WebSocket(buildUrl(planId));
 
     socket.onopen = () => {
-      if (attempt > 0) {
-        // Something may have changed while disconnected, so catch up once
-        // rather than waiting for the next message.
-        void queryClient.invalidateQueries({ queryKey: ["plan", planId] });
-      }
+      // Catch up on every open, not only on a retry. Messages are
+      // fire-and-forget: anything broadcast before this socket existed was
+      // never queued for it, so a client that connects a moment late would
+      // otherwise show stale data indefinitely. That is not hypothetical —
+      // it is what made the end-to-end collaboration test flaky.
+      void queryClient.invalidateQueries({ queryKey: ["plan", planId] });
+      void queryClient.invalidateQueries({ queryKey: ["today"] });
       attempt = 0;
     };
 

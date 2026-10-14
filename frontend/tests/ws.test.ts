@@ -1,7 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
-import { applyMessage, nextDelay } from "../src/lib/ws";
+import { applyMessage, nextDelay, subscribeToPlan } from "../src/lib/ws";
 
 function clientSpy() {
   const client = new QueryClient();
@@ -80,5 +80,57 @@ describe("reconnect backoff", () => {
     for (let attempt = 0; attempt < 12; attempt += 1) {
       expect(nextDelay(attempt)).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("catching up when the socket opens", () => {
+  /** Minimal stand-in: the production code only ever sets the handlers. */
+  class FakeSocket {
+    static last: FakeSocket | null = null;
+    onopen: (() => void) | null = null;
+    onmessage: ((event: MessageEvent<string>) => void) | null = null;
+    onclose: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    close = vi.fn();
+    constructor() {
+      FakeSocket.last = this;
+    }
+  }
+
+  function subscribe() {
+    const { client, invalidate } = clientSpy();
+    vi.stubGlobal("WebSocket", FakeSocket);
+    const subscription = subscribeToPlan(client, "plan-1", {
+      url: (id) => `ws://test/${id}`,
+    });
+    return { invalidate, subscription };
+  }
+
+  it("refetches on the very first open, not only after a reconnect", () => {
+    // Broadcasts are fire-and-forget and nothing is queued for a socket that
+    // did not exist yet. A client connecting a moment after a change would
+    // otherwise sit on stale data until something else refetched it — the
+    // flake this guards against was exactly that.
+    const { invalidate, subscription } = subscribe();
+    expect(invalidate).not.toHaveBeenCalled();
+
+    FakeSocket.last?.onopen?.();
+
+    const keys = invalidate.mock.calls.map((call) =>
+      JSON.stringify((call[0] as { queryKey: unknown }).queryKey),
+    );
+    expect(keys).toContain(JSON.stringify(["plan", "plan-1"]));
+    subscription.close();
+  });
+
+  it("includes today, which is keyed by date and not under the plan prefix", () => {
+    const { invalidate, subscription } = subscribe();
+    FakeSocket.last?.onopen?.();
+
+    const keys = invalidate.mock.calls.map((call) =>
+      JSON.stringify((call[0] as { queryKey: unknown }).queryKey),
+    );
+    expect(keys).toContain(JSON.stringify(["today"]));
+    subscription.close();
   });
 });

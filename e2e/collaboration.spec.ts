@@ -23,10 +23,19 @@ async function gotoUnplannedDay(follower: Page): Promise<void> {
       .catch(() => false);
     if (settled) return;
 
-    await follower.getByLabel("Завтра").click();
+    // The last day has no "Завтра". Without this check the walk ends in a
+    // 30 s click timeout and a failure that reads like a product bug, which
+    // is how an afternoon gets spent — the message below is the real cause
+    // and it was previously unreachable.
+    const tomorrow = follower.getByLabel("Завтра");
+    if (!(await tomorrow.isVisible().catch(() => false))) break;
+    await tomorrow.click();
   }
   throw new Error(
-    "No unplanned day in the week. The stack needs resetting — see e2e/README.md.",
+    "No unplanned day left in the week. These tests write to a real database " +
+      "and this one fills the plan's only empty day, so the stack must be " +
+      "reset between runs: `make test-e2e` does it, a bare `npx playwright " +
+      "test` does not. See e2e/README.md.",
   );
 }
 

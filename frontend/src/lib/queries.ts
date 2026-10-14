@@ -10,6 +10,7 @@
  * available response is to invalidate everything.
  */
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -151,6 +152,13 @@ export function useToday(date?: string): UseQueryResult<TodayView, ApiError> {
   return useQuery({
     queryKey: keys.today(date),
     queryFn: () => api.get<TodayView>("/today", { query: { date } }),
+    // Each date is its own key, so without this `data` goes undefined for the
+    // duration of every day navigation. The follower's socket is subscribed
+    // with `data.plan_id`, so that gap tore the connection down and rebuilt
+    // it on each tap — and an update broadcast inside the gap was lost for
+    // good. Keeping the previous day's data holds the plan id steady, and
+    // removes the loading flicker as a side effect.
+    placeholderData: keepPreviousData,
   });
 }
 
