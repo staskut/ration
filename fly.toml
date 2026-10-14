@@ -13,7 +13,16 @@ primary_region = "arn"
   # and once rather than per-instance. A migration in the start command races
   # itself the moment there is more than one machine.
   release_command = "alembic upgrade head"
-  strategy = "rolling"
+  # bluegreen, not rolling. With a single Machine, rolling updates it *in
+  # place*: a release that then fails its health check has already replaced
+  # the one that worked. bluegreen boots the new Machine alongside the old,
+  # waits for the check below to pass, and only then moves traffic — so a bad
+  # release leaves the site up, which is the actual requirement.
+  #
+  # It needs at least one health check (there is one) and no attached volumes
+  # (there are none — Postgres is Neon). It runs two Machines for the length
+  # of a deploy, which is seconds of overlap, not a line on the bill.
+  strategy = "bluegreen"
 
 [env]
   # RATION_STATIC_DIR is already set in the image. Only what differs from the

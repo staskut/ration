@@ -96,11 +96,18 @@ fly deploy --app ration
 2. Runs `alembic upgrade head` as the **release command**: once, before any new
    machine takes traffic. A migration in the start command races itself as soon
    as there is more than one machine.
-3. Starts machines one at a time, each gated on `GET /health`.
+3. Boots the new machine **alongside** the old one, waits for `GET /health`
+   to pass, then moves traffic and destroys the old machine.
 
 A release that fails migration never starts. A machine that fails its health
 check never receives traffic, and the previous version keeps serving. **A
 broken deploy leaves the site up.**
+
+That last sentence is why the strategy is `bluegreen` rather than `rolling`.
+With one machine, rolling updates it *in place* — so a release that fails its
+check has already replaced the one that worked, and the guarantee is the
+opposite of the one claimed. The distinction only appears at a single
+machine, which is exactly the size this app runs at.
 
 Production is never seeded. It starts empty and the planner creates the real
 plan through the UI.
