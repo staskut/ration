@@ -9,6 +9,7 @@ dependencies = [
     "email-validator>=2.2",
     "fastapi>=0.115",
     "itsdangerous>=2.2",
+    "psycopg[binary]>=3.2",
     "pyyaml>=6.0",
     "sqlalchemy>=2.0",
     "uvicorn[standard]>=0.34",

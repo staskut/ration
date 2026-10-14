@@ -1,5 +1,5 @@
 .PHONY: help test lint format test-backend test-unit test-integration \
-        lint-backend test-frontend lint-frontend check-client
+        test-integration-postgres lint-backend test-frontend lint-frontend check-client
 
 help:
 	@echo "make test             - everything"
@@ -19,6 +19,11 @@ test-unit:
 
 test-integration:
 	cd backend && uv run pytest tests/integration
+
+test-integration-postgres:
+	@# The same suite against the database production uses. SQLite differs in
+	@# ways that matter, so a green SQLite run says nothing about Postgres.
+	cd backend && RATION_TEST_DATABASE_URL=$${RATION_TEST_DATABASE_URL:-postgresql+psycopg://ration:test@localhost:55432/ration_test} uv run pytest tests/integration
 
 lint-backend:
 	cd backend && uv run ruff check . && uv run ruff format --check . && uv run lint-imports

@@ -1,0 +1,48 @@
+# The full system, on Postgres. This is the first time anything runs on
+# Postgres rather than SQLite, and it is deliberately the same image and the
+# same migrations that deploy (HLD AD-5).
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ration
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ration-dev}
+      POSTGRES_DB: ration
+    volumes:
+      - ration-db:/var/lib/postgresql/data
+    healthcheck:
+      # The app waits on this. Without it the first boot races the database
+      # and fails on a connection refused that looks like a code bug.
+      test: ["CMD-SHELL", "pg_isready -U ration -d ration"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      RATION_DATABASE_URL: postgresql+psycopg://ration:${POSTGRES_PASSWORD:-ration-dev}@db:5432/ration
+      RATION_SESSION_SECRET: ${RATION_SESSION_SECRET:?set it in .env}
+      RATION_ENV: ${RATION_ENV:-development}
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "
+        alembic upgrade head &&
+        ration-seed &&
+        uvicorn ration.api.app:application --host 0.0.0.0 --port 8000
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  ration-db:

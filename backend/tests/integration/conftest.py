@@ -6,6 +6,7 @@ domain suite stays in milliseconds, and anything needing SQL lives here.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from datetime import date
 from decimal import Decimal
@@ -32,13 +33,54 @@ def engine(tmp_path: Path) -> Engine:
 
     Built by running the real migrations rather than metadata.create_all, so the
     tests exercise the schema that will actually be deployed.
+
+    SQLite by default, for speed. Set RATION_TEST_DATABASE_URL to run the same
+    suite against Postgres — which is what production uses, and the only way to
+    catch a SQLite-ism before it ships. Each test gets its own schema there, so
+    they stay independent without paying for a database per test.
     """
+    configured = os.environ.get("RATION_TEST_DATABASE_URL")
+    if configured:
+        yield from _postgres_engine(configured)
+        return
+
     url = f"sqlite:///{tmp_path / 'test.db'}"
     config = Config(str(BACKEND / "alembic.ini"))
     config.set_main_option("script_location", str(BACKEND / "migrations"))
     config.set_main_option("sqlalchemy.url", url)
     command.upgrade(config, "head")
-    return make_engine(url)
+    yield make_engine(url)
+
+
+def _postgres_engine(url: str) -> Iterator[Engine]:
+    """One throwaway schema per test, so tests do not see each other's rows."""
+    import uuid
+
+    from sqlalchemy import text
+
+    schema = f"t_{uuid.uuid4().hex[:12]}"
+    admin = make_engine(url)
+    with admin.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+    admin.dispose()
+
+    scoped = f"{url}?options=-csearch_path%3D{schema}"
+    config = Config(str(BACKEND / "alembic.ini"))
+    config.set_main_option("script_location", str(BACKEND / "migrations"))
+    # Alembic's config is a ConfigParser, which reads % as interpolation, so
+    # the percent-encoded search_path has to be escaped on the way in.
+    config.set_main_option("sqlalchemy.url", scoped.replace("%", "%%"))
+    command.upgrade(config, "head")
+
+    engine = make_engine(scoped)
+    try:
+        yield engine
+    finally:
+        engine.dispose()
+        admin = make_engine(url)
+        with admin.begin() as connection:
+            connection.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))
+        admin.dispose()
 
 
 @pytest.fixture

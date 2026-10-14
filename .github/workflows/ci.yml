@@ -76,6 +76,73 @@ jobs:
       - name: Build
         run: npm run build
 
+  postgres:
+    name: Integration tests on Postgres
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ration
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: ration_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ration"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # The same suite the SQLite job runs, against the database production
+      # uses. SQLite differs in ways that matter — ASCII-only lower(), foreign
+      # keys off by default, no real decimal type — so a green SQLite run says
+      # nothing about Postgres.
+      - name: Integration tests
+        run: uv run pytest tests/integration
+        env:
+          RATION_TEST_DATABASE_URL: postgresql+psycopg://ration:test@localhost:5432/ration_test
+
+  image:
+    name: Docker image builds and serves
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build
+        run: docker build -t ration:ci .
+
+      - name: It starts and answers /health
+        run: |
+          docker run -d --name ration-ci -p 8000:8000 \
+            -e RATION_DATABASE_URL=sqlite:////tmp/ci.db \
+            -e RATION_SESSION_SECRET=ci-secret-not-used-anywhere-real \
+            --entrypoint sh ration:ci -c \
+            "alembic upgrade head && uvicorn ration.api.app:application --host 0.0.0.0 --port 8000"
+          for _ in $(seq 1 30); do
+            curl -sf http://localhost:8000/health && break
+            sleep 2
+          done
+          curl -sf http://localhost:8000/health
+          # An unknown API path must be a JSON 404, never the SPA: a client
+          # fetching a mistyped endpoint should get an error it can parse.
+          curl -s http://localhost:8000/api/nope | grep -q NOT_FOUND
+          # A deep link must survive a reload.
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/some/deep/link)" = "200"
+
   contract:
     name: API client matches the contract
     runs-on: ubuntu-latest

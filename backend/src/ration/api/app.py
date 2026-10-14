@@ -9,11 +9,15 @@ check the frontend depends on.
 from __future__ import annotations
 
 import asyncio
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from ration.api import ws
 from ration.api.errors import (
@@ -79,4 +83,39 @@ def create_app(database_url: str | None = None) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    _serve_frontend(app)
     return app
+
+
+def _serve_frontend(app: FastAPI) -> None:
+    """Serve the built single-page app, when there is one.
+
+    Absent in development, where Vite serves it and proxies /api here.
+
+    Two rules matter. An unknown path under /api is a JSON 404, never the SPA —
+    a client fetching a mistyped endpoint should get an error it can parse, not
+    an HTML page that fails to deserialise three frames later. Any other
+    unknown path falls through to index.html, so a deep link survives a reload.
+    """
+    static_dir = (
+        Path(os.environ.get("RATION_STATIC_DIR", ""))
+        if os.environ.get("RATION_STATIC_DIR")
+        else None
+    )
+    if static_dir is None or not static_dir.is_dir():
+        return
+
+    index = static_dir / "index.html"
+    app.mount("/assets", StaticFiles(directory=static_dir / "assets"), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def spa(full_path: str) -> FileResponse:
+        if full_path.startswith("api/"):
+            raise ApiError(404, "NOT_FOUND", "No such endpoint")
+        candidate = static_dir / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(index)
+
+
+application = create_app()
