@@ -1,6 +1,16 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 
-import { ApiError, api } from "../src/api/client";
+import { ApiError, api } from "../../src/api/client";
+
+function calls(): unknown[][] {
+  return (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls as unknown[][];
+}
+
+function firstCall(): { url: string; init: RequestInit } {
+  const call = calls()[0];
+  if (!call) throw new Error("fetch was never called");
+  return { url: call[0] as string, init: (call[1] ?? {}) as RequestInit };
+}
 
 function respondWith(status: number, body: unknown): void {
   vi.stubGlobal(
@@ -22,22 +32,19 @@ describe("the api client", () => {
   it("sends credentials, or the session cookie never travels", async () => {
     respondWith(200, { ok: true });
     await api.get("/auth/me");
-    const [, init] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(init.credentials).toBe("include");
+    expect(firstCall().init.credentials).toBe("include");
   });
 
   it("prefixes every path with /api", async () => {
     respondWith(200, []);
     await api.get("/ingredients");
-    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(url).toBe("/api/ingredients");
+    expect(firstCall().url).toBe("/api/ingredients");
   });
 
   it("drops undefined query parameters rather than sending the string", async () => {
     respondWith(200, []);
     await api.get("/ingredients", { query: { q: undefined, section: "dairy" } });
-    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
-    expect(url).toBe("/api/ingredients?section=dairy");
+    expect(firstCall().url).toBe("/api/ingredients?section=dairy");
   });
 
   it("throws a typed error carrying the server's code", async () => {

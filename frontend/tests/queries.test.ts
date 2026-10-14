@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { INVALIDATES, keys } from "../src/lib/queries";
+import { INVALIDATES, keys, type ChangedResource } from "../src/lib/queries";
 
 describe("query keys", () => {
   it("nest plan-scoped queries under the plan", () => {
@@ -24,7 +24,13 @@ describe("query keys", () => {
 describe("websocket invalidation map", () => {
   it("covers every resource the server can name as changed", () => {
     // The server's enum, from openapi.yaml's WebSocketMessage.
-    const serverSends = ["entries", "validation", "shopping_list", "feedback", "days"];
+    const serverSends: ChangedResource[] = [
+      "entries",
+      "validation",
+      "shopping_list",
+      "feedback",
+      "days",
+    ];
     expect(Object.keys(INVALIDATES).sort()).toEqual([...serverSends].sort());
   });
 

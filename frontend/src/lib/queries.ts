@@ -49,8 +49,24 @@ export const keys = {
   today: (date?: string) => ["today", date ?? ""] as const,
 } as const;
 
-/** What a WebSocket message's `changed` entries invalidate. */
-export const INVALIDATES: Record<string, (planId: string) => readonly unknown[][]> = {
+/**
+ * What a WebSocket message's `changed` entries invalidate.
+ *
+ * Keyed by the server's own enum rather than by `string`, so a value the
+ * server can send but the client does not handle is a type error here instead
+ * of a lookup that silently returns undefined and invalidates nothing.
+ */
+export type ChangedResource =
+  | "entries"
+  | "validation"
+  | "shopping_list"
+  | "feedback"
+  | "days";
+
+export const INVALIDATES: Record<
+  ChangedResource,
+  (planId: string) => readonly unknown[][]
+> = {
   entries: (id) => [["plan", id]],
   days: (id) => [["plan", id]],
   validation: (id) => [["plan", id, "validation"]],

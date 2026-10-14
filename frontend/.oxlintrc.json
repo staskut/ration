@@ -6,7 +6,12 @@
       {
         "patterns": [
           {
-            "group": ["**/api/client", "**/api/types", "../api/*", "../../api/*"],
+            "group": [
+              "**/api/client",
+              "**/api/types",
+              "../api/*",
+              "../../api/*"
+            ],
             "message": "Backend communication goes through src/lib/queries.ts. See docs/decisions.md D6."
           }
         ]
@@ -15,8 +20,14 @@
   },
   "overrides": [
     {
-      "files": ["src/lib/queries.ts", "src/api/**"],
-      "rules": { "no-restricted-imports": "off" }
+      "files": [
+        "src/lib/queries.ts",
+        "src/api/**",
+        "tests/api/**"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
     }
   ]
 }
