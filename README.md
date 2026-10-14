@@ -68,13 +68,20 @@ runbooks. Deploying is `fly apps create`, three secrets, `fly deploy`.
 
 ## Run it
 
-### One command
+### Docker
+
+`.env` is gitignored, so a fresh clone needs one. The session secret has no
+committed default on purpose — a default in the repository is a default that
+eventually reaches a deployment.
 
 ```bash
+cp .env.example .env
+python3 -c "import secrets; print('RATION_SESSION_SECRET=' + secrets.token_urlsafe(32))" >> .env
 docker compose up --build
 ```
 
-Then <http://localhost:8000>. Postgres starts first, the app waits on its
+Then <http://localhost:8000>. If something else already holds port 8000, set
+`RATION_PORT` in `.env`. Postgres starts first, the app waits on its
 health check, migrations run, and the reference plan is seeded.
 
 **Demo accounts** — both seeded, both with the password

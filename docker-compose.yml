@@ -35,7 +35,9 @@ services:
       # this cannot reach a real deployment.
       RATION_DEV_PASSWORD: ${RATION_DEV_PASSWORD:-correct-horse-battery}
     ports:
-      - "8000:8000"
+      # Overridable because 8000 is a popular port. Set RATION_PORT if
+      # something else already holds it; the container side stays 8000.
+      - "${RATION_PORT:-8000}:8000"
     command: >
       sh -c "
         alembic upgrade head &&
