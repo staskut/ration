@@ -6,8 +6,10 @@ help:
 	@echo "make test             - everything"
 	@echo "make test-unit        - domain tests, no database"
 	@echo "make test-integration - repository and API tests, real database"
-	@echo "make lint    - lint and check formatting for both"
-	@echo "make format  - apply formatting"
+	@echo "make test-integration-postgres - the same suite, on Postgres"
+	@echo "make test-e2e         - two browsers against the compose stack"
+	@echo "make lint             - ruff, import contract, oxlint, tsc, client drift"
+	@echo "make format           - apply formatting"
 
 test: test-backend test-frontend
 

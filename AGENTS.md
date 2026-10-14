@@ -15,6 +15,9 @@ Read these before changing anything they cover.
 - `docs/decisions.md` — decisions closed during implementation (D1…D10), with their cost
 - `docs/acceptance-audit.md` — closed issues checked against their own criteria
 - `docs/testing.md` — the three test layers, the golden tests, and what they have caught
+- `docs/deployment.md` — Fly and Neon, secrets, rollback
+- `docs/release-process.md` — commit to production, and back
+- `docs/ai-usage-report.md` — how this was built with AI, including the failures
 - `docs/mvp-plan.md` — milestones and sequencing
 - `docs/tasks.md` — the backlog
 - `docs/process.md` — how work is organized
