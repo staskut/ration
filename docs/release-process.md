@@ -54,7 +54,14 @@ Run once, on purpose:
    runs and nothing reaches Fly.
 4. Revert.
 
-Recorded in [`acceptance-audit.md`](acceptance-audit.md) when exercised.
+**Exercised 2026-10-14**, on commit `2fe7163`: a unit test asserting `1 == 2`
+was pushed to `main`. CI reported `failure` and the Deploy workflow reported
+**`skipped`** — not `success`, and with no step executed. Reverted in
+`2ec3c09`.
+
+That distinction is the one worth checking if you ever change the condition.
+A workflow that runs and exits 0 without deploying looks identical in a
+green-tick list to one that deployed.
 
 ## What runs where
 
