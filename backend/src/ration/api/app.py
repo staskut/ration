@@ -8,22 +8,48 @@ check the frontend depends on.
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 
+from ration.api import ws
 from ration.api.errors import (
     ApiError,
     api_error_handler,
     http_exception_handler,
     validation_exception_handler,
 )
-from ration.api.routers import auth, derived, ingredients, modules, plans, profiles
+from ration.api.routers import (
+    auth,
+    derived,
+    follower,
+    ingredients,
+    modules,
+    plans,
+    profiles,
+)
 from ration.config import settings
 from ration.repositories.database import make_engine, make_session_factory
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Remember the running loop so synchronous handlers can reach it.
+
+    A sync handler runs in a threadpool worker with no loop of its own, so
+    without this every WebSocket broadcast is dropped — silently, and
+    invisibly to any request-level test.
+    """
+    app.state.event_loop = asyncio.get_running_loop()
+    yield
+
+
 def create_app(database_url: str | None = None) -> FastAPI:
     app = FastAPI(
+        lifespan=_lifespan,
         title="Ration API",
         version="0.1.0",
         openapi_url=None,
@@ -34,6 +60,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
     engine = make_engine(database_url or settings().database_url)
     app.state.engine = engine
     app.state.session_factory = make_session_factory(engine)
+    app.state.plan_hub = ws.PlanHub()
 
     app.add_exception_handler(ApiError, api_error_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
@@ -45,6 +72,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
     app.include_router(profiles.router, prefix="/api")
     app.include_router(plans.router, prefix="/api")
     app.include_router(derived.router, prefix="/api")
+    app.include_router(follower.router, prefix="/api")
+    app.include_router(ws.router, prefix="/api")
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:

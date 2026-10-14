@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from typing import Annotated
 
 from fastapi import APIRouter, Query, Response
 from sqlalchemy import select
@@ -167,9 +168,9 @@ def check_yield(factor: object, source: str | None) -> None:
 def list_ingredients(
     session: SessionDep,
     _user: CurrentUserDep,
-    q: str | None = Query(default=None),
-    locale: str = Query(default="ru"),
-    section: str | None = Query(default=None),
+    q: Annotated[str | None, Query()] = None,
+    locale: Annotated[str, Query()] = "ru",
+    section: Annotated[str | None, Query()] = None,
 ) -> list[IngredientResponse]:
     """Search the catalog. Both roles may read it.
 

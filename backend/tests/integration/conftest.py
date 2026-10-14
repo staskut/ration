@@ -241,3 +241,53 @@ def follower(api, engine: Engine):  # type: ignore[no-untyped-def]
         )
         assert response.status_code == 204, response.text
         yield client
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
+@pytest.fixture
+def anonymous(api):  # type: ignore[no-untyped-def]
+    """A client that has never signed in.
+
+    Distinct from `api`, which the `planner` fixture logs in on and returns —
+    so a test depending on both would otherwise get an authenticated client
+    under the name `api` and quietly prove nothing.
+    """
+    from fastapi.testclient import TestClient
+
+    with TestClient(api.app, raise_server_exceptions=False) as client:
+        yield client
+
+
+@pytest.fixture
+def cookies_for(api):  # type: ignore[no-untyped-def]
+    """Drive one client as either role.
+
+    WebSocket tests need this. Each TestClient runs its own event loop and the
+    app records the loop it started on, so two clients mean two loops and a
+    broadcast fired on one never reaches a socket held by the other. Production
+    has a single process and a single loop, so one client switching identity is
+    the faithful arrangement rather than a convenience.
+
+    Identity is set on the client rather than passed per request, because
+    starlette is deprecating per-request cookies.
+    """
+    from ration.seed.command import FOLLOWER_EMAIL, PLANNER_EMAIL
+
+    jars: dict[str, dict[str, str]] = {}
+    for role, email in (("planner", PLANNER_EMAIL), ("follower", FOLLOWER_EMAIL)):
+        response = api.post("/api/auth/login", json={"email": email, "password": SEED_PASSWORD})
+        assert response.status_code == 204, response.text
+        jars[role] = dict(response.cookies)
+    api.cookies.clear()
+
+    class Identity(dict):  # type: ignore[type-arg]
+        def act_as(self, role: str) -> None:
+            api.cookies.clear()
+            api.cookies.update(jars[role])
+
+    identity = Identity(jars)
+    return identity

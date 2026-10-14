@@ -10,10 +10,11 @@ from __future__ import annotations
 from datetime import timedelta
 from decimal import Decimal
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
+from ration.api.broadcast import notify
 from ration.api.deps import CurrentUserDep, OwnedPlanDep, PlannerDep, SessionDep
 from ration.api.errors import ErrorDetail, conflict, not_found, unprocessable
 from ration.api.schemas.plans import (
@@ -268,6 +269,7 @@ def update_day(
     body: PlanDayPut,
     session: SessionDep,
     _planner: PlannerDep,
+    request: Request = None,  # type: ignore[assignment]
 ) -> PlanDayWithValidation:
     row = _day(session, plan, day_index)
     if body.day_template is not None:
@@ -276,6 +278,7 @@ def update_day(
         row.notes = body.notes
     session.flush()
 
+    notify(request, plan.id, ["days", "validation"])
     catalog = CatalogRepository(session).load()
     slugs = {i: s for s, i in CatalogRepository(session).module_ids_by_slug().items()}
     return PlanDayWithValidation(
@@ -393,6 +396,7 @@ def create_entry(
     body: PlanEntryCreate,
     session: SessionDep,
     _planner: PlannerDep,
+    request: Request = None,  # type: ignore[assignment]
 ) -> PlanEntryWithValidation:
     day = _day(session, plan, day_index)
     _check_portion(body.portion_factor)
@@ -411,6 +415,7 @@ def create_entry(
     )
     session.add(row)
     session.flush()
+    notify(request, plan.id, ["entries", "validation", "shopping_list"])
     return _entry_with_validation(row, plan.id, session)
 
 
@@ -421,6 +426,7 @@ def update_entry(
     body: PlanEntryPatch,
     session: SessionDep,
     _planner: PlannerDep,
+    request: Request = None,  # type: ignore[assignment]
 ) -> PlanEntryWithValidation:
     row = _entry(session, plan, entry_id)
     _check_portion(body.portion_factor)
@@ -438,14 +444,20 @@ def update_entry(
         row.position = body.position
 
     session.flush()
+    notify(request, plan.id, ["entries", "validation", "shopping_list"])
     return _entry_with_validation(row, plan.id, session)
 
 
 @router.delete("/plans/{plan_id}/entries/{entry_id}", operation_id="deletePlanEntry")
 def delete_entry(
-    plan: OwnedPlanDep, entry_id: str, session: SessionDep, _planner: PlannerDep
+    plan: OwnedPlanDep,
+    entry_id: str,
+    session: SessionDep,
+    _planner: PlannerDep,
+    request: Request = None,  # type: ignore[assignment]
 ) -> ValidationReport:
     row = _entry(session, plan, entry_id)
     session.delete(row)
     session.flush()
+    notify(request, plan.id, ["entries", "validation", "shopping_list"])
     return _report(session, plan.id)

@@ -26,6 +26,8 @@ dev = [
     "types-pyyaml>=6.0",
     "openapi-spec-validator>=0.9.0",
     "httpx>=0.28",
+    "anyio>=4.15.1",
+    "pytest-timeout>=2.4.0",
 ]
 
 [build-system]

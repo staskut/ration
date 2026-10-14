@@ -7,8 +7,9 @@ out and this reads it.
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
+from ration.api.broadcast import notify
 from ration.api.deps import CurrentUserDep, OwnedPlanDep, SessionDep
 from ration.api.errors import not_found
 from ration.api.routers.plans import _report
@@ -73,6 +74,7 @@ def set_checked(
     body: CheckedPatch,
     session: SessionDep,
     user: CurrentUserDep,
+    request: Request = None,  # type: ignore[assignment]
 ) -> ShoppingLineIO:
     """Both roles may write this — the follower is the one in the shop.
 
@@ -93,6 +95,7 @@ def set_checked(
     state.checked = body.checked
     session.flush()
 
+    notify(request, plan.id, ["shopping_list"])
     line.checked = body.checked
     return line
 

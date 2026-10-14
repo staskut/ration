@@ -8,6 +8,7 @@ module that uses it, with no migration and no recomputation pass.
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Annotated
 
 from fastapi import APIRouter, Query, Response
 from sqlalchemy import select
@@ -140,9 +141,9 @@ def _replace(owner: object, attribute: str, items: list, session: SessionDep) ->
 def list_modules(
     session: SessionDep,
     _user: CurrentUserDep,
-    slot: str | None = Query(default=None),
-    role: str | None = Query(default=None),
-    tag: str | None = Query(default=None),
+    slot: Annotated[str | None, Query()] = None,
+    role: Annotated[str | None, Query()] = None,
+    tag: Annotated[str | None, Query()] = None,
 ) -> list[ModuleResponse]:
     statement = (
         select(models.Module)
