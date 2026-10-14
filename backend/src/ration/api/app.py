@@ -17,7 +17,7 @@ from ration.api.errors import (
     http_exception_handler,
     validation_exception_handler,
 )
-from ration.api.routers import auth, ingredients, modules, plans, profiles
+from ration.api.routers import auth, derived, ingredients, modules, plans, profiles
 from ration.config import settings
 from ration.repositories.database import make_engine, make_session_factory
 
@@ -44,6 +44,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
     app.include_router(modules.router, prefix="/api")
     app.include_router(profiles.router, prefix="/api")
     app.include_router(plans.router, prefix="/api")
+    app.include_router(derived.router, prefix="/api")
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:
