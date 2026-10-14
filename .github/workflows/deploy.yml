@@ -1,0 +1,101 @@
+name: Deploy
+
+# The gate is the point of this file.
+#
+# `workflow_run` fires when CI *finishes*, success or failure, so the
+# conclusion check below is not decoration — without it this workflow would
+# deploy a red build. CI is the one that runs lint, typecheck, the unit and
+# integration suites, the Postgres run, the image build, the end-to-end suite
+# and the client-drift gate; this workflow re-runs none of it and trusts none
+# of it unless it passed.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Which app to deploy
+        type: choice
+        options: [staging, production]
+        default: staging
+
+concurrency:
+  # Never two deploys to the same app at once. Not cancel-in-progress: a
+  # half-finished deploy that gets cancelled is the one state worse than a
+  # slow queue.
+  group: deploy-${{ github.event.inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+    runs-on: ubuntu-latest
+
+    # A push to main deploys production only if CI passed. A manual run
+    # deploys whatever it was asked to, which is how staging is reached.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    env:
+      APP: ${{ github.event.inputs.environment == 'staging' && 'ration-staging' || 'ration' }}
+      URL: ${{ github.event.inputs.environment == 'staging' && 'https://ration-staging.fly.dev' || 'https://ration.fly.dev' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run checks out the default branch by default, not the
+          # commit CI actually tested. Deploying a different tree than the one
+          # that went green is exactly the failure this gate exists to prevent.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      # Until the Fly apps exist there is no token, and every push to main
+      # would otherwise show a red Deploy for a reason that is not a defect.
+      # Skipping loudly is honest; failing is noise, and succeeding without
+      # deploying would be a lie. See #50.
+      - name: Check for deploy credentials
+        id: creds
+        run: |
+          if [ -n "${{ secrets.FLY_API_TOKEN }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Not deployed::FLY_API_TOKEN is not set. \
+          CI passed and this commit is deployable, but no target is configured."
+          fi
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: steps.creds.outputs.configured == 'true'
+
+      # Builds the image, runs `alembic upgrade head` as the release command,
+      # then rolls machines one at a time behind the healthcheck in fly.toml.
+      - name: Deploy
+        if: steps.creds.outputs.configured == 'true'
+        run: flyctl deploy --app "$APP" --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # Separate from the deploy so a smoke failure is its own red step with
+      # its own name, rather than a line buried in deploy output.
+      - name: Smoke test
+        if: steps.creds.outputs.configured == 'true'
+        run: scripts/smoke-test.sh "$URL"
+
+      - name: Report
+        if: always()
+        run: |
+          if [ "${{ steps.creds.outputs.configured }}" != "true" ]; then
+            echo "### Not deployed" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "CI passed. No \`FLY_API_TOKEN\` is configured, so there is no target yet (#50)." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ job.status }}" = "success" ]; then
+            echo "### Deployed to \`$APP\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "<$URL> — smoke test passed." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Deploy to \`$APP\` failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "The previous release is still serving. See \`docs/release-process.md\`." >> "$GITHUB_STEP_SUMMARY"
+          fi

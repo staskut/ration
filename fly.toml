@@ -1,0 +1,42 @@
+# Staging and production are the same file with a different app name and a
+# different database, deployed with `--app`. One definition, so the two cannot
+# drift into being different systems.
+
+app = "ration"
+primary_region = "arn"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  # Migrations run as a release command: before new instances take traffic,
+  # and once rather than per-instance. A migration in the start command races
+  # itself the moment there is more than one machine.
+  release_command = "alembic upgrade head"
+  strategy = "rolling"
+
+[env]
+  # RATION_STATIC_DIR is already set in the image. Only what differs from the
+  # image's own defaults belongs here; RATION_DATABASE_URL and
+  # RATION_SESSION_SECRET are secrets and are never in this file.
+  RATION_ENV = "production"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    # A failing release does not replace a working one: Fly holds the rollout
+    # until the new machine passes.
+    grace_period = "10s"
+    interval = "15s"
+    method = "GET"
+    path = "/health"
+    timeout = "3s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
