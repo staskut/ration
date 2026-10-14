@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  /* The follower uses this one-handed, often in a shop. 44px is the smallest
+     reliably tappable target, so it is a token rather than a magic number. */
+  --spacing-tap: 44px;
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
