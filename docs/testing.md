@@ -5,7 +5,7 @@ Three layers, each answering a question the others cannot.
 | | Where | What it proves | Database | Runtime |
 |---|---|---|---|---|
 | **Unit** | `backend/tests/unit/` | the arithmetic and the rules are right | none | ~3 s |
-| **Integration** | `backend/tests/integration/` | the API behaves as the contract says | real | ~50 s |
+| **Integration** | `backend/tests/integration/` | the API behaves as the contract says | real | ~80 s |
 | **Frontend unit** | `frontend/tests/` | the client's own logic | none | ~2 s |
 | **End-to-end** | `e2e/` | two people, two browsers, one stack | compose | ~20 s |
 
@@ -122,6 +122,19 @@ testing in general.
   invalidation map used — and only the end-to-end suite could see it. The unit
   test had checked the map was *complete* against the server's enum, which it
   was; it had not checked each mapping was *sufficient*.
+- **Every broadcast was sent before its own commit.** `notify()` fired inside
+  the handler; `get_session` commits in its teardown, which runs after the
+  handler returns. The other client was told "something changed" while the
+  writing transaction was still open, refetched about 40 ms later, read the
+  pre-write database, and rendered stale data — permanently, because nothing
+  would tell it again. 594 backend tests passed throughout. *Only two real
+  clients against a real database can see an ordering bug between a message
+  and a commit.*
+- **Navigating days tore down the follower's socket.** `useToday` keys by
+  date, so `data` went undefined on each tap and the subscription, which uses
+  `data.plan_id`, was rebuilt every time. Combined with the above it made the
+  end-to-end collaboration test fail about half the time — which is the shape
+  a flaky test usually has: a real race, not a slow selector.
 - **A duplicate ingredient alias escaped as a 500.** Found by a QA pass, not by
   the 42 tests written alongside the feature: every one of them used distinct
   aliases, so the collision never occurred.

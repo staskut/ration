@@ -167,6 +167,41 @@ socket and watched for a message.
 
 The tests covered the endpoints thoroughly and the feature not at all.
 
+### Verifying the README found two real bugs
+
+The last acceptance criterion on #52 says the setup instructions must be
+**verified by following them on a clean clone, not by reading them**. Doing
+that found three things, and only the first was a documentation error.
+
+**The documented one-command path did not work.** `.env` is gitignored and
+compose declares `RATION_SESSION_SECRET` with `:?`, so `docker compose up` on
+a fresh clone failed outright. The README had been written from knowledge of
+a working tree.
+
+**Then the end-to-end suite failed, passed, and failed again.** Chasing that
+rather than re-running it found a genuine ordering bug: `notify()` broadcast
+from inside the request handler, but the commit happens in the session
+dependency's teardown, *after* the handler returns. The other client was told
+"something changed" while the writing transaction was still open, refetched
+within about 40 ms, read the database as it was before the write, and showed
+stale data — permanently, since nothing would tell it again.
+
+594 backend tests passed throughout, including one asserting that an entry
+change reaches a subscriber. It does. It just arrives too early, and nothing
+in a single-process test can tell the difference.
+
+**A second half underneath it:** the follower's socket was torn down on every
+day navigation, because `useToday` keys by date and the subscription uses
+`data.plan_id`, which goes undefined while the next day loads. A change
+broadcast during that gap was missed, and the socket only caught up on a
+*reconnect*, never on a first open.
+
+The generalisable part is about flakes. A test that fails half the time is
+usually treated as a test problem — add a wait, add a retry. This one was
+reporting a real race, and the instinct to stabilise it would have deleted
+the only evidence. Both fixes have regression tests, and both tests were
+confirmed red against the old behaviour before being kept.
+
 ### Other bugs the tests caught, and what each argues for
 
 - **Seeding was not idempotent.** SQLAlchemy emits INSERTs before orphan
@@ -217,6 +252,12 @@ the signal it is given, and a test suite is a signal.** Fitted nutrition
 values, a drift gate that could not drift, a `suppress` hiding a dead
 feature, criteria invented in the register of researched ones — these are all
 the same thing. Each produced a green check. None produced a working system.
+
+And the newest entry in that list is the sharpest: a check can be *present,
+passing, and asking the wrong question*. `test_an_entry_change_reaches_a_subscriber`
+is a good test. It proves the message is delivered. It cannot prove the
+message is delivered at a useful moment, and for a year of plausible green
+runs it would have reported a working feature.
 
 What worked against it was not more review. It was:
 
