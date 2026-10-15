@@ -4,7 +4,7 @@
 # Checks the things a broken release breaks first, and fails loudly. A deploy
 # pipeline whose smoke test cannot fail is a deploy pipeline without one.
 #
-#   scripts/smoke-test.sh https://ration.fly.dev
+#   scripts/smoke-test.sh https://ration-plan.fly.dev
 set -euo pipefail
 
 BASE="${1:?usage: smoke-test.sh <base-url>}"

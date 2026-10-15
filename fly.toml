@@ -2,7 +2,7 @@
 # different database, deployed with `--app`. One definition, so the two cannot
 # drift into being different systems.
 
-app = "ration"
+app = "ration-plan"
 primary_region = "arn"
 
 [build]
@@ -39,7 +39,7 @@ primary_region = "arn"
   # apply to *both* apps, since they share this file — and staging running
   # 24/7 to serve nobody is the easiest money this project could waste. To
   # keep production warm, scale that one app rather than editing this:
-  #   fly scale count 1 --app ration
+  #   fly scale count 1 --app ration-plan
   min_machines_running = 0
 
   [[http_service.checks]]

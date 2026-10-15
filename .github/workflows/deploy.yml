@@ -40,8 +40,8 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
 
     env:
-      APP: ${{ github.event.inputs.environment == 'staging' && 'ration-staging' || 'ration' }}
-      URL: ${{ github.event.inputs.environment == 'staging' && 'https://ration-staging.fly.dev' || 'https://ration.fly.dev' }}
+      APP: ${{ github.event.inputs.environment == 'staging' && 'ration-plan-staging' || 'ration-plan' }}
+      URL: ${{ github.event.inputs.environment == 'staging' && 'https://ration-plan-staging.fly.dev' || 'https://ration-plan.fly.dev' }}
 
     steps:
       - uses: actions/checkout@v4

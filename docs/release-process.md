@@ -20,7 +20,7 @@ From a commit to production, and back again.
   └─────────────────────────────────────────────┘
        │
        ▼
-  https://ration.fly.dev
+  https://ration-plan.fly.dev
 ```
 
 ## The gate
@@ -114,9 +114,9 @@ It fails the run, loudly, with a non-zero exit and a per-check `FAIL` line.
 ## Rolling back
 
 ```bash
-fly releases --app ration
-fly deploy --app ration --image <image-ref>
-scripts/smoke-test.sh https://ration.fly.dev
+fly releases --app ration-plan
+fly deploy --app ration-plan --image <image-ref>
+scripts/smoke-test.sh https://ration-plan.fly.dev
 ```
 
 **Check the migration before you assume you are done.** Redeploying the old

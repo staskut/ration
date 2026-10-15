@@ -5,8 +5,8 @@ Postgres database.
 
 | | Staging | Production |
 |---|---|---|
-| App | `ration-staging` | `ration` |
-| URL | `https://ration-staging.fly.dev` | `https://ration.fly.dev` |
+| App | `ration-plan-staging` | `ration-plan` |
+| URL | `https://ration-plan-staging.fly.dev` | `https://ration-plan.fly.dev` |
 | `RATION_ENV` | `staging` | `production` |
 | Database | its own Neon branch | its own Neon project, **empty** |
 | Reference plan | seeded | refused |
@@ -47,8 +47,8 @@ believes are open.
 
 ```bash
 fly auth login
-fly apps create ration
-fly apps create ration-staging
+fly apps create ration-plan
+fly apps create ration-plan-staging
 ```
 
 `fly launch` is not used: it rewrites `fly.toml` from its own guesses about the
@@ -60,14 +60,14 @@ Never in `fly.toml`, never in the repository, never in a workflow file.
 
 ```bash
 # Production
-fly secrets set --app ration \
+fly secrets set --app ration-plan \
   RATION_DATABASE_URL="postgresql+psycopg://...neon.tech/ration?sslmode=require" \
   RATION_SESSION_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
 
 # Staging
-fly secrets set --app ration-staging \
+fly secrets set --app ration-plan-staging \
   RATION_ENV=staging \
-  RATION_DATABASE_URL="postgresql+psycopg://...neon.tech/ration-staging?sslmode=require" \
+  RATION_DATABASE_URL="postgresql+psycopg://...neon.tech/ration_staging?sslmode=require" \
   RATION_SESSION_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
 ```
 
@@ -85,8 +85,8 @@ The database URL needs the `postgresql+psycopg://` scheme. Neon hands out
 ### 4. Deploy
 
 ```bash
-fly deploy --app ration-staging
-fly deploy --app ration
+fly deploy --app ration-plan-staging
+fly deploy --app ration-plan
 ```
 
 ## What a deploy does
@@ -117,14 +117,14 @@ plan through the UI.
 Fly keeps every released image.
 
 ```bash
-fly releases --app ration              # find the last good version
-fly deploy --app ration --image <image-ref-from-that-release>
+fly releases --app ration-plan              # find the last good version
+fly deploy --app ration-plan --image <image-ref-from-that-release>
 ```
 
 Verify, always against the real URL rather than the dashboard:
 
 ```bash
-scripts/smoke-test.sh https://ration.fly.dev
+scripts/smoke-test.sh https://ration-plan.fly.dev
 ```
 
 ### Rolling back a migration
@@ -136,8 +136,8 @@ An old image against a new schema is only safe when the migration was additive.
 If it was not, downgrade first, then deploy:
 
 ```bash
-fly ssh console --app ration -C "alembic downgrade -1"
-fly deploy --app ration --image <previous>
+fly ssh console --app ration-plan -C "alembic downgrade -1"
+fly deploy --app ration-plan --image <previous>
 ```
 
 Every migration in this repository has a tested `downgrade`; CI runs the full
@@ -172,7 +172,7 @@ If you want production warm, scale that one app — do not set
 `min_machines_running` in this file, because both apps read it:
 
 ```bash
-fly scale count 1 --app ration     # ~$3.69/mo more, staging unaffected
+fly scale count 1 --app ration-plan     # ~$3.69/mo more, staging unaffected
 ```
 
 Stockholm (`arn`) is not one of the cheapest regions; Fly's own figures put
