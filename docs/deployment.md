@@ -194,6 +194,16 @@ branch of the same project, also free.
 
 ## Status
 
-Not yet deployed. `fly.toml`, the smoke test and this document are in place;
-creating the apps and the databases needs an account, and is the one step in
-this repository that costs money. See #50.
+**Deployed**, 2026-10-15.
+
+| | |
+|---|---|
+| Production | <https://ration-plan.fly.dev> — empty, never seeded |
+| Staging | <https://ration-plan-staging.fly.dev> — carries the reference plan |
+
+`ration` was taken globally on Fly by someone else, hence `ration-plan`.
+
+Both run one `shared-cpu-1x` 512 MB machine. Fly creates two per app by
+default for high availability; both were scaled to one, since two users do
+not need it and it doubles compute. Rerun `fly scale count 1` if a future
+deploy reintroduces the second.

@@ -51,22 +51,40 @@ Four of the design decisions behind those are load-bearing and non-obvious:
   This one cost a day to get right and is the most important thing in the
   repository — see [below](#what-went-wrong).
 
+## Try it
+
+**<https://ration-plan-staging.fly.dev>** — the demo, carrying the
+de-identified reference plan.
+
+| Role | Email | Password | Sees |
+|---|---|---|---|
+| Planner | `planner@ration.example` | `correct-horse-battery` | plan board, module library, validation, shopping list |
+| Follower | `follower@ration.example` | `correct-horse-battery` | today, and a tap to rate |
+
+Open the two in separate browser profiles to watch a planner's edit land on
+the follower's screen over the WebSocket.
+
+The planner's board expects a desktop viewport; the follower's screens are
+designed for a phone and tested at 375px.
+
+Production is at **<https://ration-plan.fly.dev>** and is **deliberately
+empty** — it holds one real person's dietary information, so the demo
+credentials do not work there and the reference plan is never seeded into
+it. The release command runs migrations on both and the seed only outside
+production.
+
+Both machines suspend when idle, so the first request after a quiet spell
+takes about a second.
+
 ## Status
 
 | | |
 |---|---|
-| Backend, frontend, database, containerisation, CI | done, 50 of 54 issues closed |
-| Deployed | **not yet** — see [#50](https://github.com/staskut/ration/issues/50) |
-| Public URL | none; `docker compose up` is the way to run it today |
+| Backend, frontend, database, containerisation, CI/CD | done |
+| Deployed | staging and production, on Fly.io with Neon Postgres |
+| Issues | 50 of 54 closed; the rest are [#54](https://github.com/staskut/ration/issues/54) (needs a kitchen scale) and the three deployment ones now being verified |
 
-Deployment is the one task that needs an account and a payment method, so it
-waits on the repository's owner. Everything it requires is written and
-committed: [`fly.toml`](fly.toml),
-[`scripts/smoke-test.sh`](scripts/smoke-test.sh),
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) and the two
-runbooks. Deploying is `fly apps create`, three secrets, `fly deploy`.
-
-## Run it
+## Run it yourself
 
 ### Docker
 

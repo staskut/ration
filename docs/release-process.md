@@ -137,6 +137,21 @@ Roll back first, diagnose afterwards. The commit is still there.
 
 ## Status
 
-The workflow exists and its gate is live. Deploy steps are skipped with a
-visible warning until `FLY_API_TOKEN` is set, so a push to `main` does not
-report a false green or a false red. See #50.
+Live, 2026-10-15. `FLY_API_TOKEN` is set as a repository secret, scoped to
+deploy rather than to the account.
+
+### Rollback, exercised
+
+On staging, 2026-10-15. `fly deploy --image` with v1's ref, which bluegreen
+deployed as v3; the smoke test passed against it, and a normal deploy rolled
+forward again.
+
+One thing that exercise surfaced and a reader should know: **the release
+command came from the local `fly.toml`, not from the rolled-back image.**
+Config and code roll back independently. So a rollback undoes application
+code and leaves `fly.toml` — release command, health check, VM size — exactly
+as it is on disk. If the thing you are rolling back *is* a config change,
+revert the file and deploy; `--image` alone will not do it.
+
+That sits alongside the migration caveat above, and has the same shape: the
+image is not the whole release.
