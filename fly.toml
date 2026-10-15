@@ -12,7 +12,17 @@ primary_region = "arn"
   # Migrations run as a release command: before new instances take traffic,
   # and once rather than per-instance. A migration in the start command races
   # itself the moment there is more than one machine.
-  release_command = "alembic upgrade head"
+  # Migrations always; the demo plan only outside production.
+  #
+  # Two layers, because the failure mode is writing demo data into one real
+  # person's dietary record. The shell guard below is the first; `ration-seed`
+  # itself raises ProductionSeedRefused when RATION_ENV=production, which is
+  # the second. The guard is still needed: that refusal exits 1, so an
+  # unguarded seed here would fail every production deploy.
+  #
+  # Seeding is idempotent, so running it on each staging deploy keeps staging
+  # a clean demo rather than accumulating drift.
+  release_command = "sh -c 'alembic upgrade head && if [ \"$RATION_ENV\" != production ]; then ration-seed; fi'"
   # bluegreen, not rolling. With a single Machine, rolling updates it *in
   # place*: a release that then fails its health check has already replaced
   # the one that worked. bluegreen boots the new Machine alongside the old,
