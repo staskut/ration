@@ -144,6 +144,12 @@ test.describe("the follower on a phone @mobile", () => {
 
   test("every tap target is at least 44px", async ({ follower }) => {
     await follower.goto("/");
+    // Wait for content, as the sibling test above does. Counting buttons
+    // straight after goto() passes on localhost and fails against a
+    // deployment, where a suspended machine takes about a second to resume:
+    // the screen is still "Загрузка…", there are zero buttons, and the
+    // failure reads as a UI defect rather than a missing wait.
+    await expect(follower.getByRole("heading", { name: "Сегодня" })).toBeVisible();
     const buttons = follower.getByRole("button");
     const count = await buttons.count();
     expect(count).toBeGreaterThan(0);
