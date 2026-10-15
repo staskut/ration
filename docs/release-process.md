@@ -81,13 +81,26 @@ visible in the Actions log with the name of whoever pressed it.
 in `fly.toml`, and never echoed — GitHub masks it in logs, which is a backstop
 rather than the plan.
 
+**One token per app**, each scoped to the app it deploys:
+
 ```bash
-fly tokens create deploy --name github-actions --expiry 8760h
+fly tokens create deploy --app ration-plan --name github-actions --expiry 8760h
 gh secret set FLY_API_TOKEN
+
+fly tokens create deploy --app ration-plan-staging --name github-actions-staging --expiry 8760h
+gh secret set FLY_API_TOKEN_STAGING
 ```
 
-Scope it to deploy, not to the whole account. If it leaks, `fly tokens revoke`
-and set a new one; nothing else needs to change.
+An org-wide token would be one secret instead of two and would let a leak
+from either environment reach the other. These cannot: the staging token is
+unauthorized for production and vice versa.
+
+That is not theoretical here — the first staging deploy through the pipeline
+failed with `unauthorized`, because `fly tokens create deploy` run in this
+directory scopes itself to the app in `fly.toml`. The fix was a second token,
+not a broader one.
+
+If one leaks, `fly tokens revoke` and set a new one; nothing else changes.
 
 ## The smoke test
 

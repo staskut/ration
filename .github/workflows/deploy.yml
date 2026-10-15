@@ -42,6 +42,14 @@ jobs:
     env:
       APP: ${{ github.event.inputs.environment == 'staging' && 'ration-plan-staging' || 'ration-plan' }}
       URL: ${{ github.event.inputs.environment == 'staging' && 'https://ration-plan-staging.fly.dev' || 'https://ration-plan.fly.dev' }}
+      # One token per app, not one for the organisation. Each is scoped to
+      # the app it deploys, so a leaked staging token cannot touch
+      # production — which an org-wide token would not give us.
+      #
+      # If the staging secret were missing this falls through to the
+      # production token, which is then unauthorized for the staging app and
+      # fails the deploy. Wrong-but-safe: it cannot deploy the wrong app.
+      FLY_API_TOKEN: ${{ github.event.inputs.environment == 'staging' && secrets.FLY_API_TOKEN_STAGING || secrets.FLY_API_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +72,7 @@ jobs:
           # image to production, silently and successfully.
           echo "Target: app=$APP url=$URL" >> "$GITHUB_STEP_SUMMARY"
           echo "Target: app=$APP url=$URL"
-          if [ -n "${{ secrets.FLY_API_TOKEN }}" ]; then
+          if [ -n "$FLY_API_TOKEN" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -80,8 +88,6 @@ jobs:
       - name: Deploy
         if: steps.creds.outputs.configured == 'true'
         run: flyctl deploy --app "$APP" --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
       # Separate from the deploy so a smoke failure is its own red step with
       # its own name, rather than a line buried in deploy output.
