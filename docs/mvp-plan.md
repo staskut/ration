@@ -10,8 +10,9 @@
 follower opens Today instead of the document.** That is PRD §9's adoption test, and it is the only
 definition that matters — a feature that doesn't move it is not in the MVP.
 
-Concretely, the MVP covers PRD stories **S1–S9a**. Substitution (S10), prep plan (S11), and module
-import (S12) are deliberately out, for reasons in §5.
+Concretely, the MVP covers PRD stories **S1–S9a**, and the prep plan (S11), which was built
+during the MVP rather than after it. Substitution (S10) and module import (S12) are deliberately
+out, for reasons in §5.
 
 ## 2. Sequencing principle
 
@@ -167,7 +168,6 @@ backend and the generated client wait on it).
 | Deferred | Why |
 |---|---|
 | Substitution (S10) | Valuable, but needs a populated library and real preference data to rank against. Nine of fourteen modules were untried in the pilot — ranking is premature until that number drops. |
-| Prep plan (S11) | The reference's two cook sessions are stable week to week; hand-copying them costs minutes. Low value until the module library grows. |
 | Module import (S12) | The library is ~14 modules. Typing them is faster than building an extractor. Revisit at ~40. |
 | Nutrition beyond kcal and protein | PRD §7. A schema addition later, not a redesign. |
 | Multi-profile | PRD §2. One pairing. |
@@ -175,6 +175,13 @@ backend and the generated client wait on it).
 
 Each is a story in the PRD with acceptance criteria already written, so none needs re-specifying
 when its turn comes.
+
+**The prep plan (S11) was on this list and is no longer.** It was built — engine, endpoint and
+golden test — while the list still said it was deferred, and so nobody noticed it had no screen:
+the document said the feature was absent, which is indistinguishable from a feature that is
+present and unreachable. It shipped a screen in #55. The lesson is about the list rather than
+about the feature: a deferred item that gets built must leave this table the same day, or the
+table starts hiding work instead of describing it.
 
 ## 6. Risks
 

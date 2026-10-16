@@ -34,6 +34,24 @@ describe("websocket invalidation map", () => {
     expect(Object.keys(INVALIDATES).sort()).toEqual([...serverSends].sort());
   });
 
+  it("reaches the prep plan when an entry changes", () => {
+    // The prep plan is derived from the entries, so adding or removing one
+    // changes it. Its key sits under ["plan", id], so the existing entries
+    // mapping already covers it — asserted rather than assumed, because the
+    // screen would otherwise show yesterday's cook sessions with no clue
+    // that it was stale.
+    const prefixes = INVALIDATES.entries("p");
+    const covers = (key: readonly unknown[]) =>
+      prefixes.some((prefix) => prefix.every((part, index) => key[index] === part));
+
+    expect(covers(keys.prepPlan("p"))).toBe(true);
+    // Negative control, so a `covers` that returned true for anything would
+    // be caught here rather than silently passing the assertion above.
+    expect(covers(keys.ingredients())).toBe(false);
+    // And the prefix must be the *right* plan.
+    expect(covers(keys.prepPlan("other"))).toBe(false);
+  });
+
   it("maps a shopping change to the shopping list and nothing else", () => {
     expect(INVALIDATES.shopping_list("p")).toEqual([["plan", "p", "shopping-list"]]);
   });

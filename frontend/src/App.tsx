@@ -12,6 +12,7 @@ import { Today } from "./features/follower/Today";
 import { Catalog } from "./features/planner/Catalog";
 import { ModuleEditor } from "./features/planner/ModuleEditor";
 import { PlanBuilder } from "./features/planner/PlanBuilder";
+import { PrepPlan } from "./features/planner/PrepPlan";
 import { Loading } from "./components/Status";
 import { useLogin, usePlans } from "./lib/queries";
 import { useSession } from "./lib/session";
@@ -102,7 +103,7 @@ function FollowerApp() {
 }
 
 function PlannerApp() {
-  const [view, setView] = useState<"plan" | "modules" | "catalog">("plan");
+  const [view, setView] = useState<"plan" | "prep" | "modules" | "catalog">("plan");
   const { data: plans } = usePlans();
   const active = plans?.find((plan) => plan.status === "active") ?? plans?.[0];
   const { t } = useSession();
@@ -116,6 +117,13 @@ function PlannerApp() {
           className={view === "plan" ? "font-semibold" : "text-slate-500"}
         >
           План
+        </button>
+        <button
+          type="button"
+          onClick={() => setView("prep")}
+          className={view === "prep" ? "font-semibold" : "text-slate-500"}
+        >
+          Заготовки
         </button>
         <button
           type="button"
@@ -136,10 +144,12 @@ function PlannerApp() {
         <Catalog />
       ) : view === "modules" ? (
         <ModuleEditor />
-      ) : active ? (
-        <PlanBuilder planId={active.id} />
-      ) : (
+      ) : !active ? (
         <Loading t={t} />
+      ) : view === "prep" ? (
+        <PrepPlan planId={active.id} />
+      ) : (
+        <PlanBuilder planId={active.id} />
       )}
     </>
   );

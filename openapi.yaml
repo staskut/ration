@@ -1119,11 +1119,16 @@ components:
 
     CookSessionItem:
       type: object
-      required: [ingredient_id, name, grams_raw]
+      required: [ingredient_id, name, grams_raw, grams_cooked_per_portion]
       properties:
         ingredient_id: {type: string}
         name: {type: string}
+        # Two different numbers, deliberately both present. grams_raw is what
+        # to buy for the whole session; grams_cooked_per_portion is what to
+        # weigh into each container. A yield factor separates them, so they
+        # must never be shown as one figure.
         grams_raw: {$ref: "#/components/schemas/Decimal"}
+        grams_cooked_per_portion: {$ref: "#/components/schemas/Decimal"}
 
     CookSession:
       type: object

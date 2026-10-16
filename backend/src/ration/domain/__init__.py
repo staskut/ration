@@ -1,4 +1,4 @@
-"""Pure business logic: nutrition totals, validation, shopping list, substitution.
+"""Pure business logic: nutrition totals, validation, shopping list, prep plan.
 
 Everything here is a function from frozen dataclasses to frozen dataclasses. No
 I/O, no database, no HTTP, no framework imports — see docs/hld.md AD-1. The

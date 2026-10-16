@@ -156,8 +156,8 @@ make lint                       # ruff, import contract, oxlint, tsc, client dri
 |---|---|---|
 | Backend unit | 317 | the arithmetic and the rules |
 | Backend integration | 279 | the API matches the contract |
-| Frontend unit | 90 | the client's own logic |
-| End-to-end | 6 | two people, two browsers, one stack |
+| Frontend unit | 100 | the client's own logic |
+| End-to-end | 8 | two people, two browsers, one stack |
 
 Three of the unit tests are **golden**: their expected values were written by
 a person, in the reference plan document, before the code existed. The oracle

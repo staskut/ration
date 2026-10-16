@@ -60,7 +60,7 @@ backend/src/ration/      api/  →  repositories/  →  database
 ### Two boundaries that are enforced, not suggested
 
 **`domain/` is pure** (HLD AD-1). It may not import `fastapi`, `sqlalchemy`, `api`, or
-`repositories`. All arithmetic — totals, validation, shopping list, prep plan, substitution —
+`repositories`. All arithmetic — totals, validation, shopping list, prep plan —
 lives there, as functions from frozen dataclasses to frozen dataclasses. Handlers and
 repositories contain no business rules. CI enforces this with an import-linter contract.
 

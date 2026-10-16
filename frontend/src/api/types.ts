@@ -752,6 +752,7 @@ export interface components {
             ingredient_id: string;
             name: string;
             grams_raw: components["schemas"]["Decimal"];
+            grams_cooked_per_portion: components["schemas"]["Decimal"];
         };
         CookSession: {
             module_id: string;
