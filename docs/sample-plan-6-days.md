@@ -1,859 +1,859 @@
-# Рацион питания: требования, модульная система и пилот на 6 дней
+# Ration: requirements, the module system, and a 6-day pilot
 
 > [!NOTE]
-> Это демонстрационный документ с вымышленным профилем. Он используется как исходные данные
-> и тестовая фикстура для приложения. Любое сходство с реальными людьми случайно.
-
-## Статус документа
-
-Это рабочая версия для обсуждения. Она включает все собранные требования, предпочтения, ограничения, предложенную систему модулей, пилотный рацион на шесть дней и список покупок.
-
-Калорийность и пищевая ценность блюд указаны ориентировочно. Точные значения зависят от конкретных марок молока, йогурта, протеина, лепешек, соленой рыбы и других продуктов. После выбора конкретных продуктов значения нужно уточнить по этикеткам.
-
-## 1. Исходные данные
-
-- Мужчина, 40 лет.
-- Рост: 178 см.
-- Фактический вес неизвестен.
-- Для расчета белка используется условный вес 75 кг. Это не оценка фактического веса.
-- Человек здоров.
-- Аллергий нет.
-- Цель: снижение веса.
-- Калорийность: около 1700 ккал в день. Она определена по калькулятору с учетом роста и веса.
-- Ориентир по белку: около 105–120 г в день. Рабочая цель — примерно 110 г.
-- Работа: инженер дежурной смены в дата-центре.
-- Средняя активность: около 8000 шагов в день.
-- Силовые тренировки: понедельник и четверг, с 21:00 до 22:00.
-- Обычная смена: с 7:00 до 15:00.
-- Иногда бывают смены до 20:00–21:00.
-- Два раза в месяц бывают суточные дежурства с утра до утра.
-- Поздние рабочие смены и тренировки приходятся на разные дни.
-- Первый прием пищи: с 5:00 до 7:00.
-- Обычное время последнего приема пищи: около 18:00.
-- В дни длинных смен ужин переносится примерно на 21:00.
-- Режим питания: три основных приема пищи и один перекус.
-- После вечерней тренировки предпочтителен очень легкий прием пищи или отсутствие еды.
-
-## 2. Бытовые условия
-
-- Завтрак и обед нужно брать на работу.
-- На работе есть холодильник и микроволновая печь.
-- Рыбные блюда лучше есть дома, а не разогревать на работе.
-- Удобно готовить сразу на два-три дня.
-- Замораживать готовые порции не планируется.
-- Замороженная рыба и морепродукты подходят.
-- Есть духовка, блендер и газовая плита.
-- Вес порций нужно указывать в готовом виде. Это позволит собирать контейнеры на весах.
-- Для списка покупок дополнительно указывается примерный сырой вес продуктов.
-- Бюджет и конкретные магазины на первом этапе не учитываются.
-- Религиозных ограничений в питании нет.
-
-## 3. Основные предпочтения
-
-### Белковые продукты
-
-Допустимы:
-
-- белая рыба;
-- соленая красная рыба;
-- сельдь;
-- креветки;
-- кальмары;
-- индейка;
-- курица, кроме куриной грудки;
-- говядина;
-- баранина;
-- свинина;
-- куриная и говяжья печень;
-- яйца;
-- творог и обычный натуральный йогурт;
-- тофу и бобовые, если они хорошо переносятся;
-- сывороточный протеин.
+> This is a demonstration document with a fictional profile. It is used as source data
+> and as a test fixture for the application. Any resemblance to real people is coincidental.
+
+## Document status
+
+This is a working version for discussion. It contains all the gathered requirements, preferences, constraints, the proposed module system, a six-day pilot diet and a shopping list.
+
+Calorie and nutrition values for dishes are approximate. Exact values depend on the particular brands of milk, yoghurt, protein, tortillas, salted fish and other products. Once specific products are chosen, the values need to be refined from their labels.
+
+## 1. Source data
+
+- Man, 40 years old.
+- Height: 178 cm.
+- Actual weight unknown.
+- A nominal weight of 75 kg is used for the protein calculation. This is not an estimate of the actual weight.
+- The person is healthy.
+- No allergies.
+- Goal: weight loss.
+- Calories: about 1700 kcal per day. Determined by a calculator from height and weight.
+- Protein guideline: about 105–120 g per day. The working target is approximately 110 g.
+- Work: duty-shift engineer in a data centre.
+- Average activity: about 8000 steps per day.
+- Strength training: Monday and Thursday, 21:00 to 22:00.
+- Usual shift: 7:00 to 15:00.
+- Shifts occasionally run until 20:00–21:00.
+- Twice a month there are 24-hour duty shifts, morning to morning.
+- Late work shifts and training fall on different days.
+- First meal: between 5:00 and 7:00.
+- Usual time of the last meal: around 18:00.
+- On long-shift days dinner moves to approximately 21:00.
+- Eating pattern: three main meals and one snack.
+- After evening training a very light meal, or no food at all, is preferred.
+
+## 2. Practical conditions
+
+- Breakfast and lunch need to be taken to work.
+- There is a fridge and a microwave at work.
+- Fish dishes are better eaten at home than reheated at work.
+- Cooking for two or three days at once is convenient.
+- Freezing prepared portions is not planned.
+- Frozen fish and seafood are suitable.
+- There is an oven, a blender and a gas hob.
+- Portion weights need to be given as cooked weight. That allows containers to be assembled on scales.
+- For the shopping list, the approximate raw weight of products is given as well.
+- Budget and specific shops are not considered at this stage.
+- There are no religious dietary restrictions.
+
+## 3. Main preferences
+
+### Protein products
+
+Acceptable:
+
+- white fish;
+- salted red fish;
+- herring;
+- shrimp;
+- squid;
+- turkey;
+- chicken, except chicken breast;
+- beef;
+- lamb;
+- pork;
+- chicken and beef liver;
+- eggs;
+- cottage cheese and plain natural yoghurt;
+- tofu and legumes, if they are well tolerated;
+- whey protein.
 
-### Особенно понравившиеся идеи
+### Particularly liked ideas
 
-- роллы и разные начинки для них;
-- яичные маффины;
-- ночная овсянка;
-- лапша и блюда в азиатском стиле;
-- творожные коробки;
-- молочные протеиновые коктейли с фруктами, ягодами и небольшим количеством овощей.
+- rolls and various fillings for them;
+- egg muffins;
+- overnight oats;
+- noodles and Asian-style dishes;
+- cottage cheese boxes;
+- milk protein shakes with fruit, berries and a small amount of vegetables.
 
-### Овощи и фрукты
+### Vegetables and fruit
 
-- Большинство овощей, ягод и фруктов подходит.
-- Из капусты подходят брокколи, цветная, брюссельская, пекинская капуста и бок-чой.
-- В коктейлях из овощей подходят шпинат и сельдерей.
-- В коктейлях из фруктов и ягод подходят банан, клубника, черника, ананас, киви и другие хорошо переносимые варианты.
+- Most vegetables, berries and fruit are suitable.
+- Among cabbages, broccoli, cauliflower, Brussels sprouts, napa cabbage and bok choy are suitable.
+- In vegetable shakes, spinach and celery are suitable.
+- In fruit and berry shakes, banana, strawberry, blueberry, pineapple, kiwi and other well-tolerated options are suitable.
 
-### Сладкое и алкоголь
+### Sweets and alcohol
 
-- Сладости и вино допустимы.
-- Планируется до трех модулей со сладким или вином в неделю суммарно.
-- Такой модуль учитывается в суточной калорийности, а не добавляется сверху.
+- Sweets and wine are acceptable.
+- Up to three modules with sweets or wine per week in total are planned.
+- Such a module counts towards the daily calories rather than being added on top.
 
-## 4. Что не подходит
+## 4. What does not work
 
-### Полностью исключаем
+### Excluded entirely
 
-- куриную грудку;
-- мидии;
-- белокочанную капусту;
-- краснокочанную капусту;
-- кукурузу;
-- киноа;
-- фенхель;
-- сложный и долгий в приготовлении рататуй;
-- скир, поскольку нужного продукта нет в обычной доступности.
+- chicken breast;
+- mussels;
+- white cabbage;
+- red cabbage;
+- sweetcorn;
+- quinoa;
+- fennel;
+- ratatouille, as complicated and slow to prepare;
+- skyr, since the product is not normally available.
 
-### Не добавляем в протеиновые коктейли
+### Not added to protein shakes
 
-- кефир;
-- овсянку;
-- свеклу;
-- кабачок.
+- kefir;
+- oats;
+- beetroot;
+- courgette.
 
-Коктейли готовятся на молоке. Овсянка используется отдельно в ночной овсянке.
+Shakes are made with milk. Oats are used separately, in overnight oats.
 
-### Осторожно из-за возможного вздутия
+### Careful because of possible bloating
 
-Блюда не должны провоцировать усиленную перистальтику и выраженное вздутие. Переносимость индивидуальна, поэтому в основной пилот не включаются:
+Dishes must not provoke increased gut motility or pronounced bloating. Tolerance is individual, so the following are not included in the main pilot:
 
-- большие порции бобовых;
-- большие порции хумуса;
-- большие сырые салаты;
-- много сырого лука и чеснока;
-- очень жирные блюда;
-- продукты с большим количеством сахарных спиртов или других подсластителей.
+- large portions of legumes;
+- large portions of hummus;
+- large raw salads;
+- a lot of raw onion and garlic;
+- very fatty dishes;
+- products with large amounts of sugar alcohols or other sweeteners.
 
-Если обычное молоко или йогурт вызывают симптомы, их можно заменить безлактозными. Если симптомы вызывает протеин, стоит проверить состав и рассмотреть сывороточный изолят без инулина и большого количества подсластителей.
+If ordinary milk or yoghurt causes symptoms, they can be replaced with lactose-free versions. If protein causes symptoms, it is worth checking the composition and considering a whey isolate without inulin and without large amounts of sweeteners.
 
-## 5. Принципы рациона
+## 5. Diet principles
 
-### Распределение калорий
+### Calorie distribution
 
-Базовый ориентир:
+Baseline guideline:
 
-- завтрак: 395–420 ккал;
-- обед: 515–545 ккал;
-- быстрый перекус: 150–250 ккал;
-- ужин: 470–495 ккал;
-- модуль со сладким или вином: 100–150 ккал, с уменьшением других частей дня при необходимости.
+- breakfast: 395–420 kcal;
+- lunch: 515–545 kcal;
+- quick snack: 150–250 kcal;
+- dinner: 470–495 kcal;
+- module with sweets or wine: 100–150 kcal, reducing other parts of the day if necessary.
 
-Итоговая цель: примерно 1650–1750 ккал в день.
+Resulting target: approximately 1650–1750 kcal per day.
 
-### Распределение белка
+### Protein distribution
 
-- завтрак: около 30–33 г;
-- обед: около 35–38 г;
-- перекус: от небольшого количества до 12 г, в зависимости от выбора;
-- ужин: около 35–42 г.
+- breakfast: about 30–33 g;
+- lunch: about 35–38 g;
+- snack: from a small amount up to 12 g, depending on the choice;
+- dinner: about 35–42 g.
 
-### Ужин
+### Dinner
 
-Под формулировкой «без углеводов» понимается ужин без отдельного крахмалистого гарнира:
+The phrase "no carbohydrates" means a dinner without a separate starchy side:
 
-- без хлеба;
-- без крупы;
-- без пасты и лапши;
-- без картофеля.
+- no bread;
+- no grains;
+- no pasta or noodles;
+- no potato.
 
-Овощи остаются. Они содержат небольшое количество углеводов и дают клетчатку.
+Vegetables stay. They contain a small amount of carbohydrate and provide fibre.
 
-Основная схема ужина:
+The basic dinner scheme:
 
-- рыба или морепродукты;
-- приготовленные овощи или небольшая порция свежих овощей;
-- небольшое количество масла, тахини или авокадо.
+- fish or seafood;
+- cooked vegetables, or a small portion of fresh vegetables;
+- a small amount of oil, tahini or avocado.
 
-Рыба или морепродукты на ужин желательны, но не являются строгим ежедневным правилом.
+Fish or seafood at dinner is preferred, but is not a strict daily rule.
 
-## 6. Режимы дня
+## 6. Day modes
 
-### Обычный рабочий день, 7:00–15:00
+### Ordinary working day, 7:00–15:00
 
-- 5:30–6:30 — завтрак или коктейль в дорогу;
-- 11:00–12:00 — обед;
-- 15:30–16:00 — быстрый перекус;
-- около 18:00 — домашний ужин.
+- 5:30–6:30 — breakfast, or a shake to take along;
+- 11:00–12:00 — lunch;
+- 15:30–16:00 — quick snack;
+- around 18:00 — dinner at home.
 
-### Длинная смена до 20:00–21:00
+### Long shift until 20:00–21:00
 
-- завтрак перед работой;
-- обед около 11:00–12:00;
-- быстрый перекус около 15:30–17:00;
-- ужин после смены около 21:00.
+- breakfast before work;
+- lunch around 11:00–12:00;
+- quick snack around 15:30–17:00;
+- dinner after the shift, around 21:00.
 
-Ужин переносится. Он не добавляется к отдельному ужину в 18:00.
+Dinner moves. It is not added to a separate dinner at 18:00.
 
-### Тренировочный день
+### Training day
 
-- обычный завтрак и обед;
-- быстрый перекус около 16:00;
-- основной ужин около 18:00;
-- тренировка с 21:00 до 22:00;
-- после тренировки можно ничего не есть, если нет голода и дневная норма белка набрана.
+- ordinary breakfast and lunch;
+- quick snack around 16:00;
+- main dinner around 18:00;
+- training from 21:00 to 22:00;
+- after training it is fine to eat nothing, if there is no hunger and the daily protein target has been met.
 
-Если после тренировки появляется голод, часть ужина можно заранее оставить на 22:00. Это не дополнительная еда, а разделенный ужин.
+If hunger appears after training, part of dinner can be set aside in advance for 22:00. That is not extra food, it is a split dinner.
 
-### Суточное дежурство
+### 24-hour duty shift
 
-На суточном дежурстве правило «последний прием пищи в 18:00» не используется. День считается от пробуждения до следующего сна.
+On a 24-hour duty shift the "last meal at 18:00" rule does not apply. The day is counted from waking to the next sleep.
 
-На дежурство берутся:
+Taken on duty:
 
-- один завтрак;
-- два контейнера с основным блюдом;
-- один быстрый перекус.
+- one breakfast;
+- two containers with a main dish;
+- one quick snack.
 
-Второй основной контейнер можно разделить на вечернюю и ночную части. Резервная еда заменяет сорванный прием пищи, а не добавляется к полному рациону.
+The second main container can be divided into an evening part and a night part. Reserve food replaces a missed meal rather than being added to a complete diet.
 
-## 7. Предложенная система модулей
+## 7. Proposed module system
 
-### Завтраки
+### Breakfasts
 
-#### Молочные коктейли
+#### Milk shakes
 
-1. Клубника, банан и шпинат.
-2. Черника, банан и немного сельдерея.
-3. Ананас, киви и шпинат.
-4. Банан, какао и шпинат.
+1. Strawberry, banana and spinach.
+2. Blueberry, banana and a little celery.
+3. Pineapple, kiwi and spinach.
+4. Banana, cocoa and spinach.
 
-Базовая формула:
+Base formula:
 
-- молоко — 200 мл;
-- сывороточный протеин — 25 г;
-- фрукты или ягоды — 180–220 г суммарно;
-- шпинат — около 30 г или сельдерей — 20–30 г;
-- ореховая паста — 12–14 г.
+- milk — 200 ml;
+- whey protein — 25 g;
+- fruit or berries — 180–220 g in total;
+- spinach — about 30 g, or celery — 20–30 g;
+- nut butter — 12–14 g.
 
-#### Ночная овсянка
+#### Overnight oats
 
-1. Клубника и миндаль.
-2. Банан и какао.
-3. Черника и арахисовая паста.
-4. Киви и клубника.
+1. Strawberry and almond.
+2. Banana and cocoa.
+3. Blueberry and peanut butter.
+4. Kiwi and strawberry.
 
-Базовая формула:
+Base formula:
 
-- натуральный йогурт — 180–200 г;
-- овсянка — 30–32 г;
-- протеин — 22 г;
-- фрукты или ягоды;
-- небольшая порция орехов или ореховой пасты при необходимости.
+- natural yoghurt — 180–200 g;
+- oats — 30–32 g;
+- protein — 22 g;
+- fruit or berries;
+- a small portion of nuts or nut butter if needed.
 
-#### Яичные маффины
+#### Egg muffins
 
-Варианты наполнения:
+Filling options:
 
-- творог, шпинат и печеный перец;
-- индейка и морковь;
-- немного феты, томат и зелень;
-- творог, морковь и укроп.
+- cottage cheese, spinach and roasted pepper;
+- turkey and carrot;
+- a little feta, tomato and herbs;
+- cottage cheese, carrot and dill.
 
-#### Роллы на завтрак или обед
+#### Rolls for breakfast or lunch
 
-- индейка, сливочный сыр, огурец и шпинат;
-- куриное бедро, печеный перец и йогуртовый соус;
-- яйца, творог, огурец и зелень;
-- ростбиф, авокадо и печеный перец;
-- куриная печень, йогуртовый соус, огурец и шпинат.
+- turkey, cream cheese, cucumber and spinach;
+- chicken thigh, roasted pepper and yoghurt sauce;
+- eggs, cottage cheese, cucumber and herbs;
+- roast beef, avocado and roasted pepper;
+- chicken liver, yoghurt sauce, cucumber and spinach.
 
-#### Творожные коробки
+#### Cottage cheese boxes
 
-- творог, банан и орехи;
-- творог, ягоды и небольшая порция шоколада;
-- творог, яйцо, огурец, авокадо и хлебцы;
-- творог, киви, виноград и орехи.
+- cottage cheese, banana and nuts;
+- cottage cheese, berries and a small portion of chocolate;
+- cottage cheese, egg, cucumber, avocado and crispbread;
+- cottage cheese, kiwi, grapes and nuts.
 
-### Обеды
+### Lunches
 
-Основное требование: один вид обеда готовится сразу на два-три дня. На пилотной неделе используются только два вида обеда и два вида мяса.
+The main requirement: one kind of lunch is cooked for two or three days at once. In the pilot week only two kinds of lunch and two kinds of meat are used.
 
-Подходящие варианты для дальнейших недель:
+Suitable options for later weeks:
 
-- рисовая лапша с индейкой;
-- соба с куриным бедром;
-- стеклянная лапша со свиной вырезкой;
-- удон с говядиной;
-- роллы с куриным бедром;
-- роллы с индейкой;
-- роллы с ростбифом;
-- куриная или говяжья печень с подходящим гарниром.
+- rice noodles with turkey;
+- soba with chicken thigh;
+- glass noodles with pork tenderloin;
+- udon with beef;
+- rolls with chicken thigh;
+- rolls with turkey;
+- rolls with roast beef;
+- chicken or beef liver with a suitable side.
 
-Печень не подходит для приготовления одного и того же обеда на три дня. Ее следует использовать как отдельный прием пищи не чаще одного раза в неделю.
+Liver is not suitable for cooking the same lunch for three days. It should be used as a separate meal no more than once a week.
 
-### Быстрые перекусы на работе
+### Quick snacks at work
 
-Оставлены только три варианта:
+Only three options are kept:
 
-1. Банан.
-2. Заранее отвешенная порция несоленых орехов.
-3. Готовая упаковка натурального йогурта.
+1. A banana.
+2. A pre-weighed portion of unsalted nuts.
+3. A ready-made pack of natural yoghurt.
 
-В пилоте чаще используется комбинация банана и 25 г орехов либо упаковка йогурта с 10 г орехов.
+In the pilot, the combination of a banana and 25 g of nuts, or a pack of yoghurt with 10 g of nuts, is used more often.
 
-### Домашние ужины
+### Dinners at home
 
-Подходящие основные варианты:
+Suitable main options:
 
-- белая рыба с тыквой и морковью;
-- белая рыба в простом томатном соусе со шпинатом;
-- белая рыба с брокколи или цветной капустой;
-- креветки с перцем, морковью и шпинатом;
-- кальмар с печеным перцем и томатами;
-- сельдь с творогом, огурцом и авокадо;
-- соленая красная рыба с яйцами, огурцом и зеленью.
+- white fish with pumpkin and carrot;
+- white fish in a simple tomato sauce with spinach;
+- white fish with broccoli or cauliflower;
+- shrimp with pepper, carrot and spinach;
+- squid with roasted pepper and tomatoes;
+- herring with cottage cheese, cucumber and avocado;
+- salted red fish with eggs, cucumber and herbs.
 
-Соленую красную рыбу и сельдь желательно использовать суммарно не чаще одного-двух раз в неделю. В эти блюда не нужно добавлять дополнительную соль.
+Salted red fish and herring should preferably be used no more than once or twice a week in total. No additional salt is needed in these dishes.
 
-### Печень
+### Liver
 
-Варианты для дальнейшей ротации:
+Options for later rotation:
 
-- куриная печень, гречка и запеченная морковь;
-- говяжья печень, картофельное пюре и печеный перец;
-- ролл с куриной печенью, йогуртовым соусом, огурцом и шпинатом.
+- chicken liver, buckwheat and roasted carrot;
+- beef liver, mashed potato and roasted pepper;
+- a roll with chicken liver, yoghurt sauce, cucumber and spinach.
 
-Готовая порция печени: около 120–140 г. Печень используется не чаще одного раза в неделю из-за высокого содержания витамина A.
+Cooked liver portion: about 120–140 g. Liver is used no more than once a week because of its high vitamin A content.
 
-### Модули со сладким или вином
+### Modules with sweets or wine
 
-Допустимы три модуля в неделю суммарно:
+Three modules a week in total are acceptable:
 
-- сухое вино — 125 мл;
-- темный шоколад — около 20 г;
-- мороженое — около 50 г;
-- альтернативно: небольшой йогуртовый десерт с какао и ягодами.
+- dry wine — 125 ml;
+- dark chocolate — about 20 g;
+- ice cream — about 50 g;
+- alternatively: a small yoghurt dessert with cocoa and berries.
 
-Вино допустимо только в день без дежурства, вождения, тренировки и возможного вызова на работу.
+Wine is acceptable only on a day without duty, driving, training or a possible call-out to work.
 
-## 8. Пилотный рацион на 6 дней
+## 8. The 6-day pilot diet
 
-День 1 соответствует понедельнику, день 4 — четвергу. Это тренировочные дни. День 3 рассчитан на смену до 20:00–21:00.
+Day 1 corresponds to Monday, day 4 to Thursday. These are training days. Day 3 is planned for a shift until 20:00–21:00.
 
-| День | Завтрак | Обед | Быстрый перекус | Ужин | Дополнение | Ориентир |
+| Day | Breakfast | Lunch | Quick snack | Dinner | Extra | Guideline |
 |---|---|---|---|---|---|---:|
-| 1, тренировка | Клубнично-банановый коктейль | Рисовая лапша с индейкой | Банан и орехи | Белая рыба с тыквой и морковью | — | ≈1650 ккал |
-| 2 | Ночная овсянка с клубникой | Рисовая лапша с индейкой | Йогурт и орехи | Креветки по-азиатски | Вино 125 мл | ≈1725 ккал |
-| 3, длинная смена | Яичные маффины | Рисовая лапша с индейкой | Банан и орехи | Кальмар с печеным перцем | — | ≈1660 ккал |
-| 4, тренировка | Коктейль с ананасом и киви | Ролл с куриным бедром | Банан и орехи | Белая рыба в томате со шпинатом | — | ≈1650 ккал |
-| 5 | Ночная овсянка с бананом и какао | Ролл с куриным бедром | Йогурт и орехи | Соленая красная рыба с яйцами | Шоколад 20 г | ≈1720 ккал |
-| 6 | Творожная коробка | Ролл с куриным бедром | Йогурт и орехи | Сельдь с творогом и овощами | Мороженое 50 г | ≈1735 ккал |
+| 1, training | Strawberry and banana shake | Rice noodles with turkey | Banana and nuts | White fish with pumpkin and carrot | — | ≈1650 kcal |
+| 2 | Overnight oats with strawberry | Rice noodles with turkey | Yoghurt and nuts | Asian-style shrimp | Wine 125 ml | ≈1725 kcal |
+| 3, long shift | Egg muffins | Rice noodles with turkey | Banana and nuts | Squid with roasted pepper | — | ≈1660 kcal |
+| 4, training | Pineapple and kiwi shake | Roll with chicken thigh | Banana and nuts | White fish in tomato with spinach | — | ≈1650 kcal |
+| 5 | Overnight oats with banana and cocoa | Roll with chicken thigh | Yoghurt and nuts | Salted red fish with eggs | Chocolate 20 g | ≈1720 kcal |
+| 6 | Cottage cheese box | Roll with chicken thigh | Yoghurt and nuts | Herring with cottage cheese and vegetables | Ice cream 50 g | ≈1735 kcal |
 
-## 9. Порции и рецепты пилотной недели
+## 9. Portions and recipes for the pilot week
 
-### День 1
+### Day 1
 
-#### Завтрак: клубнично-банановый коктейль
+#### Breakfast: strawberry and banana shake
 
-- молоко 1–2% — 200 мл;
-- сывороточный протеин — 25 г;
-- клубника — 120 г;
-- банан — 90 г;
-- шпинат — 30 г;
-- арахисовая или миндальная паста — 12 г;
-- вода или лед.
+- milk 1–2% — 200 ml;
+- whey protein — 25 g;
+- strawberry — 120 g;
+- banana — 90 g;
+- spinach — 30 g;
+- peanut or almond butter — 12 g;
+- water or ice.
 
-Выход: около 470 мл. Примерно 405 ккал и 31 г белка.
+Yield: about 470 ml. Approximately 405 kcal and 31 g protein.
 
-#### Обед: рисовая лапша с индейкой
+#### Lunch: rice noodles with turkey
 
-- готовая рисовая лапша — 170 г;
-- готовое бедро индейки без кожи — 120 г;
-- морковь — 80 г;
-- шпинат — 50 г;
-- кунжутное масло — 9 г;
-- соевый соус — 10 г;
-- имбирь и сок лайма.
+- cooked rice noodles — 170 g;
+- cooked skinless turkey thigh — 120 g;
+- carrot — 80 g;
+- spinach — 50 g;
+- sesame oil — 9 g;
+- soy sauce — 10 g;
+- ginger and lime juice.
 
-Вес контейнера: около 440 г. Примерно 525 ккал и 35 г белка.
+Container weight: about 440 g. Approximately 525 kcal and 35 g protein.
 
-#### Перекус
+#### Snack
 
-- банан — около 100 г;
-- несоленые орехи — 25 г.
+- banana — about 100 g;
+- unsalted nuts — 25 g.
 
-Примерно 240 ккал и 6 г белка.
+Approximately 240 kcal and 6 g protein.
 
-#### Ужин: белая рыба с тыквой и морковью
+#### Dinner: white fish with pumpkin and carrot
 
-- готовая белая рыба — 170 г;
-- запеченная тыква — 180 г;
-- запеченная морковь — 100 г;
-- натуральный йогурт с укропом — 50 г;
-- оливковое масло — 12 г.
+- cooked white fish — 170 g;
+- roasted pumpkin — 180 g;
+- roasted carrot — 100 g;
+- natural yoghurt with dill — 50 g;
+- olive oil — 12 g.
 
-Вес порции: около 510 г. Примерно 480 ккал и 40 г белка.
+Portion weight: about 510 g. Approximately 480 kcal and 40 g protein.
 
-Итог дня: примерно 1650 ккал и 112 г белка.
+Day total: approximately 1650 kcal and 112 g protein.
 
-### День 2
+### Day 2
 
-#### Завтрак: ночная овсянка с клубникой
+#### Breakfast: overnight oats with strawberry
 
-- натуральный йогурт — 200 г;
-- овсянка — 32 г;
-- протеин — 22 г;
-- клубника — 120 г;
-- орехи — 8 г.
+- natural yoghurt — 200 g;
+- oats — 32 g;
+- protein — 22 g;
+- strawberry — 120 g;
+- nuts — 8 g.
 
-Вес порции: около 382 г. Примерно 410 ккал и 32 г белка.
+Portion weight: about 382 g. Approximately 410 kcal and 32 g protein.
 
-#### Обед
+#### Lunch
 
-Та же рисовая лапша с индейкой, что в день 1.
+The same rice noodles with turkey as on day 1.
 
-#### Перекус
+#### Snack
 
-- готовая упаковка натурального йогурта — 180–200 г;
-- несоленые орехи — 10 г.
+- a ready-made pack of natural yoghurt — 180–200 g;
+- unsalted nuts — 10 g.
 
-Ориентир: 190–210 ккал и около 12 г белка. Точное значение определяется по этикетке.
+Guideline: 190–210 kcal and about 12 g protein. The exact value is determined from the label.
 
-#### Ужин: креветки по-азиатски
+#### Dinner: Asian-style shrimp
 
-- готовые очищенные креветки — 175 г;
-- сладкий перец — 120 г;
-- морковь — 80 г;
-- шпинат — 80 г;
-- авокадо — 90 г;
-- кунжутное масло — 9 г;
-- имбирь и немного соевого соуса.
+- cooked peeled shrimp — 175 g;
+- bell pepper — 120 g;
+- carrot — 80 g;
+- spinach — 80 g;
+- avocado — 90 g;
+- sesame oil — 9 g;
+- ginger and a little soy sauce.
 
-Вес порции: около 555 г. Примерно 485 ккал и 41 г белка.
+Portion weight: about 555 g. Approximately 485 kcal and 41 g protein.
 
-#### Дополнение
+#### Extra
 
-- сухое вино — 125 мл, примерно 105 ккал.
+- dry wine — 125 ml, approximately 105 kcal.
 
-Если в этот день возможно вождение, дежурство или вызов на работу, вино заменяется 20 г шоколада.
+If driving, duty or a call-out to work is possible that day, the wine is replaced with 20 g of chocolate.
 
-Итог дня: примерно 1725 ккал и 120 г белка.
+Day total: approximately 1725 kcal and 120 g protein.
 
-### День 3
+### Day 3
 
-#### Завтрак: яичные маффины
+#### Breakfast: egg muffins
 
-- яйца — 3 шт.;
-- творог 5% — 80 г;
-- шпинат — 40 г;
-- печеный перец — 70 г;
-- тертая морковь — 40 г;
-- оливковое масло — 3 г;
-- цельнозерновой хлебец — 10 г.
+- eggs — 3 pcs;
+- cottage cheese 5% — 80 g;
+- spinach — 40 g;
+- roasted pepper — 70 g;
+- grated carrot — 40 g;
+- olive oil — 3 g;
+- wholegrain crispbread — 10 g.
 
-Смешать ингредиенты, кроме хлебца. Разложить по формам. Выпекать около 20 минут при 180°C.
+Mix the ingredients, except the crispbread. Divide between moulds. Bake for about 20 minutes at 180°C.
 
-Вес порции: около 350 г. Примерно 410 ккал и 32 г белка.
+Portion weight: about 350 g. Approximately 410 kcal and 32 g protein.
 
-#### Обед
+#### Lunch
 
-Та же рисовая лапша с индейкой, что в днях 1 и 2.
+The same rice noodles with turkey as on days 1 and 2.
 
-#### Перекус
+#### Snack
 
-- банан — около 100 г;
-- несоленые орехи — 25 г.
+- banana — about 100 g;
+- unsalted nuts — 25 g.
 
-Примерно 240 ккал.
+Approximately 240 kcal.
 
-#### Поздний ужин: кальмар с печеным перцем
+#### Late dinner: squid with roasted pepper
 
-- готовый кальмар — 200 г;
-- печеный перец — 150 г;
-- томаты — 150 г;
-- шпинат — 50 г;
-- тахини — 32 г.
+- cooked squid — 200 g;
+- roasted pepper — 150 g;
+- tomatoes — 150 g;
+- spinach — 50 g;
+- tahini — 32 g.
 
-Кальмара готовить на сильном огне две-три минуты. Вес порции зависит от количества овощей. Ориентир: около 485 ккал и 39 г белка.
+Cook the squid over high heat for two or three minutes. Portion weight depends on the amount of vegetables. Guideline: about 485 kcal and 39 g protein.
 
-Итог дня: примерно 1660 ккал и 112 г белка.
+Day total: approximately 1660 kcal and 112 g protein.
 
-### День 4
+### Day 4
 
-#### Завтрак: коктейль с ананасом и киви
+#### Breakfast: pineapple and kiwi shake
 
-- молоко — 200 мл;
-- протеин — 25 г;
-- ананас — 130 г;
-- киви — 80 г;
-- шпинат — 30 г;
-- ореховая паста — 14 г;
-- вода или лед.
+- milk — 200 ml;
+- protein — 25 g;
+- pineapple — 130 g;
+- kiwi — 80 g;
+- spinach — 30 g;
+- nut butter — 14 g;
+- water or ice.
 
-Примерно 400 ккал и 31 г белка.
+Approximately 400 kcal and 31 g protein.
 
-#### Обед: ролл с куриным бедром
+#### Lunch: roll with chicken thigh
 
-- цельнозерновая лепешка — 75 г;
-- готовое куриное бедро без кожи — 120 г;
-- печеный перец — 80 г;
-- очищенный огурец — 50 г;
-- шпинат или пекинская капуста — 30 г;
-- натуральный йогурт — 30 г;
-- зелень, паприка и немного горчицы.
+- wholegrain tortilla — 75 g;
+- cooked skinless chicken thigh — 120 g;
+- roasted pepper — 80 g;
+- peeled cucumber — 50 g;
+- spinach or napa cabbage — 30 g;
+- natural yoghurt — 30 g;
+- herbs, paprika and a little mustard.
 
-Вес ролла: около 385 г. Примерно 530 ккал и 38 г белка.
+Roll weight: about 385 g. Approximately 530 kcal and 38 g protein.
 
-#### Перекус
+#### Snack
 
-- банан — около 100 г;
-- несоленые орехи — 25 г.
+- banana — about 100 g;
+- unsalted nuts — 25 g.
 
-Примерно 240 ккал.
+Approximately 240 kcal.
 
-#### Ужин: белая рыба в томате со шпинатом
+#### Dinner: white fish in tomato with spinach
 
-- готовая белая рыба — 170 г;
-- простой томатный соус без лука и чеснока — 180 г;
-- шпинат — 100 г;
-- тахини — 25 г;
-- оливковое масло — 5 г.
+- cooked white fish — 170 g;
+- simple tomato sauce without onion and garlic — 180 g;
+- spinach — 100 g;
+- tahini — 25 g;
+- olive oil — 5 g.
 
-Вес порции: около 480 г. Примерно 480 ккал и 39 г белка.
+Portion weight: about 480 g. Approximately 480 kcal and 39 g protein.
 
-После тренировки можно ничего не есть. При голоде часть рыбы и овощей следует заранее оставить на 22:00.
+After training it is fine to eat nothing. If hungry, part of the fish and vegetables should be set aside in advance for 22:00.
 
-Итог дня: примерно 1650 ккал и 114 г белка.
+Day total: approximately 1650 kcal and 114 g protein.
 
-### День 5
+### Day 5
 
-#### Завтрак: ночная овсянка с бананом и какао
+#### Breakfast: overnight oats with banana and cocoa
 
-- натуральный йогурт — 200 г;
-- овсянка — 30 г;
-- протеин — 22 г;
-- банан — 80 г;
-- какао — 5 г.
+- natural yoghurt — 200 g;
+- oats — 30 g;
+- protein — 22 g;
+- banana — 80 g;
+- cocoa — 5 g.
 
-Вес порции: около 337 г. Примерно 410 ккал и 31 г белка.
+Portion weight: about 337 g. Approximately 410 kcal and 31 g protein.
 
-#### Обед
+#### Lunch
 
-Тот же ролл с куриным бедром, что в день 4.
+The same roll with chicken thigh as on day 4.
 
-#### Перекус
+#### Snack
 
-- готовая упаковка натурального йогурта — 180–200 г;
-- несоленые орехи — 10 г.
+- a ready-made pack of natural yoghurt — 180–200 g;
+- unsalted nuts — 10 g.
 
-Примерно 200 ккал.
+Approximately 200 kcal.
 
-#### Ужин: соленая красная рыба с яйцами
+#### Dinner: salted red fish with eggs
 
-- соленая красная рыба — 90 г;
-- яйца — 3 шт.;
-- очищенный огурец — 100 г;
-- шпинат или пекинская капуста — 50 г;
-- авокадо — 35 г.
+- salted red fish — 90 g;
+- eggs — 3 pcs;
+- peeled cucumber — 100 g;
+- spinach or napa cabbage — 50 g;
+- avocado — 35 g.
 
-Вес порции: около 400 г. Примерно 480 ккал и 38 г белка. Дополнительную соль не добавлять.
+Portion weight: about 400 g. Approximately 480 kcal and 38 g protein. Do not add extra salt.
 
-#### Дополнение
+#### Extra
 
-- темный шоколад — 20 г, примерно 110 ккал.
+- dark chocolate — 20 g, approximately 110 kcal.
 
-Итог дня: примерно 1720 ккал и 119 г белка.
+Day total: approximately 1720 kcal and 119 g protein.
 
-### День 6
+### Day 6
 
-#### Завтрак: творожная коробка
+#### Breakfast: cottage cheese box
 
-- творог 5% — 230 г;
-- банан — 100 г;
-- несоленые орехи — 12 г.
+- cottage cheese 5% — 230 g;
+- banana — 100 g;
+- unsalted nuts — 12 g.
 
-Вес порции: около 342 г. Примерно 410 ккал и 32 г белка.
+Portion weight: about 342 g. Approximately 410 kcal and 32 g protein.
 
-#### Обед
+#### Lunch
 
-Тот же ролл с куриным бедром, что в днях 4 и 5.
+The same roll with chicken thigh as on days 4 and 5.
 
-#### Перекус
+#### Snack
 
-- готовая упаковка натурального йогурта — 180–200 г;
-- несоленые орехи — 10 г.
+- a ready-made pack of natural yoghurt — 180–200 g;
+- unsalted nuts — 10 g.
 
-Примерно 200 ккал.
+Approximately 200 kcal.
 
-#### Ужин: сельдь с творогом и овощами
+#### Dinner: herring with cottage cheese and vegetables
 
-- филе сельди — 100 г;
-- творог 5% — 150 г;
-- очищенный огурец — 100 г;
-- томат — 100 г;
-- авокадо — 45 г;
-- зелень.
+- herring fillet — 100 g;
+- cottage cheese 5% — 150 g;
+- peeled cucumber — 100 g;
+- tomato — 100 g;
+- avocado — 45 g;
+- herbs.
 
-Вес порции: около 495 г. Примерно 485 ккал и 39 г белка. Если сельдь очень соленая, ее можно быстро ополоснуть водой и обсушить.
+Portion weight: about 495 g. Approximately 485 kcal and 39 g protein. If the herring is very salty, it can be rinsed quickly in water and patted dry.
 
-#### Дополнение
+#### Extra
 
-- мороженое — около 50 г или порция на 100–120 ккал по этикетке.
+- ice cream — about 50 g, or a portion of 100–120 kcal according to the label.
 
-Итог дня: примерно 1735 ккал и 121 г белка.
+Day total: approximately 1735 kcal and 121 g protein.
 
-## 10. Обеды: приготовление сразу на три дня
+## 10. Lunches: cooking for three days at once
 
-### Дни 1–3: рисовая лапша с индейкой
+### Days 1–3: rice noodles with turkey
 
-На три порции:
+For three portions:
 
-- готовое бедро индейки без кожи — 360 г;
-- готовая рисовая лапша — 510 г;
-- морковь — 240 г;
-- шпинат — 150 г;
-- кунжутное масло — 27 г;
-- соевый соус — 30 г;
-- имбирь и сок лайма.
+- cooked skinless turkey thigh — 360 g;
+- cooked rice noodles — 510 g;
+- carrot — 240 g;
+- spinach — 150 g;
+- sesame oil — 27 g;
+- soy sauce — 30 g;
+- ginger and lime juice.
 
-В каждый контейнер:
+Into each container:
 
-- индейка — 120 г;
-- лапша — 170 г;
-- морковь — 80 г;
-- шпинат — 50 г;
-- кунжутное масло — 9 г;
-- соевый соус — 10 г.
+- turkey — 120 g;
+- noodles — 170 g;
+- carrot — 80 g;
+- spinach — 50 g;
+- sesame oil — 9 g;
+- soy sauce — 10 g.
 
-Лапшу лучше не переваривать. Так она сохранит текстуру после разогрева.
+The noodles are better slightly undercooked. That way they keep their texture after reheating.
 
-### Дни 4–6: ролл с куриным бедром
+### Days 4–6: roll with chicken thigh
 
-На три порции:
+For three portions:
 
-- готовое куриное бедро без кожи — 360 г;
-- цельнозерновые лепешки — 3 шт. по 75 г;
-- печеный перец — 240 г;
-- очищенный огурец — 150 г;
-- шпинат или пекинская капуста — 90 г;
-- натуральный йогурт — 90 г;
-- зелень, паприка и немного горчицы.
+- cooked skinless chicken thigh — 360 g;
+- wholegrain tortillas — 3 pcs of 75 g;
+- roasted pepper — 240 g;
+- peeled cucumber — 150 g;
+- spinach or napa cabbage — 90 g;
+- natural yoghurt — 90 g;
+- herbs, paprika and a little mustard.
 
-Курицу, перец и соус можно приготовить сразу на три дня. Ролл лучше собирать вечером перед следующим рабочим днем, чтобы лепешка не размокла.
+The chicken, pepper and sauce can be prepared for three days at once. The roll is better assembled the evening before each working day, so the tortilla does not go soggy.
 
-## 11. План подготовки
+## 11. Prep plan
 
-### Первая готовка: дни 1–3
+### First cooking session: days 1–3
 
-- приготовить индейку на три обеда;
-- приготовить рисовую лапшу и морковь;
-- разделить обед на три контейнера;
-- приготовить яичные маффины;
-- запечь тыкву, морковь и перец;
-- собрать ночную овсянку для дня 2;
-- подготовить порции орехов.
+- cook the turkey for three lunches;
+- cook the rice noodles and carrot;
+- divide the lunch between three containers;
+- make the egg muffins;
+- roast the pumpkin, carrot and pepper;
+- assemble the overnight oats for day 2;
+- prepare the portions of nuts.
 
-### Вторая готовка: дни 4–6
+### Second cooking session: days 4–6
 
-- приготовить куриные бедра на три ролла;
-- запечь перец;
-- приготовить йогуртовый соус;
-- собрать ночную овсянку для дня 5;
-- подготовить начинку для трех роллов;
-- собрать роллы вечером перед каждым рабочим днем.
+- cook the chicken thighs for three rolls;
+- roast the pepper;
+- make the yoghurt sauce;
+- assemble the overnight oats for day 5;
+- prepare the filling for three rolls;
+- assemble the rolls the evening before each working day.
 
-Рыбу, креветки и кальмара лучше готовить в день ужина. Эти блюда занимают около 10–15 минут.
+Fish, shrimp and squid are better cooked on the day of the dinner. These dishes take about 10–15 minutes.
 
-## 12. Список покупок на пилотную неделю
+## 12. Shopping list for the pilot week
 
-Список рассчитан на одного человека на шесть дней. Для мяса, рыбы и овощей указано примерное количество до приготовления.
+The list is for one person for six days. For meat, fish and vegetables the approximate quantity before cooking is given.
 
-### Мясо, рыба и морепродукты
+### Meat, fish and seafood
 
-- [ ] Бедро индейки без кожи и костей — 550 г
-- [ ] Куриное бедро без кожи и костей — 550 г
-- [ ] Филе белой рыбы, замороженное — 450–500 г
-- [ ] Креветки очищенные, замороженные — 300 г
-- [ ] Кальмар очищенный, замороженный — 300–350 г
-- [ ] Красная соленая рыба — 100 г
-- [ ] Филе сельди — 120 г
+- [ ] Skinless, boneless turkey thigh — 550 g
+- [ ] Skinless, boneless chicken thigh — 550 g
+- [ ] White fish fillet, frozen — 450–500 g
+- [ ] Peeled shrimp, frozen — 300 g
+- [ ] Cleaned squid, frozen — 300–350 g
+- [ ] Salted red fish — 100 g
+- [ ] Herring fillet — 120 g
 
-### Молочные продукты и яйца
+### Dairy and eggs
 
-- [ ] Молоко 1–2% — 1 л, используется около 400 мл
-- [ ] Натуральный йогурт 1,5–3% без сахара — 600 г для рецептов
-- [ ] Готовый натуральный йогурт — 3 упаковки по 180–200 г
-- [ ] Творог 5% — 500 г
-- [ ] Яйца — 6 шт.
-- [ ] Сывороточный протеин — 100 г
+- [ ] Milk 1–2% — 1 l, about 400 ml used
+- [ ] Natural yoghurt 1.5–3%, unsweetened — 600 g for recipes
+- [ ] Ready-made natural yoghurt — 3 packs of 180–200 g
+- [ ] Cottage cheese 5% — 500 g
+- [ ] Eggs — 6 pcs
+- [ ] Whey protein — 100 g
 
-### Овощи и зелень
+### Vegetables and herbs
 
-- [ ] Шпинат — около 650 г
-- [ ] Пекинская капуста — 1 небольшой кочан
-- [ ] Сладкий перец — 7–8 средних штук, около 1 кг
-- [ ] Морковь — 600 г
-- [ ] Тыква — 300–350 г
-- [ ] Огурцы — 3 средних
-- [ ] Помидоры — 3 средних
-- [ ] Томатная пассата или простой соус без лука и чеснока — 1 упаковка около 400 г
-- [ ] Авокадо — 2 средних
-- [ ] Укроп — 1 пучок
-- [ ] Петрушка или кинза — 1 пучок
-- [ ] Свежий имбирь — около 50 г
-- [ ] Лимон — 1 шт.
-- [ ] Лаймы — 2 шт.
+- [ ] Spinach — about 650 g
+- [ ] Napa cabbage — 1 small head
+- [ ] Bell pepper — 7–8 medium, about 1 kg
+- [ ] Carrot — 600 g
+- [ ] Pumpkin — 300–350 g
+- [ ] Cucumbers — 3 medium
+- [ ] Tomatoes — 3 medium
+- [ ] Tomato passata, or a simple sauce without onion and garlic — 1 pack of about 400 g
+- [ ] Avocado — 2 medium
+- [ ] Dill — 1 bunch
+- [ ] Parsley or coriander — 1 bunch
+- [ ] Fresh ginger — about 50 g
+- [ ] Lemon — 1 pc
+- [ ] Limes — 2 pcs
 
-### Фрукты и ягоды
+### Fruit and berries
 
-- [ ] Бананы — 6 средних
-- [ ] Клубника, свежая или замороженная — 300 г
-- [ ] Ананас, свежий или замороженный — 150–200 г
-- [ ] Киви — 2 шт.
+- [ ] Bananas — 6 medium
+- [ ] Strawberries, fresh or frozen — 300 g
+- [ ] Pineapple, fresh or frozen — 150–200 g
+- [ ] Kiwi — 2 pcs
 
-### Крупы, лапша и хлеб
+### Grains, noodles and bread
 
-- [ ] Рисовая лапша — около 180 г в сухом виде
-- [ ] Овсяные хлопья — 70 г
-- [ ] Цельнозерновые лепешки — 3 большие лепешки, около 225 г
-- [ ] Цельнозерновые хлебцы — не менее 10 г
+- [ ] Rice noodles — about 180 g dry
+- [ ] Rolled oats — 70 g
+- [ ] Wholegrain tortillas — 3 large tortillas, about 225 g
+- [ ] Wholegrain crispbread — at least 10 g
 
-### Орехи, пасты и добавки
+### Nuts, butters and extras
 
-- [ ] Несоленые орехи — 150 г
-- [ ] Арахисовая или миндальная паста — около 30 г
-- [ ] Тахини — около 60 г
-- [ ] Какао без сахара — 10 г
+- [ ] Unsalted nuts — 150 g
+- [ ] Peanut or almond butter — about 30 g
+- [ ] Tahini — about 60 g
+- [ ] Unsweetened cocoa — 10 g
 
-### Масло, соусы и приправы
+### Oil, sauces and seasonings
 
-- [ ] Оливковое масло — около 30 г
-- [ ] Кунжутное масло — около 50 г
-- [ ] Соевый соус — около 50 мл
-- [ ] Горчица
-- [ ] Паприка
-- [ ] Черный перец
-- [ ] Корица
-- [ ] Сушеные травы
+- [ ] Olive oil — about 30 g
+- [ ] Sesame oil — about 50 g
+- [ ] Soy sauce — about 50 ml
+- [ ] Mustard
+- [ ] Paprika
+- [ ] Black pepper
+- [ ] Cinnamon
+- [ ] Dried herbs
 
-### Сладкое и вино
+### Sweets and wine
 
-- [ ] Сухое вино — не менее 125 мл
-- [ ] Темный шоколад — 20 г
-- [ ] Мороженое — около 50 г
+- [ ] Dry wine — at least 125 ml
+- [ ] Dark chocolate — 20 g
+- [ ] Ice cream — about 50 g
 
-## 13. Что оценивать во время пилота
+## 13. What to assess during the pilot
 
-В течение шести дней желательно фиксировать:
+Over the six days it is worth recording:
 
-- насколько удобно готовить обеды сразу на три дня;
-- достаточно ли размера порций;
-- хватает ли сытости между приемами пищи;
-- удобно ли пить коктейль по дороге;
-- удобно ли есть ролл на работе;
-- появляется ли голод после тренировки;
-- какие ужины кажутся слишком объемными;
-- реакцию на молоко, йогурт и сывороточный протеин;
-- вздутие по шкале от 0 до 3;
-- усиление перистальтики;
-- реакцию на соленую рыбу;
-- какие блюда хочется оставить, заменить или повторять чаще.
+- how convenient it is to cook lunches for three days at once;
+- whether the portion sizes are sufficient;
+- whether satiety between meals is adequate;
+- whether it is convenient to drink the shake on the way;
+- whether it is convenient to eat the roll at work;
+- whether hunger appears after training;
+- which dinners feel too bulky;
+- the reaction to milk, yoghurt and whey protein;
+- bloating on a scale from 0 to 3;
+- increased gut motility;
+- the reaction to salted fish;
+- which dishes are worth keeping, replacing or repeating more often.
 
-После пилота следует выбрать:
+After the pilot the following should be chosen:
 
-- два-три постоянных завтрака;
-- два-три обеда для чередования по три дня;
-- четыре-пять любимых ужинов;
-- удобный размер быстрого перекуса;
-- лучший вариант питания в тренировочный день;
-- блюда для отдельного суточного дежурства.
+- two or three permanent breakfasts;
+- two or three lunches to rotate in three-day blocks;
+- four or five favourite dinners;
+- a convenient size for the quick snack;
+- the best eating pattern for a training day;
+- dishes for a separate 24-hour duty shift.
 
-## 14. Обратная связь после первого пилота
+## 14. Feedback after the first pilot
 
-### Завтраки
+### Breakfasts
 
-- Творожная коробка понравилась. Использовалась все дни пилота.
-- Коктейли, ночная овсянка и яичные маффины не пробовались.
+- The cottage cheese box was liked. It was used on every day of the pilot.
+- Shakes, overnight oats and egg muffins were not tried.
 
-### Обеды
+### Lunches
 
-- Оба варианта обеда понравились.
-- Лепешки куплены меньшего размера: 45 г вместо 75 г. Начинка, рассчитанная на лепешку 75 г, не заворачивалась.
-- Еда в контейнерах менее чувствительна к этой ошибке, чем ролл.
-- Роллы остаются в ротации. В описание ролла нужно добавить явное требование к размеру лепешки и к пропорциям начинки.
+- Both lunch options were liked.
+- The tortillas bought were smaller: 45 g instead of 75 g. The filling, calculated for a 75 g tortilla, would not wrap.
+- Food in containers is less sensitive to this mistake than a roll is.
+- Rolls stay in rotation. An explicit requirement for the tortilla size and the filling proportions needs to be added to the roll description.
 
-### Перекусы
+### Snacks
 
-- Банан использовался как основной перекус.
-- Вариант с готовым йогуртом не пробовался.
+- The banana was used as the main snack.
+- The ready-made yoghurt option was not tried.
 
-### Ужины
+### Dinners
 
-- Белая рыба и креветки понравились.
-- Гарниры заменялись самостоятельно: овощной салат, печеная тыква, печеный перец, печеный лук.
-- Печеный лук переносится нормально. Ограничение из раздела 4 касается сырого лука.
-- Кальмар, соленая красная рыба и сельдь не пробовались.
+- White fish and shrimp were liked.
+- Sides were substituted independently: vegetable salad, roasted pumpkin, roasted pepper, roasted onion.
+- Roasted onion is tolerated normally. The restriction in section 4 concerns raw onion.
+- Squid, salted red fish and herring were not tried.
 
-### Система в целом
+### The system as a whole
 
-- Повторение одного модуля несколько дней подряд удобно.
-- Замена модуля в одном приеме пищи не требует пересборки остальных приемов пищи. Это подтверждает модульную схему.
+- Repeating one module several days in a row is convenient.
+- Replacing a module in one meal does not require reassembling the other meals. That confirms the modular scheme.
 
-### Сводка по модулям
+### Module summary
 
-| Модуль | Статус | Оценка | Комментарий |
+| Module | Status | Rating | Comment |
 |---|---|---|---|
-| Творожная коробка | пробовал | понравилось | использовалась все дни |
-| Молочные коктейли | не пробовал | — | — |
-| Ночная овсянка | не пробовал | — | — |
-| Яичные маффины | не пробовал | — | — |
-| Рисовая лапша с индейкой | пробовал | понравилось | — |
-| Ролл с куриным бедром | пробовал | понравилось | нужна лепешка 70–80 г |
-| Банан и орехи | пробовал | понравилось | основной перекус |
-| Йогурт и орехи | не пробовал | — | — |
-| Белая рыба с тыквой и морковью | пробовал | понравилось | гарнир заменялся |
-| Белая рыба в томате со шпинатом | пробовал | понравилось | гарнир заменялся |
-| Креветки по-азиатски | пробовал | понравилось | — |
-| Кальмар с печеным перцем | не пробовал | — | — |
-| Соленая красная рыба с яйцами | не пробовал | — | — |
-| Сельдь с творогом и овощами | не пробовал | — | — |
+| Cottage cheese box | tried | liked | used on every day |
+| Milk shakes | not tried | — | — |
+| Overnight oats | not tried | — | — |
+| Egg muffins | not tried | — | — |
+| Rice noodles with turkey | tried | liked | — |
+| Roll with chicken thigh | tried | liked | needs a 70–80 g tortilla |
+| Banana and nuts | tried | liked | the main snack |
+| Yoghurt and nuts | not tried | — | — |
+| White fish with pumpkin and carrot | tried | liked | side was substituted |
+| White fish in tomato with spinach | tried | liked | side was substituted |
+| Asian-style shrimp | tried | liked | — |
+| Squid with roasted pepper | not tried | — | — |
+| Salted red fish with eggs | not tried | — | — |
+| Herring with cottage cheese and vegetables | not tried | — | — |
 
-### Что меняется в следующей неделе
+### What changes next week
 
-1. В модуль ролла добавляется обязательное требование к лепешке: 70–80 г. При меньшем размере начинка уменьшается пропорционально.
-2. Печеный лук добавляется в список допустимых гарниров.
-3. Непробованные модули остаются в библиотеке без изменений. Их нужно попробовать прежде, чем решать, оставлять ли их.
+1. A mandatory tortilla requirement is added to the roll module: 70–80 g. At a smaller size the filling is reduced proportionally.
+2. Roasted onion is added to the list of acceptable sides.
+3. Untried modules stay in the library unchanged. They need to be tried before deciding whether to keep them.
 
-### Предложение: вынести гарниры в отдельные модули
+### Proposal: move sides into separate modules
 
-Ужин собирался как «белковая часть плюс гарнир», причем гарнир менялся свободно, а белковая часть оставалась по плану. Сейчас ужин — это один модуль, и замена гарнира требует правки всего модуля.
+Dinner was assembled as "a protein part plus a side", where the side changed freely while the protein part stayed as planned. At present dinner is a single module, and replacing the side requires editing the whole module.
 
-Предлагается разделить ужин на два модуля: белковый и гарнир. Тогда гарнир меняется независимо, а калорийность и белок считаются по сумме. Это требует поддержки нескольких модулей в одном приеме пищи.
+The proposal is to split dinner into two modules: protein and side. The side can then be changed independently, while calories and protein are counted as the sum. This requires support for several modules in one meal.
 
-### Замечание о формате обратной связи
+### A note on the feedback format
 
-Фактическая обратная связь описывает, что было съедено и что понравилось. Шкалы вздутия и сытости из раздела 13 не заполнялись ни разу.
+The actual feedback describes what was eaten and what was liked. The bloating and satiety scales from section 13 were never filled in once.
 
-Основные признаки на практике — «пробовал / не пробовал» и «понравилось / не понравилось». Шкалы вздутия и сытости остаются, но заполняются только при необходимости. Это нужно учесть в модели данных.
+The signals that matter in practice are "tried / not tried" and "liked / disliked". The bloating and satiety scales remain, but are filled in only when needed. This needs to be reflected in the data model.
 
-## 15. Следующий этап
+## 15. Next stage
 
-После обратной связи рацион можно расширить до библиотеки модулей:
+After the feedback, the diet can be expanded into a library of modules:
 
-- 8–10 завтраков;
-- 6–8 обедов, каждый из которых готовится на два-три дня;
-- 10 домашних ужинов;
-- 3 быстрых рабочих перекуса;
-- 3–4 модуля со сладким или вином;
-- отдельные наборы для суточного дежурства;
-- таблица замен продуктов с сохранением калорий и белка.
+- 8–10 breakfasts;
+- 6–8 lunches, each cooked for two or three days;
+- 10 dinners at home;
+- 3 quick snacks for work;
+- 3–4 modules with sweets or wine;
+- separate sets for a 24-hour duty shift;
+- a table of product substitutions preserving calories and protein.
 
-Для будущего подбора продуктов в магазине каждому ингредиенту желательно добавить:
+For choosing products in a shop in future, it is worth adding to each ingredient:
 
-- название на русском языке;
-- пищевую ценность на 100 г;
-- размер упаковки;
-- допустимые марки;
-- количество соли и добавленного сахара;
-- возможные замены;
-- пересчет количества упаковок на выбранную неделю.
+- the name in Russian;
+- nutrition values per 100 g;
+- pack size;
+- acceptable brands;
+- the amount of salt and added sugar;
+- possible substitutions;
+- a recalculation of the number of packs for the chosen week.
 
-## 16. Справочные источники
+## 16. Reference sources
 
-- [Здоровое питание: информационный бюллетень ВОЗ](https://www.who.int/news-room/fact-sheets/detail/healthy-diet)
-- [Питание и вздутие: NIDDK](https://www.niddk.nih.gov/health-information/digestive-diseases/gas-digestive-tract/eating-diet-nutrition)
-- [Рекомендации Australian Institute of Sport по белку](https://www.ais.gov.au/__data/assets/pdf_file/0003/1000488/Sport-supplement-fact-sheets-Isolated-protein-supplement-v3.pdf)
+- [Healthy diet: WHO fact sheet](https://www.who.int/news-room/fact-sheets/detail/healthy-diet)
+- [Eating, diet and nutrition for gas in the digestive tract: NIDDK](https://www.niddk.nih.gov/health-information/digestive-diseases/gas-digestive-tract/eating-diet-nutrition)
+- [Australian Institute of Sport protein guidance](https://www.ais.gov.au/__data/assets/pdf_file/0003/1000488/Sport-supplement-fact-sheets-Isolated-protein-supplement-v3.pdf)
 - [NIDDK Body Weight Planner](https://www.niddk.nih.gov/bwp)
-- [Витамин A и печень: NHS](https://www.nhs.uk/conditions/vitamins-and-minerals/vitamin-a/)
+- [Vitamin A and liver: NHS](https://www.nhs.uk/conditions/vitamins-and-minerals/vitamin-a/)

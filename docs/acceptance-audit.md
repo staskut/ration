@@ -72,8 +72,8 @@ to reproduce section 9's totals ([`decisions.md`](decisions.md) D1).
 ### #11 — shopping quantities "within 5%"
 
 Now 15%, with staples compared on presence and piece counts against the
-document's stated range. 5% is not achievable against a list that says "около
-30 г" and "не менее 125 мл".
+document's stated range. 5% is not achievable against a list that says "about
+30 g" and "at least 125 ml".
 
 ### #12 — slot protein checked as a band
 

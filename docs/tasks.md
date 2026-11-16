@@ -25,7 +25,7 @@ were written before the data they described existed:
 - `yield_factor` was bounded to `(0, 2]`, which assumes cooking only ever removes
   water. Rice noodles are about 2.85. Now `(0, 5]`.
 - The golden shopping tolerance was 5%, which is unachievable against a list that
-  says "около 30 г" and "не менее 125 мл". Now 15%, with staples compared on
+  says "about 30 g" and "at least 125 ml". Now 15%, with staples compared on
   presence rather than quantity.
 - The module count was 14, taken from section 14's feedback table, which groups
   the shakes and the overnight oats. Section 8 has 19.
