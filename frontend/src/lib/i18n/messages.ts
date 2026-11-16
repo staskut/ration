@@ -75,7 +75,9 @@ const ru: Catalog = {
   ui: {
     "today.title": "Сегодня",
     "today.nothing_planned": "На этот день ничего не запланировано",
-    "today.outside_plan": "Этот день вне плана. Листайте стрелками к дням плана.",
+    "today.outside_plan": "Этот день вне плана.",
+    "today.plan_week": "Неделя плана",
+    "today.go_to_plan": "Перейти к плану",
     "today.home_only": "Дома",
     "today.total": "Итого за день",
     "today.yesterday": "Вчера",
@@ -149,7 +151,9 @@ const en: Catalog = {
   ui: {
     "today.title": "Today",
     "today.nothing_planned": "Nothing planned for this day",
-    "today.outside_plan": "This day is outside the plan. Use the arrows to reach the plan's days.",
+    "today.outside_plan": "This day is outside the plan.",
+    "today.plan_week": "The plan's week",
+    "today.go_to_plan": "Go to the plan",
     "today.home_only": "At home",
     "today.total": "Day total",
     "today.yesterday": "Yesterday",

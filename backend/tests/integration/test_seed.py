@@ -199,3 +199,56 @@ class TestTheSeededPlanCoversToday:
 
         assert len(plan.days) == 7
         assert len(empty) == 1
+
+
+class TestAPlanThatHasAgedSinceTheSeed:
+    """Seed at one date, read at another — the case that went unnoticed.
+
+    The seed runs on container start and on deploy, so a demo left alone for a
+    week is outside its own plan again. QA failed #75 on exactly this, and the
+    two tests above do not catch it: both seed and assert at the same instant,
+    which is the one arrangement in which an expiring plan looks fine.
+    """
+
+    @staticmethod
+    def _aged(engine: Engine, weeks: int) -> None:
+        from datetime import date, timedelta
+
+        from ration.seed.command import seed
+
+        seed(engine, today=date.today() - timedelta(weeks=weeks))
+
+    def test_today_falls_outside_a_plan_seeded_a_fortnight_ago(self, engine: Engine) -> None:
+        from datetime import date
+
+        self._aged(engine, 2)
+        with Session(engine) as session:
+            plan = session.scalars(
+                select(models.Plan).where(models.Plan.slug == "reference_week_1")
+            ).one()
+            assert date.today() not in {day.date for day in plan.days}
+
+    def test_the_plan_is_still_a_whole_week_with_one_unplanned_day(self, engine: Engine) -> None:
+        """Ageing must not deform the plan — only move it."""
+        self._aged(engine, 2)
+        with Session(engine) as session:
+            plan = session.scalars(
+                select(models.Plan).where(models.Plan.slug == "reference_week_1")
+            ).one()
+            assert len(plan.days) == 7
+            assert len([day for day in plan.days if not day.entries]) == 1
+            assert plan.start_date.weekday() == 0
+
+    def test_re_seeding_moves_it_back_onto_today(self, engine: Engine) -> None:
+        """Which is what a deploy does, and why the demo recovers on release."""
+        from datetime import date
+
+        from ration.seed.command import seed
+
+        self._aged(engine, 2)
+        seed(engine)
+        with Session(engine) as session:
+            plan = session.scalars(
+                select(models.Plan).where(models.Plan.slug == "reference_week_1")
+            ).one()
+            assert date.today() in {day.date for day in plan.days}

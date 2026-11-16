@@ -38,7 +38,11 @@ const TODAY = {
   ],
 };
 
-function mockApi(body: unknown, status = 200): void {
+const PLANS = [
+  { id: "p1", name: "Пилотная неделя 1", profile_id: "pr", start_date: "2026-11-16", status: "active" },
+];
+
+function mockApi(body: unknown, status = 200, plans: unknown = PLANS): void {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string) => {
@@ -53,6 +57,12 @@ function mockApi(body: unknown, status = 200): void {
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         );
+      }
+      if (String(url).includes("/plans")) {
+        return new Response(JSON.stringify(plans), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
       }
       return new Response(JSON.stringify(body), {
         status,
@@ -171,6 +181,10 @@ describe("Today", () => {
   });
 });
 
+function todayIsoForTest(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 describe("Today outside the plan's week", () => {
   // The bug these pin: the day navigation used to render only in the success
   // branch, so a date with no plan behind it produced an error screen with no
@@ -205,16 +219,52 @@ describe("Today outside the plan's week", () => {
   });
 
   it("navigates away from a day outside the plan", async () => {
+    // QA caught this one asserting that a button was enabled while its comment
+    // claimed it checked the date — a test weaker than it read. It now reads
+    // the date out of the header and asserts it actually moved.
     mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404);
     renderWithProviders(<Today />);
 
-    const tomorrow = await screen.findByLabelText("Завтра");
-    await userEvent.click(tomorrow);
+    const before = (await screen.findByText(todayIsoForTest())).textContent;
+    await userEvent.click(screen.getByLabelText("Завтра"));
 
-    // The date in the header moved, which is the whole of what was missing:
-    // a way off the screen.
     await waitFor(() => {
-      expect(screen.getByLabelText("Завтра")).toBeEnabled();
+      expect(screen.queryByText(before ?? "")).not.toBeInTheDocument();
     });
+  });
+
+  it("names the plan's week and offers one tap into it", async () => {
+    // Arrows alone leave the follower guessing which way and how far. For a
+    // plan a fortnight behind that is fourteen blind taps, which is what QA
+    // failed #75 on.
+    mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404);
+    renderWithProviders(<Today />);
+
+    expect(await screen.findByText(/2026-11-16 – 2026-11-22/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Перейти к плану" })).toBeInTheDocument();
+  });
+
+  it("the tap lands on the plan's first day", async () => {
+    mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404);
+    renderWithProviders(<Today />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Перейти к плану" }));
+
+    // The header now shows the plan's own first day rather than the date the
+    // screen opened on. Matched exactly: the week line below it contains the
+    // same date inside a range, and a substring match would pass on that
+    // without the header having moved at all.
+    expect(await screen.findByText("2026-11-16", { exact: true })).toBeInTheDocument();
+  });
+
+  it("says the day is outside the plan even when the plan list is unavailable", async () => {
+    // The week and the button are an improvement on the message, not a
+    // replacement for it: a follower whose /plans call fails still gets told
+    // where they are.
+    mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404, []);
+    renderWithProviders(<Today />);
+
+    expect(await screen.findByText(/вне плана/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Завтра")).toBeInTheDocument();
   });
 });
