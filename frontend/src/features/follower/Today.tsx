@@ -9,7 +9,7 @@
 import { useState } from "react";
 
 import { Empty, ErrorState, Loading } from "../../components/Status";
-import { useToday } from "../../lib/queries";
+import { usePlans, useToday } from "../../lib/queries";
 import { useSession } from "../../lib/session";
 import { usePlanSocket } from "../../lib/usePlanSocket";
 import { Rating } from "./Rating";
@@ -24,10 +24,20 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** The active plan's week, for a day that falls outside it. */
+function planWeek(plans: { start_date: string; status: string }[] | undefined) {
+  const plan = plans?.find((p) => p.status === "active") ?? plans?.[0];
+  if (!plan) return null;
+  return { first: plan.start_date, last: shiftDate(plan.start_date, 6) };
+}
+
 export function Today() {
   const { t } = useSession();
   const [date, setDate] = useState(todayIso);
   const { data, isLoading, isError, error, refetch } = useToday(date);
+  // Only consulted when the day falls outside the plan, which is why it is
+  // not gated: the query is cached and the follower's nav already holds it.
+  const { data: plans } = usePlans();
 
   usePlanSocket(data?.plan_id);
 
@@ -88,11 +98,32 @@ export function Today() {
     // "something went wrong" there sends the follower looking for a fault
     // that is not there.
     const outsidePlan = error?.status === 404;
+    const week = planWeek(plans);
     return (
       <main className="mx-auto max-w-xl px-4 pb-16">
         {header}
         {outsidePlan ? (
-          <Empty>{t.t("today.outside_plan")}</Empty>
+          <div className="px-4 py-8 text-center">
+            <p className="text-slate-400">{t.t("today.outside_plan")}</p>
+            {/* The plan's own dates, and one tap to reach them. Saying only
+                "this day is outside the plan" leaves the follower guessing
+                which direction to walk and how far — which, for a plan a
+                fortnight behind, is fourteen blind taps. */}
+            {week && (
+              <>
+                <p className="mt-2 text-sm text-slate-500">
+                  {t.t("today.plan_week")}: {week.first} – {week.last}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDate(week.first)}
+                  className="mt-4 min-h-(--spacing-tap) rounded-lg bg-slate-900 px-4 text-white"
+                >
+                  {t.t("today.go_to_plan")}
+                </button>
+              </>
+            )}
+          </div>
         ) : (
           <ErrorState t={t} onRetry={() => void refetch()} />
         )}

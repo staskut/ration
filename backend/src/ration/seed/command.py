@@ -66,8 +66,16 @@ class ProductionSeedRefused(RuntimeError):
     """Raised rather than writing demo data into a real person's database."""
 
 
-def seed(engine: Engine, *, reset: bool = False) -> ReferenceData:
-    """Load the reference fixture. Safe to call repeatedly."""
+def seed(engine: Engine, *, reset: bool = False, today: date | None = None) -> ReferenceData:
+    """Load the reference fixture. `today` picks the week the plan lands in.
+
+    The clock is injectable so a test can seed as if it were a fortnight ago
+    and read the result now — which is the only way to check what happens to
+    this demo *after* the seed, and precisely the case that went unnoticed for
+    a month (#75). Production passes nothing and gets the current week.
+
+    Safe to call repeatedly.
+    """
     if settings().is_production:
         raise ProductionSeedRefused(
             "Refusing to seed a production database: the reference plan is demo data."
@@ -82,7 +90,7 @@ def seed(engine: Engine, *, reset: bool = False) -> ReferenceData:
         ingredient_ids = _upsert_ingredients(session, reference)
         module_ids = _upsert_modules(session, reference, ingredient_ids)
         profile_id, follower_id = _upsert_identity_and_profile(session, reference, ingredient_ids)
-        _upsert_plan(session, reference, profile_id, module_ids)
+        _upsert_plan(session, reference, profile_id, module_ids, today)
         session.commit()
 
     assert follower_id  # the pairing is what makes the follower's screens work
@@ -308,6 +316,7 @@ def _upsert_plan(
     reference: ReferenceData,
     profile_id: str,
     module_ids: dict[str, str],
+    today: date | None = None,
 ) -> str:
     row = session.scalars(
         select(models.Plan).where(models.Plan.slug == reference.plan.id)
@@ -316,7 +325,7 @@ def _upsert_plan(
         row = models.Plan(slug=reference.plan.id)
         session.add(row)
 
-    start = demo_start_date()
+    start = demo_start_date(today)
     row.profile_id = profile_id
     row.name = reference.plan.name
     row.start_date = start
