@@ -27,47 +27,84 @@ function todayIso(): string {
 export function Today() {
   const { t } = useSession();
   const [date, setDate] = useState(todayIso);
-  const { data, isLoading, isError, refetch } = useToday(date);
+  const { data, isLoading, isError, error, refetch } = useToday(date);
 
   usePlanSocket(data?.plan_id);
 
-  if (isLoading) return <Loading t={t} />;
-  if (isError || !data) return <ErrorState t={t} onRetry={() => void refetch()} />;
+  // The day navigation renders whatever the query did, and that is the whole
+  // point of it. It used to live inside the success branch, so a date outside
+  // the plan's week — which is every date once the week has passed — produced
+  // an error screen with no way off it. The follower's own screen became a
+  // dead end on the day the plan ran out, and the public demo sat like that
+  // for a month before anything noticed (#75).
+  const header = (
+    <header className="sticky top-0 bg-white/95 py-3 backdrop-blur">
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setDate(shiftDate(date, -1))}
+          className="min-h-(--spacing-tap) min-w-(--spacing-tap) rounded-lg border border-slate-200"
+          aria-label={t.t("today.yesterday")}
+        >
+          ‹
+        </button>
+        <div className="text-center">
+          <h1 className="text-lg font-semibold">{t.t("today.title")}</h1>
+          <p className="text-sm text-slate-500">
+            {date}
+            {data && ` · ${t.template(data.day_template)}`}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDate(shiftDate(date, 1))}
+          className="min-h-(--spacing-tap) min-w-(--spacing-tap) rounded-lg border border-slate-200"
+          aria-label={t.t("today.tomorrow")}
+        >
+          ›
+        </button>
+      </div>
+      {/* Day totals sit in the header so they need no scrolling. */}
+      {data && (
+        <p className="mt-2 text-center text-sm text-slate-600">
+          {t.t("today.total")}: {t.number(data.kcal)} ккал · {t.number(data.protein_g)} г
+        </p>
+      )}
+    </header>
+  );
+
+  if (isLoading && !data) {
+    return (
+      <main className="mx-auto max-w-xl px-4 pb-16">
+        {header}
+        <Loading t={t} />
+      </main>
+    );
+  }
+
+  if (isError || !data) {
+    // A 404 is not a failure: it is a date with no plan behind it, which is
+    // the ordinary state of every day outside the current week. Saying
+    // "something went wrong" there sends the follower looking for a fault
+    // that is not there.
+    const outsidePlan = error?.status === 404;
+    return (
+      <main className="mx-auto max-w-xl px-4 pb-16">
+        {header}
+        {outsidePlan ? (
+          <Empty>{t.t("today.outside_plan")}</Empty>
+        ) : (
+          <ErrorState t={t} onRetry={() => void refetch()} />
+        )}
+      </main>
+    );
+  }
 
   const planned = data.slots.some((slot) => slot.entries.length > 0);
 
   return (
     <main className="mx-auto max-w-xl px-4 pb-16">
-      <header className="sticky top-0 bg-white/95 py-3 backdrop-blur">
-        <div className="flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => setDate(shiftDate(date, -1))}
-            className="min-h-(--spacing-tap) min-w-(--spacing-tap) rounded-lg border border-slate-200"
-            aria-label={t.t("today.yesterday")}
-          >
-            ‹
-          </button>
-          <div className="text-center">
-            <h1 className="text-lg font-semibold">{t.t("today.title")}</h1>
-            <p className="text-sm text-slate-500">
-              {date} · {t.template(data.day_template)}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDate(shiftDate(date, 1))}
-            className="min-h-(--spacing-tap) min-w-(--spacing-tap) rounded-lg border border-slate-200"
-            aria-label={t.t("today.tomorrow")}
-          >
-            ›
-          </button>
-        </div>
-        {/* Day totals sit in the header so they need no scrolling. */}
-        <p className="mt-2 text-center text-sm text-slate-600">
-          {t.t("today.total")}: {t.number(data.kcal)} ккал · {t.number(data.protein_g)} г
-        </p>
-      </header>
+      {header}
 
       {!planned && <Empty>{t.t("today.nothing_planned")}</Empty>}
 

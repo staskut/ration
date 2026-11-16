@@ -286,6 +286,31 @@ def follower(api, engine: Engine):  # type: ignore[no-untyped-def]
 
 
 @pytest.fixture
+def seeded_day(engine: Engine):  # type: ignore[no-untyped-def]
+    """The ISO date of day N of the seeded plan.
+
+    Derived from the row the seed wrote, never computed the way the seed
+    computes it — a test that repeats the production arithmetic agrees with
+    itself whatever either of them does.
+
+    These dates used to be literals (`2026-10-12`…`2026-10-18`). The seed now
+    anchors the demo plan to the current week, because a fixed week quietly
+    expires: on 19 October 2026 the follower's Today screen became an error
+    state with no way out of it, and no test noticed for a month (#75).
+    """
+
+    def _date(day_index: int = 0) -> str:
+        with Session(engine) as session:
+            plan = session.scalars(
+                select(models.Plan).where(models.Plan.slug == "reference_week_1")
+            ).one()
+            day = next(d for d in plan.days if d.day_index == day_index)
+            return day.date.isoformat()
+
+    return _date
+
+
+@pytest.fixture
 def anyio_backend() -> str:
     return "asyncio"
 

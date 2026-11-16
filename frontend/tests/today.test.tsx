@@ -170,3 +170,51 @@ describe("Today", () => {
     });
   });
 });
+
+describe("Today outside the plan's week", () => {
+  // The bug these pin: the day navigation used to render only in the success
+  // branch, so a date with no plan behind it produced an error screen with no
+  // arrows — a dead end. Every date is outside the plan once its week has
+  // passed, so the follower's own screen broke on the day the plan ran out and
+  // the public demo sat like that for a month (#75).
+
+  it("still offers the day navigation when the day has no plan", async () => {
+    mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404);
+    renderWithProviders(<Today />);
+
+    expect(await screen.findByLabelText("Вчера")).toBeInTheDocument();
+    expect(screen.getByLabelText("Завтра")).toBeInTheDocument();
+  });
+
+  it("says the day is outside the plan rather than that something went wrong", async () => {
+    // A 404 here is not a failure. Calling it one sends the follower looking
+    // for a fault that is not there.
+    mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404);
+    renderWithProviders(<Today />);
+
+    expect(await screen.findByText(/вне плана/i)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("still reports a real failure as a failure", async () => {
+    mockApi({ error: { code: "INTERNAL", message: "boom" } }, 500);
+    renderWithProviders(<Today />);
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(screen.getByLabelText("Завтра")).toBeInTheDocument();
+  });
+
+  it("navigates away from a day outside the plan", async () => {
+    mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404);
+    renderWithProviders(<Today />);
+
+    const tomorrow = await screen.findByLabelText("Завтра");
+    await userEvent.click(tomorrow);
+
+    // The date in the header moved, which is the whole of what was missing:
+    // a way off the screen.
+    await waitFor(() => {
+      expect(screen.getByLabelText("Завтра")).toBeEnabled();
+    });
+  });
+});

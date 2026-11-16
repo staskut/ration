@@ -31,11 +31,25 @@ async function gotoUnplannedDay(follower: Page): Promise<void> {
     if (!(await tomorrow.isVisible().catch(() => false))) break;
     await tomorrow.click();
   }
+  // Two different causes land here and they want opposite fixes, so say both
+  // and say how to tell them apart. The first time this fired it was the
+  // second cause, and the message named only the first — which sent the
+  // reader after a stale database for a date problem, and cost an afternoon.
+  const stillThere = await follower
+    .getByLabel("Завтра")
+    .isVisible()
+    .catch(() => false);
   throw new Error(
-    "No unplanned day left in the week. These tests write to a real database " +
-      "and this one fills the plan's only empty day, so the stack must be " +
-      "reset between runs: `make test-e2e` does it, a bare `npx playwright " +
-      "test` does not. See e2e/README.md.",
+    stillThere
+      ? "No unplanned day left in the week. These tests write to a real " +
+          "database and this one fills the plan's only empty day, so the " +
+          "stack must be reset between runs: `make test-e2e` does it, a bare " +
+          "`npx playwright test` does not. See e2e/README.md."
+      : "The follower's screen has no day navigation, so the walk could not " +
+          "start. That means today is outside the seeded plan's week and the " +
+          "screen is showing the outside-the-plan state. The seed anchors the " +
+          "plan to the current week, so this points at the seed not having " +
+          "run, or at a stale database from an older seed. See #75.",
   );
 }
 

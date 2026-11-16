@@ -119,7 +119,7 @@ class TestFollowerBoundary:
         assert failures == []
 
     def test_a_follower_can_read_what_the_screens_need(
-        self, follower: TestClient, ids: dict[str, str]
+        self, follower: TestClient, ids: dict[str, str], seeded_day
     ) -> None:
         for path in (
             "/api/ingredients",
@@ -129,7 +129,7 @@ class TestFollowerBoundary:
             f"/api/plans/{ids['plan']}/validation",
             f"/api/plans/{ids['plan']}/shopping-list",
             f"/api/plans/{ids['plan']}/prep-plan",
-            "/api/today?date=2026-10-12",
+            "/api/today?date=" + seeded_day(0),
         ):
             assert follower.get(path).status_code == 200, path
 
