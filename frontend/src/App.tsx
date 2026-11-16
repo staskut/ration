@@ -116,28 +116,28 @@ function PlannerApp() {
           onClick={() => setView("plan")}
           className={view === "plan" ? "font-semibold" : "text-slate-500"}
         >
-          План
+          Plan
         </button>
         <button
           type="button"
           onClick={() => setView("prep")}
           className={view === "prep" ? "font-semibold" : "text-slate-500"}
         >
-          Заготовки
+          Prep
         </button>
         <button
           type="button"
           onClick={() => setView("modules")}
           className={view === "modules" ? "font-semibold" : "text-slate-500"}
         >
-          Модули
+          Modules
         </button>
         <button
           type="button"
           onClick={() => setView("catalog")}
           className={view === "catalog" ? "font-semibold" : "text-slate-500"}
         >
-          Ингредиенты
+          Ingredients
         </button>
       </nav>
       {view === "catalog" ? (

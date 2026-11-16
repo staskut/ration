@@ -111,13 +111,13 @@ export function ModuleEditor() {
     <main className="mx-auto grid max-w-6xl gap-4 px-4 pb-16 lg:grid-cols-[18rem_1fr]">
       <aside>
         <div className="flex items-center justify-between py-4">
-          <h1 className="text-xl font-semibold">Модули</h1>
+          <h1 className="text-xl font-semibold">Modules</h1>
           <button
             type="button"
             onClick={() => choose(null)}
             className="min-h-(--spacing-tap) rounded-lg bg-slate-900 px-3 text-sm text-white"
           >
-            Новый
+            New
           </button>
         </div>
         <ul className="space-y-1">
@@ -134,8 +134,8 @@ export function ModuleEditor() {
               >
                 <span className="block truncate">{module.name}</span>
                 <span className="text-xs opacity-70">
-                  {t.slot(module.slot)} · {t.number(module.kcal)} ккал ·{" "}
-                  {t.number(module.protein_g)} г
+                  {t.slot(module.slot)} · {t.number(module.kcal)} kcal ·{" "}
+                  {t.number(module.protein_g)} g
                 </span>
               </button>
             </li>
@@ -149,14 +149,14 @@ export function ModuleEditor() {
             shopping list uses. */}
         {editing && (
           <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm">
-            <strong>{t.number(editing.kcal)} ккал</strong> ·{" "}
-            <strong>{t.number(editing.protein_g)} г белка</strong>
-            <span className="ml-2 text-slate-400">считает сервер</span>
+            <strong>{t.number(editing.kcal)} kcal</strong> ·{" "}
+            <strong>{t.number(editing.protein_g)} g protein</strong>
+            <span className="ml-2 text-slate-400">computed by the server</span>
           </p>
         )}
 
         <label className="block">
-          <span className="text-sm text-slate-600">Название</span>
+          <span className="text-sm text-slate-600">Name</span>
           <input
             value={draft.name}
             onChange={(event) => setDraft({ ...draft, name: event.target.value })}
@@ -166,7 +166,7 @@ export function ModuleEditor() {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="block">
-            <span className="text-sm text-slate-600">Приём пищи</span>
+            <span className="text-sm text-slate-600">Meal</span>
             <select
               value={draft.slot}
               onChange={(event) => setDraft({ ...draft, slot: event.target.value })}
@@ -178,7 +178,7 @@ export function ModuleEditor() {
             </select>
           </label>
           <label className="block">
-            <span className="text-sm text-slate-600">Роль</span>
+            <span className="text-sm text-slate-600">Role</span>
             <select
               value={draft.role}
               onChange={(event) => setDraft({ ...draft, role: event.target.value })}
@@ -186,13 +186,13 @@ export function ModuleEditor() {
             >
               {ROLES.map((role) => (
                 <option key={role} value={role}>
-                  {role === "main" ? "основное" : "гарнир"}
+                  {role === "main" ? "main" : "side"}
                 </option>
               ))}
             </select>
           </label>
           <label className="block">
-            <span className="text-sm text-slate-600">Порций за раз</span>
+            <span className="text-sm text-slate-600">Portions per batch</span>
             <input
               type="number"
               min={1}
@@ -205,10 +205,10 @@ export function ModuleEditor() {
         </div>
 
         <section>
-          <h2 className="text-sm font-medium text-slate-600">Состав, готовый вес</h2>
+          <h2 className="text-sm font-medium text-slate-600">Composition, cooked weight</h2>
           {noLines && (
             <p className="mt-1 text-sm text-rose-700">
-              Нужен хотя бы один ингредиент
+              At least one ingredient is required
             </p>
           )}
           <ul className="mt-2 space-y-2">
@@ -231,7 +231,7 @@ export function ModuleEditor() {
                 </select>
                 <div className="w-28">
                   <DecimalField
-                    label="г"
+                    label="g"
                     value={line.grams_cooked}
                     onChange={(grams) => {
                       const lines = [...draft.lines];
@@ -251,11 +251,11 @@ export function ModuleEditor() {
                     }}
                   />
                   {/* The pilot bought 45 g flatbreads for a 75 g module. */}
-                  важен размер
+                  size matters
                 </label>
                 <button
                   type="button"
-                  aria-label="Выше"
+                  aria-label="Up"
                   onClick={() => setDraft({ ...draft, lines: move(draft.lines, index, index - 1) })}
                   className="min-h-(--spacing-tap) px-2 text-slate-400"
                 >
@@ -263,7 +263,7 @@ export function ModuleEditor() {
                 </button>
                 <button
                   type="button"
-                  aria-label="Ниже"
+                  aria-label="Down"
                   onClick={() => setDraft({ ...draft, lines: move(draft.lines, index, index + 1) })}
                   className="min-h-(--spacing-tap) px-2 text-slate-400"
                 >
@@ -271,7 +271,7 @@ export function ModuleEditor() {
                 </button>
                 <button
                   type="button"
-                  aria-label="Убрать"
+                  aria-label="Remove"
                   onClick={() =>
                     setDraft({ ...draft, lines: draft.lines.filter((_, i) => i !== index) })
                   }
@@ -299,12 +299,12 @@ export function ModuleEditor() {
             }
             className="mt-2 min-h-(--spacing-tap) rounded-lg border border-dashed border-slate-300 px-3 text-sm text-slate-500"
           >
-            + ингредиент
+            + ingredient
           </button>
         </section>
 
         <label className="block">
-          <span className="text-sm text-slate-600">Метки, через запятую</span>
+          <span className="text-sm text-slate-600">Tags, comma separated</span>
           <input
             value={draft.tags}
             onChange={(event) => setDraft({ ...draft, tags: event.target.value })}
@@ -313,7 +313,7 @@ export function ModuleEditor() {
         </label>
 
         <label className="block">
-          <span className="text-sm text-slate-600">Заметки к приготовлению</span>
+          <span className="text-sm text-slate-600">Prep notes</span>
           <textarea
             value={draft.prepNotes}
             onChange={(event) => setDraft({ ...draft, prepNotes: event.target.value })}
@@ -331,7 +331,7 @@ export function ModuleEditor() {
           disabled={save.isPending || noLines}
           className="min-h-(--spacing-tap) rounded-lg bg-slate-900 px-4 text-white disabled:opacity-50"
         >
-          Сохранить
+          Save
         </button>
       </form>
     </main>

@@ -86,19 +86,19 @@ describe("IngredientForm", () => {
   it("blocks submission while the yield factor is invalid", async () => {
     mockApi({});
     renderWithProviders(<IngredientForm onDone={() => {}} />);
-    const field = screen.getByLabelText("Выход");
+    const field = screen.getByLabelText("Yield");
     await userEvent.clear(field);
     await userEvent.type(field, "9");
-    expect(screen.getByRole("button", { name: "Сохранить" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
   it("sends decimals as strings, never as numbers", async () => {
     mockApi({ id: "x" });
     renderWithProviders(<IngredientForm onDone={() => {}} />);
-    await userEvent.type(screen.getByLabelText("Название"), "Треска");
-    await userEvent.type(screen.getByLabelText("ккал / 100 г"), "82");
-    await userEvent.type(screen.getByLabelText("белок / 100 г"), "17.8");
-    await userEvent.click(screen.getByRole("button", { name: "Сохранить" }));
+    await userEvent.type(screen.getByLabelText("Name"), "Треска");
+    await userEvent.type(screen.getByLabelText("kcal / 100 g"), "82");
+    await userEvent.type(screen.getByLabelText("protein / 100 g"), "17.8");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => {
       const call = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.find(
@@ -114,7 +114,7 @@ describe("IngredientForm", () => {
   it("uses text inputs, because a number input would parse to a float", () => {
     mockApi({});
     renderWithProviders(<IngredientForm onDone={() => {}} />);
-    expect(screen.getByLabelText("ккал / 100 г")).toHaveAttribute("type", "text");
+    expect(screen.getByLabelText("kcal / 100 g")).toHaveAttribute("type", "text");
   });
 });
 

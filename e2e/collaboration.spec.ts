@@ -4,7 +4,7 @@ import { expect, test } from "./fixtures";
 
 /** The planner has two nav buttons; scope to the nav to stay unambiguous. */
 async function openPlan(planner: Page): Promise<void> {
-  await planner.locator("nav").getByRole("button", { name: "План" }).click();
+  await planner.locator("nav").getByRole("button", { name: "Plan" }).click();
   await expect(planner.locator("#day-0")).toBeVisible();
 }
 
@@ -136,7 +136,7 @@ test.describe("planner and follower", () => {
     // Day 1 carries the wine treat; making it a training day must fire the
     // template gate and show it in the panel.
     await planner
-      .getByLabel("Режим дня 2")
+      .getByLabel("Day template 2")
       .selectOption("training");
 
     await expect(
