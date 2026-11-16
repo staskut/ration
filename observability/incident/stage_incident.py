@@ -141,9 +141,20 @@ def guard(base_url: str) -> dict[str, str]:
 
 
 def restart_app(*, resolve_units: bool, port: str) -> None:
-    """Recreate the app container with or without the release flag."""
+    """Recreate the app container with or without the release flag.
+
+    `RATION_ENV` is pinned to development rather than inherited. The guard
+    reads the environment of the container that is *already running*, so a
+    caller with `RATION_ENV=production` exported would pass the check and then
+    recreate the local app in production mode — the guard having looked at the
+    old container. It cannot reach a real deployment (every target here is a
+    local compose service, and `ration-seed` refuses production outright), but
+    an ordering that only fails to matter by luck is worth closing. QA raised
+    it on #60.
+    """
     env = {
         **os.environ,
+        "RATION_ENV": "development",
         "RATION_RESOLVE_PACKAGE_UNITS": "true" if resolve_units else "false",
         "RATION_PORT": port,
     }
