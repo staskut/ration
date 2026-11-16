@@ -100,13 +100,13 @@ class TestFeedback:
         )
 
     def test_feedback_appears_on_the_plan_for_the_planner(
-        self, planner: TestClient, follower: TestClient, plan_id: str, entry_id: str
+        self, planner: TestClient, follower: TestClient, plan_id: str, entry_id: str, seeded_day
     ) -> None:
         follower.put(
             f"/api/plans/{plan_id}/entries/{entry_id}/feedback",
             json={"rating": "disliked"},
         )
-        today = follower.get("/api/today", params={"date": "2026-10-12"}).json()
+        today = follower.get("/api/today", params={"date": seeded_day(0)}).json()
         rated = [
             e
             for slot in today["slots"]
@@ -117,46 +117,48 @@ class TestFeedback:
 
 
 class TestToday:
-    DATE = "2026-10-12"
-
-    def test_resolves_the_active_plan_with_no_parameters(self, follower: TestClient) -> None:
-        response = follower.get("/api/today", params={"date": self.DATE})
+    def test_resolves_the_active_plan_with_no_parameters(
+        self, follower: TestClient, seeded_day
+    ) -> None:
+        response = follower.get("/api/today", params={"date": seeded_day(0)})
         assert response.status_code == 200
         assert response.json()["day_index"] == 0
 
-    def test_slot_times_come_from_the_day_template(self, follower: TestClient) -> None:
+    def test_slot_times_come_from_the_day_template(self, follower: TestClient, seeded_day) -> None:
         """A long shift moves dinner to 21:00, not 18:00."""
-        normal = follower.get("/api/today", params={"date": "2026-10-13"}).json()
-        long_shift = follower.get("/api/today", params={"date": "2026-10-14"}).json()
+        normal = follower.get("/api/today", params={"date": seeded_day(1)}).json()
+        long_shift = follower.get("/api/today", params={"date": seeded_day(2)}).json()
         assert long_shift["day_template"] == "long_shift"
         assert next(s for s in normal["slots"] if s["slot"] == "dinner")["time"] == "18:00"
         assert next(s for s in long_shift["slots"] if s["slot"] == "dinner")["time"] == "21:00"
 
-    def test_each_entry_carries_name_portion_and_totals(self, follower: TestClient) -> None:
-        body = follower.get("/api/today", params={"date": self.DATE}).json()
+    def test_each_entry_carries_name_portion_and_totals(
+        self, follower: TestClient, seeded_day
+    ) -> None:
+        body = follower.get("/api/today", params={"date": seeded_day(0)}).json()
         entry = next(e for s in body["slots"] for e in s["entries"] if s["slot"] == "dinner")
         assert entry["module_name"]
         assert entry["portion_grams"]
         assert entry["kcal"]
 
-    def test_home_only_is_marked(self, follower: TestClient) -> None:
+    def test_home_only_is_marked(self, follower: TestClient, seeded_day) -> None:
         """Reheated fish is not packed for work."""
-        body = follower.get("/api/today", params={"date": self.DATE}).json()
+        body = follower.get("/api/today", params={"date": seeded_day(0)}).json()
         dinner = next(s for s in body["slots"] if s["slot"] == "dinner")
         assert dinner["entries"][0]["home_only"] is True
 
-    def test_critical_sizes_surface_as_notes(self, follower: TestClient) -> None:
-        body = follower.get("/api/today", params={"date": "2026-10-15"}).json()
+    def test_critical_sizes_surface_as_notes(self, follower: TestClient, seeded_day) -> None:
+        body = follower.get("/api/today", params={"date": seeded_day(3)}).json()
         lunch = next(s for s in body["slots"] if s["slot"] == "lunch")
         assert lunch["entries"][0]["critical_notes"]
 
-    def test_day_totals_are_present(self, follower: TestClient) -> None:
-        body = follower.get("/api/today", params={"date": self.DATE}).json()
+    def test_day_totals_are_present(self, follower: TestClient, seeded_day) -> None:
+        body = follower.get("/api/today", params={"date": seeded_day(0)}).json()
         assert body["kcal"] == "1577.59"
 
-    def test_all_five_slots_appear_even_when_empty(self, follower: TestClient) -> None:
+    def test_all_five_slots_appear_even_when_empty(self, follower: TestClient, seeded_day) -> None:
         """A calm empty state, not a missing key."""
-        body = follower.get("/api/today", params={"date": self.DATE}).json()
+        body = follower.get("/api/today", params={"date": seeded_day(0)}).json()
         assert [s["slot"] for s in body["slots"]] == [
             "breakfast",
             "lunch",
@@ -168,16 +170,18 @@ class TestToday:
         assert treat["entries"] == []
         assert treat["kcal"] == "0"
 
-    def test_an_unplanned_day_returns_empty_slots_not_404(self, follower: TestClient) -> None:
-        body = follower.get("/api/today", params={"date": "2026-10-18"})
+    def test_an_unplanned_day_returns_empty_slots_not_404(
+        self, follower: TestClient, seeded_day
+    ) -> None:
+        body = follower.get("/api/today", params={"date": seeded_day(6)})
         assert body.status_code == 200
         assert all(s["entries"] == [] for s in body.json()["slots"])
 
     def test_a_date_outside_the_plan_is_404(self, follower: TestClient) -> None:
         assert follower.get("/api/today", params={"date": "2027-01-01"}).status_code == 404
 
-    def test_the_planner_sees_the_same_day(self, planner: TestClient) -> None:
-        assert planner.get("/api/today", params={"date": self.DATE}).status_code == 200
+    def test_the_planner_sees_the_same_day(self, planner: TestClient, seeded_day) -> None:
+        assert planner.get("/api/today", params={"date": seeded_day(0)}).status_code == 200
 
     def test_unauthenticated_is_401(self, api: TestClient) -> None:
         assert api.get("/api/today").status_code == 401
