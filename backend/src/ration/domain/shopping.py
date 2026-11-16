@@ -50,37 +50,119 @@ class ShoppingLine:
 
 
 def shopping_list(plan: Plan, catalog: Catalog, locale: str = "ru") -> tuple[ShoppingLine, ...]:
-    """Everything the plan needs, in raw weights, grouped by shop section."""
-    needed, critical = _accumulate_raw_grams(plan, catalog)
-    lines = [
-        _to_line(catalog.ingredient(ingredient_id), raw_grams, ingredient_id in critical, locale)
-        for ingredient_id, raw_grams in needed.items()
-    ]
-    return tuple(sorted(lines, key=lambda line: (line.shop_section, line.name)))
+    """Everything the plan needs, in raw weights, grouped by shop section.
+
+    The single entry point, and the composition of the five stages below. It
+    exists separately from them because a caller that only wants a shopping
+    list should not have to know the pipeline — and because the golden test
+    (`tests/unit/test_golden_shopping.py`) calls this and nothing else.
+
+    The stages are public so the API can time each one as its own span without
+    the engine knowing anything about telemetry (HLD §4, §7, AD-1). Composing
+    them by hand must produce exactly this; a test asserts it.
+    """
+    cooked = expand_entries(plan, catalog)
+    raw = convert_to_raw(cooked)
+    merged = merge_by_ingredient(raw)
+    lines = round_to_packages(merged, catalog, locale)
+    return group_by_shop_section(lines)
 
 
-def _accumulate_raw_grams(plan: Plan, catalog: Catalog) -> tuple[dict[str, Decimal], set[str]]:
-    """Sum raw grams per ingredient across the whole plan.
+@dataclass(frozen=True, slots=True)
+class CookedDemand:
+    """One module line, scaled to one plan entry, still in cooked grams."""
+
+    ingredient_id: str
+    grams_cooked: Decimal
+    yield_factor: Decimal
+    size_is_critical: bool
+
+
+@dataclass(frozen=True, slots=True)
+class RawDemand:
+    """The same line after the yield conversion: what has to be bought for it."""
+
+    ingredient_id: str
+    grams_raw: Decimal
+    size_is_critical: bool
+
+
+def expand_entries(plan: Plan, catalog: Catalog) -> tuple[CookedDemand, ...]:
+    """Every entry in the plan, flattened to module lines in cooked grams.
+
+    ``batch_portions`` is deliberately absent. A lunch cooked once for three
+    days appears as three entries, one per day, and each is one portion;
+    multiplying by the batch size as well would triple-count it (PRD §6.4).
+
+    The yield factor is resolved here rather than at the conversion, because a
+    line may override the ingredient's own (D4) and the override belongs to the
+    line that is being expanded.
+    """
+    return tuple(
+        CookedDemand(
+            ingredient_id=line.ingredient_id,
+            grams_cooked=line.grams_cooked * entry.portion_factor,
+            yield_factor=line.yield_factor_override
+            or catalog.ingredient(line.ingredient_id).yield_factor,
+            size_is_critical=line.size_is_critical,
+        )
+        for entry in plan.all_entries
+        for line in catalog.module(entry.module_id).lines
+    )
+
+
+def convert_to_raw(cooked: tuple[CookedDemand, ...]) -> tuple[RawDemand, ...]:
+    """Cooked grams to raw grams, the one place yield is applied (AD-3)."""
+    return tuple(
+        RawDemand(
+            ingredient_id=demand.ingredient_id,
+            grams_raw=demand.grams_cooked / demand.yield_factor,
+            size_is_critical=demand.size_is_critical,
+        )
+        for demand in cooked
+    )
+
+
+def merge_by_ingredient(raw: tuple[RawDemand, ...]) -> tuple[RawDemand, ...]:
+    """Sum raw grams per ingredient, in order of first appearance.
 
     Merging is by ingredient id, never by name — aliases are resolved when an
-    ingredient is entered, not here (PRD 6.3).
+    ingredient is entered, not here (PRD §6.3).
     """
-    needed: dict[str, Decimal] = defaultdict(Decimal)
+    totals: dict[str, Decimal] = defaultdict(Decimal)
     critical: set[str] = set()
+    for demand in raw:
+        totals[demand.ingredient_id] += demand.grams_raw
+        if demand.size_is_critical:
+            critical.add(demand.ingredient_id)
+    return tuple(
+        RawDemand(ingredient_id, grams, ingredient_id in critical)
+        for ingredient_id, grams in totals.items()
+    )
 
-    for entry in plan.all_entries:
-        module = catalog.module(entry.module_id)
-        for line in module.lines:
-            ingredient = catalog.ingredient(line.ingredient_id)
-            cooked = line.grams_cooked * entry.portion_factor
-            # A line may override the ingredient's yield when its preparation
-            # differs — raw pepper against roasted pepper, for example.
-            yield_factor = line.yield_factor_override or ingredient.yield_factor
-            needed[line.ingredient_id] += cooked / yield_factor
-            if line.size_is_critical:
-                critical.add(line.ingredient_id)
 
-    return dict(needed), critical
+def round_to_packages(
+    merged: tuple[RawDemand, ...], catalog: Catalog, locale: str = "ru"
+) -> tuple[ShoppingLine, ...]:
+    """Round each need up to whole packages and name it for the shop."""
+    return tuple(
+        _to_line(
+            catalog.ingredient(demand.ingredient_id),
+            demand.grams_raw,
+            demand.size_is_critical,
+            locale,
+        )
+        for demand in merged
+    )
+
+
+def group_by_shop_section(lines: tuple[ShoppingLine, ...]) -> tuple[ShoppingLine, ...]:
+    """Arrange the list the way the shop is: by section, then by name.
+
+    A stable sort, so two lines in the same section with the same name keep the
+    order the plan put them in.
+    """
+    return tuple(sorted(lines, key=lambda line: (line.shop_section, line.name)))
 
 
 def _to_line(
