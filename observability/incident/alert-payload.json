@@ -1,0 +1,58 @@
+{
+  "alerts": [
+    {
+      "annotations": {
+        "observed_count": "6",
+        "runbook": "docs/runbooks/shopping-list-5xx.md",
+        "summary": "6 server errors in 5 minutes on /api/plans/{plan_id}/shopping-list (dev)",
+        "tempo_query": "{resource.service.name=\"ration-api\"\n && resource.service.version=\"dev\"\n && span.http.route=\"/api/plans/{plan_id}/shopping-list\"\n && status=error}",
+        "threshold": "3",
+        "window": "5m"
+      },
+      "endsAt": "0001-01-01T00:00:00Z",
+      "fingerprint": "3e95e04f02be8e33",
+      "generatorURL": "http://1d2b695616e1:9090/graph?g0.expr=sum+by+%28http_route%2C+service_version%2C+deployment_environment%29+%28increase%28http_server_request_duration_seconds_count%7Bhttp_response_status_code%3D~%225..%22%2Chttp_route%3D%22%2Fapi%2Fplans%2F%7Bplan_id%7D%2Fshopping-list%22%7D%5B5m%5D%29%29+%3E%3D+3&g0.tab=1",
+      "labels": {
+        "alertname": "ShoppingListServerErrors",
+        "deployment_environment": "development",
+        "environment": "development",
+        "http_route": "/api/plans/{plan_id}/shopping-list",
+        "route": "/api/plans/{plan_id}/shopping-list",
+        "service_version": "dev",
+        "severity": "page",
+        "version": "dev"
+      },
+      "startsAt": "2026-11-16T17:02:46.167Z",
+      "status": "firing"
+    }
+  ],
+  "commonAnnotations": {
+    "observed_count": "6",
+    "runbook": "docs/runbooks/shopping-list-5xx.md",
+    "summary": "6 server errors in 5 minutes on /api/plans/{plan_id}/shopping-list (dev)",
+    "tempo_query": "{resource.service.name=\"ration-api\"\n && resource.service.version=\"dev\"\n && span.http.route=\"/api/plans/{plan_id}/shopping-list\"\n && status=error}",
+    "threshold": "3",
+    "window": "5m"
+  },
+  "commonLabels": {
+    "alertname": "ShoppingListServerErrors",
+    "deployment_environment": "development",
+    "environment": "development",
+    "http_route": "/api/plans/{plan_id}/shopping-list",
+    "route": "/api/plans/{plan_id}/shopping-list",
+    "service_version": "dev",
+    "severity": "page",
+    "version": "dev"
+  },
+  "externalURL": "http://e0fdb4d1dc80:9093",
+  "groupKey": "{}:{alertname=\"ShoppingListServerErrors\", route=\"/api/plans/{plan_id}/shopping-list\", version=\"dev\"}",
+  "groupLabels": {
+    "alertname": "ShoppingListServerErrors",
+    "route": "/api/plans/{plan_id}/shopping-list",
+    "version": "dev"
+  },
+  "receiver": "alert-sink",
+  "status": "firing",
+  "truncatedAlerts": 0,
+  "version": "4"
+}

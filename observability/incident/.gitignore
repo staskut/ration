@@ -1,0 +1,3 @@
+# Runtime state: which row is currently staged and what it was before. Local
+# to whoever staged it, and meaningless in anybody else's checkout.
+.staged.json

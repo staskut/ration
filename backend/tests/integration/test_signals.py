@@ -439,3 +439,63 @@ class TestTheHistogramCanAnswerAPercentile:
         # four-second one.
         occupied = [i for i, count in enumerate(point.bucket_counts) if count]
         assert occupied == [2], point.explicit_bounds
+
+
+class TestTheOtlpLogCopyIsFilteredToo:
+    """#58's amended criterion: the second, wider door is filtered and tested.
+
+    The stdout formatter and the OTLP handler are two destinations for the same
+    record, and the OTLP side takes attributes from the whole `LogRecord` —
+    anything a caller put in `extra`, anything a library attached. Its
+    filtering is deliberately silent (a warning there would be logged on this
+    handler, whose attributes would be filtered, which would warn — a
+    RecursionError on the first request). Silent and untested is one too many.
+    """
+
+    def test_a_key_outside_the_allowlist_is_not_exported(self) -> None:
+        import logging as stdlib_logging
+
+        from opentelemetry.sdk._logs import LoggerProvider
+        from opentelemetry.sdk._logs.export import (
+            InMemoryLogExporter,
+            SimpleLogRecordProcessor,
+        )
+
+        exporter = InMemoryLogExporter()
+        provider = LoggerProvider()
+        provider.add_log_record_processor(SimpleLogRecordProcessor(exporter))
+        handler = logs.AllowlistedLoggingHandler(
+            level=stdlib_logging.INFO, logger_provider=provider
+        )
+
+        logger = stdlib_logging.getLogger("ration.test-otlp-filter")
+        logger.setLevel(stdlib_logging.INFO)
+        logger.addHandler(handler)
+        try:
+            logger.info(
+                logs.Message.REQUEST_FINISHED,
+                extra={
+                    "http.route": ROUTE,
+                    # What a leak would look like: a key nobody allowed,
+                    # carrying something off the plate.
+                    "ration.ingredient_name": "Куриная грудка",
+                },
+            )
+        finally:
+            logger.removeHandler(handler)
+            provider.shutdown()
+
+        (record,) = exporter.get_finished_logs()
+        attributes = dict(record.log_record.attributes or {})
+        assert attributes["http.route"] == ROUTE
+        assert "ration.ingredient_name" not in attributes
+        assert "Куриная грудка" not in str(attributes)
+        assert set(attributes) <= ALLOWED
+
+    def test_both_destinations_are_governed_by_the_same_list(self) -> None:
+        """One list, so the two cannot drift into disagreeing."""
+        import inspect
+
+        source = inspect.getsource(logs.AllowlistedLoggingHandler._get_attributes)
+        assert "ALLOWED" in source
+        assert "ALLOWED" in inspect.getsource(logs.JsonFormatter.format)

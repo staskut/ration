@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 
 from ration.domain.types import Catalog, Ingredient, Plan
+from ration.domain.units import dimension_for
 
 _ONE_DECIMAL = Decimal("0.1")
 
@@ -49,7 +50,9 @@ class ShoppingLine:
     is_staple: bool = False
 
 
-def shopping_list(plan: Plan, catalog: Catalog, locale: str = "ru") -> tuple[ShoppingLine, ...]:
+def shopping_list(
+    plan: Plan, catalog: Catalog, locale: str = "ru", *, resolve_units: bool = False
+) -> tuple[ShoppingLine, ...]:
     """Everything the plan needs, in raw weights, grouped by shop section.
 
     The single entry point, and the composition of the five stages below. It
@@ -62,7 +65,7 @@ def shopping_list(plan: Plan, catalog: Catalog, locale: str = "ru") -> tuple[Sho
     them by hand must produce exactly this; a test asserts it.
     """
     cooked = expand_entries(plan, catalog)
-    raw = convert_to_raw(cooked)
+    raw = convert_to_raw(cooked, resolve_units=resolve_units)
     merged = merge_by_ingredient(raw)
     lines = round_to_packages(merged, catalog, locale)
     return group_by_shop_section(lines)
@@ -76,6 +79,9 @@ class CookedDemand:
     grams_cooked: Decimal
     yield_factor: Decimal
     size_is_critical: bool
+    # Carried from the catalog so the conversion can check it without the
+    # catalog, which keeps each stage a function of its own input.
+    package_unit: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,14 +111,28 @@ def expand_entries(plan: Plan, catalog: Catalog) -> tuple[CookedDemand, ...]:
             yield_factor=line.yield_factor_override
             or catalog.ingredient(line.ingredient_id).yield_factor,
             size_is_critical=line.size_is_critical,
+            package_unit=catalog.ingredient(line.ingredient_id).package_unit,
         )
         for entry in plan.all_entries
         for line in catalog.module(entry.module_id).lines
     )
 
 
-def convert_to_raw(cooked: tuple[CookedDemand, ...]) -> tuple[RawDemand, ...]:
-    """Cooked grams to raw grams, the one place yield is applied (AD-3)."""
+def convert_to_raw(
+    cooked: tuple[CookedDemand, ...], *, resolve_units: bool = False
+) -> tuple[RawDemand, ...]:
+    """Cooked grams to raw grams, the one place yield is applied (AD-3).
+
+    `resolve_units` turns on the unit check: every ingredient's `package_unit`
+    must name a dimension this system models, or `UnrecognisedUnitError` is
+    raised. It is off by default because the check shipped after the data it
+    checks — see `docs/runbooks/staging-the-incident.md`. Nothing validates
+    that column today (#70), so switching it on against a catalog that has
+    never been checked is exactly the release this milestone stages.
+    """
+    if resolve_units:
+        for demand in cooked:
+            dimension_for(demand.package_unit, demand.ingredient_id)
     return tuple(
         RawDemand(
             ingredient_id=demand.ingredient_id,

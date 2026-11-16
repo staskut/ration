@@ -54,3 +54,21 @@ class TestTelemetryIsOffUnlessAsked:
     def test_anything_else_leaves_it_off(self, monkeypatch: pytest.MonkeyPatch, value: str) -> None:
         monkeypatch.setenv("RATION_TELEMETRY_ENABLED", value)
         assert settings().telemetry_enabled is False
+
+
+class TestTheStagedRelease:
+    """#60's unit check. Off by default, so a plain deploy is unchanged.
+
+    It has a test because it was wired wrong once: the field existed, the
+    environment said `true`, and `settings()` kept returning False because the
+    line that reads it had never been added. Nothing failed — the staged
+    incident simply did not happen, which is the hardest kind of bug to see.
+    """
+
+    def test_off_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("RATION_RESOLVE_PACKAGE_UNITS", raising=False)
+        assert settings().resolve_package_units is False
+
+    def test_the_environment_can_turn_it_on(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("RATION_RESOLVE_PACKAGE_UNITS", "true")
+        assert settings().resolve_package_units is True

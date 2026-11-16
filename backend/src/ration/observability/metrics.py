@@ -50,8 +50,17 @@ def configure(settings: Settings) -> None:
             }
         )
     )
+    # Fifteen seconds, matching Prometheus's scrape interval, not the SDK's
+    # default minute. A cumulative counter exported once a minute arrives at
+    # the collector already at its new value, so a burst of failures inside one
+    # export window appears as a single flat sample — and `increase()` over a
+    # flat series is zero. The alert then does not fire while the metric sits
+    # there with the right number on it, which is the most misleading shape a
+    # monitoring failure can take. It cost an afternoon here before it could
+    # have cost an incident.
     reader = PeriodicExportingMetricReader(
-        OTLPMetricExporter(endpoint=f"{settings.otlp_endpoint}/v1/metrics")
+        OTLPMetricExporter(endpoint=f"{settings.otlp_endpoint}/v1/metrics"),
+        export_interval_millis=15_000,
     )
     set_strict(not settings.is_production)
     install(MeterProvider(resource=resource, metric_readers=[reader]))

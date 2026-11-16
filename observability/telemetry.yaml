@@ -25,6 +25,9 @@ services:
       # Overridden by the deploy pipeline in a real environment; "dev" locally
       # so the dashboard and the alert still have something to say.
       RATION_VERSION: ${RATION_VERSION:-dev}
+      # Off unless the staged incident of #60 turns it on. A plain
+      # `docker compose up` and a normal deploy are unaffected.
+      RATION_RESOLVE_PACKAGE_UNITS: ${RATION_RESOLVE_PACKAGE_UNITS:-false}
     depends_on:
       collector:
         condition: service_started
