@@ -331,3 +331,108 @@ class TestNothingDietaryEscapesAnySignal:
             assert set(_attributes(point)) <= ALLOWED
         for record in seen.records():
             assert set(record) <= ALLOWED
+
+
+class TestATelemetryMistakeNeverBreaksARequest:
+    """QA's finding on #57, kept as a test so it cannot come back.
+
+    The gate had both modes from the start, but the places that close a request
+    passed no flag and so raised in every environment. An engineer adding an
+    attribute the allowlist does not carry would have turned every request into
+    a 500 in production — the one outcome the lenient mode exists to prevent.
+    """
+
+    @staticmethod
+    def _without(key: str) -> Any:
+        from ration.observability import attributes
+
+        return {k: v for k, v in attributes.SOURCES.items() if k != key}
+
+    def test_in_production_an_unlisted_key_is_dropped_and_the_request_survives(
+        self, signals: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from ration.observability import attributes
+
+        client, seen = signals
+        plan = _plan_id(client)
+        # Production: the mode telemetry.configure() sets when is_production.
+        attributes.set_strict(False)
+        # "Somebody set a key the list does not carry" — simulated by taking a
+        # key the request path really sets out of the list.
+        monkeypatch.setattr(attributes, "ALLOWED", frozenset(self._without("http.route")))
+        seen.clear()
+
+        response = client.get(f"/api/plans/{plan}/shopping-list")
+
+        assert response.status_code == 200
+        assert response.json()["lines"]
+        assert any(r["message"] == "telemetry.attribute_dropped" for r in seen.records())
+
+    def test_outside_production_the_same_mistake_is_loud(
+        self, signals: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """So the engineer who adds the key sees it on the first request."""
+        from ration.observability import attributes
+        from ration.observability.attributes import ForbiddenAttributeError
+
+        client, _seen = signals
+        plan = _plan_id(client)
+        attributes.set_strict(True)
+        monkeypatch.setattr(attributes, "ALLOWED", frozenset(self._without("http.route")))
+
+        with pytest.raises(ForbiddenAttributeError):
+            client.get(f"/api/plans/{plan}/shopping-list")
+
+    def test_the_mode_follows_the_environment(self) -> None:
+        from ration.config import Settings
+        from ration.observability import attributes, metrics
+
+        for environment, expected in (("production", False), ("staging", True)):
+            metrics.shutdown()
+            attributes.set_strict(True)
+            metrics.configure(
+                Settings(
+                    database_url="sqlite://",
+                    environment=environment,
+                    session_secret="x",
+                    telemetry_enabled=True,
+                    otlp_endpoint="http://127.0.0.1:1",
+                )
+            )
+            assert attributes.is_strict() is expected, environment
+        metrics.shutdown()
+        attributes.set_strict(True)
+
+
+class TestTheHistogramCanAnswerAPercentile:
+    def test_the_buckets_suit_a_duration_in_seconds(self, signals: Any) -> None:
+        """QA's second finding on #57, which #59's p95 panel depends on.
+
+        The SDK's default boundaries start at 0 and jump to 5, which is right
+        for milliseconds and useless for seconds: every request this service
+        serves lands in one bucket, and a percentile over one bucket is a
+        number that is always wrong and never obviously wrong.
+        """
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+
+        from ration.observability import metrics as metrics_module
+
+        reader = InMemoryMetricReader()
+        provider = MeterProvider(metric_readers=[reader], views=[metrics_module.duration_view()])
+        metrics_module.install(provider)
+        metrics_module.record_request(method="GET", route=ROUTE, status_code=200, seconds=0.012)
+
+        point = next(
+            p
+            for resource in reader.get_metrics_data().resource_metrics
+            for scope in resource.scope_metrics
+            for metric in scope.metrics
+            if metric.name == DURATION
+            for p in metric.data.data_points
+        )
+        assert 0.025 in point.explicit_bounds
+        # The 12 ms request must land somewhere that distinguishes it from a
+        # four-second one.
+        occupied = [i for i, count in enumerate(point.bucket_counts) if count]
+        assert occupied == [2], point.explicit_bounds
