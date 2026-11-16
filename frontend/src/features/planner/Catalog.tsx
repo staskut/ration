@@ -30,7 +30,7 @@ export function Catalog() {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-16">
       <div className="flex items-center justify-between py-4">
-        <h1 className="text-xl font-semibold">Ингредиенты</h1>
+        <h1 className="text-xl font-semibold">Ingredients</h1>
         <button
           type="button"
           onClick={() => {
@@ -39,7 +39,7 @@ export function Catalog() {
           }}
           className="min-h-(--spacing-tap) rounded-lg bg-slate-900 px-4 text-white"
         >
-          Добавить
+          Add
         </button>
       </div>
 
@@ -59,7 +59,7 @@ export function Catalog() {
         type="search"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
-        placeholder="Поиск по названию или синониму"
+        placeholder="Search by name or alias"
         className="min-h-(--spacing-tap) w-full rounded-xl border border-slate-300 px-3"
       />
 
@@ -71,17 +71,17 @@ export function Catalog() {
         </p>
       )}
 
-      {data?.length === 0 && <Empty>Ничего не найдено</Empty>}
+      {data?.length === 0 && <Empty>Nothing found</Empty>}
 
       <table className="mt-4 w-full text-sm">
         <thead className="text-left text-slate-500">
           <tr>
-            <th className="py-2">Название</th>
-            <th className="py-2 text-right">ккал/100 г</th>
-            <th className="py-2 text-right">белок</th>
-            <th className="py-2 text-right">выход</th>
-            <th className="py-2 text-right">упаковка</th>
-            <th className="py-2">раздел</th>
+            <th className="py-2">Name</th>
+            <th className="py-2 text-right">kcal/100 g</th>
+            <th className="py-2 text-right">protein</th>
+            <th className="py-2 text-right">yield</th>
+            <th className="py-2 text-right">pack</th>
+            <th className="py-2">section</th>
             <th className="py-2" />
           </tr>
         </thead>
@@ -102,8 +102,8 @@ export function Catalog() {
                   // the backlog for fixing it is otherwise invisible (#54).
                   <span
                     className="ml-1 text-amber-600"
-                    title="Оценка, не измерение. Готовый вес ÷ сырой"
-                    aria-label="Оценка, не измерение"
+                    title="An estimate, not a measurement. Cooked weight ÷ raw"
+                    aria-label="An estimate, not a measurement"
                   >
                     ≈
                   </span>
@@ -124,13 +124,13 @@ export function Catalog() {
                   }}
                   className="px-2 text-slate-500 hover:text-slate-900"
                 >
-                  Изменить
+                  Edit
                 </button>
                 <button
                   type="button"
                   onClick={() => remove.mutate(ingredient.id)}
                   className="px-2 text-slate-400 hover:text-rose-700"
-                  aria-label={`Удалить ${ingredient.names.ru ?? ingredient.id}`}
+                  aria-label={`Delete ${ingredient.names.ru ?? ingredient.id}`}
                 >
                   ×
                 </button>

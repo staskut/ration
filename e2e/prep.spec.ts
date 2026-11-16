@@ -13,7 +13,7 @@ test.describe("the planner's prep plan", () => {
     planner,
   }) => {
     await planner.goto("/");
-    await planner.locator("nav").getByRole("button", { name: "Заготовки" }).click();
+    await planner.locator("nav").getByRole("button", { name: "Prep" }).click();
 
     // Both batch modules in the reference week, by name rather than by count,
     // so a wrong-but-plausible list fails rather than passes.
@@ -23,7 +23,7 @@ test.describe("the planner's prep plan", () => {
 
   test("shows raw and per-container weights as different figures", async ({ planner }) => {
     await planner.goto("/");
-    await planner.locator("nav").getByRole("button", { name: "Заготовки" }).click();
+    await planner.locator("nav").getByRole("button", { name: "Prep" }).click();
 
     const card = planner
       .getByRole("article")
@@ -36,7 +36,7 @@ test.describe("the planner's prep plan", () => {
     await expect(row).toContainText("553.8");
     await expect(row).toContainText("120");
 
-    await expect(card).toContainText("3 порции");
-    await expect(card).toContainText("Дни 1–3");
+    await expect(card).toContainText("3 portions");
+    await expect(card).toContainText("Days 1–3");
   });
 });

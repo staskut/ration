@@ -70,10 +70,10 @@ export function PlanBuilder({ planId }: { planId: string }) {
               <header className="flex items-baseline justify-between gap-2">
                 <div>
                   <h2 className="font-medium">
-                    День {day.day_index + 1} · {day.date}
+                    Day {day.day_index + 1} · {day.date}
                   </h2>
                   <p className="text-sm text-slate-500">
-                    {t.number(day.kcal)} ккал
+                    {t.number(day.kcal)} kcal
                     {profile && (
                       // Totals mean nothing without the target beside them.
                       <span className="text-slate-400">
@@ -82,11 +82,11 @@ export function PlanBuilder({ planId }: { planId: string }) {
                         {t.number(profile.daily_kcal_tolerance)}
                       </span>
                     )}{" "}
-                    · {t.number(day.protein_g)} г белка
+                    · {t.number(day.protein_g)} g protein
                     {profile && (
                       <span className="text-slate-400">
                         {" "}
-                        / от {t.number(profile.daily_protein_min)}
+                        / min {t.number(profile.daily_protein_min)}
                       </span>
                     )}
                   </p>
@@ -100,7 +100,7 @@ export function PlanBuilder({ planId }: { planId: string }) {
                     })
                   }
                   className="min-h-(--spacing-tap) rounded-lg border border-slate-300 px-2 text-sm"
-                  aria-label={`Режим дня ${day.day_index + 1}`}
+                  aria-label={`Day template ${day.day_index + 1}`}
                 >
                   {TEMPLATES.map((template) => (
                     <option key={template} value={template}>
@@ -128,11 +128,11 @@ export function PlanBuilder({ planId }: { planId: string }) {
                         >
                           <span className="block truncate">{entry.module_name}</span>
                           <span className="text-xs text-slate-400">
-                            {entry.role === "side" ? "гарнир" : "основное"}
+                            {entry.role === "side" ? "side" : "main"}
                           </span>
                           <label className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                             <span className="sr-only">
-                              Доля порции для {entry.module_name}
+                              Portion factor for {entry.module_name}
                             </span>
                             <input
                               type="range"
@@ -147,7 +147,7 @@ export function PlanBuilder({ planId }: { planId: string }) {
                                 })
                               }
                               className="w-full"
-                              aria-label={`Доля порции для ${entry.module_name}`}
+                              aria-label={`Portion factor for ${entry.module_name}`}
                             />
                             <span className="tabular-nums">
                               ×{t.number(entry.portion_factor)}
@@ -157,7 +157,7 @@ export function PlanBuilder({ planId }: { planId: string }) {
                             type="button"
                             onClick={() => removeEntry.mutate(entry.id)}
                             className="float-right text-slate-400 hover:text-rose-600"
-                            aria-label={`Убрать ${entry.module_name}`}
+                            aria-label={`Remove ${entry.module_name}`}
                           >
                             ×
                           </button>
@@ -227,8 +227,8 @@ export function PlanBuilder({ planId }: { planId: string }) {
             }}
           />
           <p className="mt-3 text-xs text-slate-400">
-            Доля порции меняет количество линейно — соль и масло так не
-            масштабируются.
+            The portion factor scales quantities linearly — salt and oil do
+            not scale that way.
           </p>
         </div>
       </div>

@@ -61,23 +61,23 @@ afterEach(() => {
 
 describe("formatDays", () => {
   it("is 1-based, matching the plan board rather than the array index", () => {
-    expect(formatDays([0])).toBe("День 1");
+    expect(formatDays([0])).toBe("Day 1");
   });
 
   it("collapses a consecutive run, which is the usual batch shape", () => {
-    expect(formatDays([0, 1, 2])).toBe("Дни 1–3");
+    expect(formatDays([0, 1, 2])).toBe("Days 1–3");
   });
 
   it("keeps a gap visible rather than implying a range", () => {
-    expect(formatDays([0, 2])).toBe("Дни 1, 3");
+    expect(formatDays([0, 2])).toBe("Days 1, 3");
   });
 
   it("handles runs and gaps together", () => {
-    expect(formatDays([0, 1, 4])).toBe("Дни 1–2, 5");
+    expect(formatDays([0, 1, 4])).toBe("Days 1–2, 5");
   });
 
   it("does not depend on the order the API happens to send", () => {
-    expect(formatDays([2, 0, 1])).toBe("Дни 1–3");
+    expect(formatDays([2, 0, 1])).toBe("Days 1–3");
   });
 });
 
@@ -87,8 +87,8 @@ describe("the prep plan screen", () => {
     renderWithProviders(<PrepPlan planId="p1" />);
 
     expect(await screen.findByText("Рисовая лапша с индейкой")).toBeInTheDocument();
-    expect(screen.getByText(/3 порции/)).toBeInTheDocument();
-    expect(screen.getByText(/Дни 1–3/)).toBeInTheDocument();
+    expect(screen.getByText(/3 portions/)).toBeInTheDocument();
+    expect(screen.getByText(/Days 1–3/)).toBeInTheDocument();
     expect(screen.getByText("Разложить по контейнерам сразу")).toBeInTheDocument();
   });
 
@@ -102,22 +102,22 @@ describe("the prep plan screen", () => {
     const row = (await screen.findByText("Бедро индейки")).closest("tr");
     expect(row).not.toBeNull();
     const cells = within(row!).getAllByRole("cell");
-    expect(cells[1]).toHaveTextContent("553.8 г");
-    expect(cells[2]).toHaveTextContent("120 г");
+    expect(cells[1]).toHaveTextContent("553.8 g");
+    expect(cells[2]).toHaveTextContent("120 g");
   });
 
   it("renders decimals exactly as sent, without re-rounding them", async () => {
     mockApi(SESSIONS);
     renderWithProviders(<PrepPlan planId="p1" />);
     // "553.8", not "554" and not "553.80". These numbers end up on a scale.
-    expect(await screen.findByText("553.8 г")).toBeInTheDocument();
+    expect(await screen.findByText("553.8 g")).toBeInTheDocument();
   });
 
   it("says so when the plan has nothing cooked in batches", async () => {
     mockApi([]);
     renderWithProviders(<PrepPlan planId="p1" />);
     expect(
-      await screen.findByText("В этом плане нет блюд, которые готовятся партией"),
+      await screen.findByText("No batch-cooked dishes in this plan"),
     ).toBeInTheDocument();
   });
 });

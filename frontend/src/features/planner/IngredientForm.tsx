@@ -48,10 +48,10 @@ function fromIngredient(ingredient: Ingredient): Draft {
 
 /** Mirrors the server's bound so the planner is told before submitting. */
 export function yieldError(value: string): string | undefined {
-  if (value.trim() === "") return "Укажите выход";
+  if (value.trim() === "") return "Enter a yield";
   const parsed = Number(value);
-  if (Number.isNaN(parsed)) return "Не число";
-  if (parsed <= 0 || parsed > MAX_YIELD) return `Должен быть больше 0 и не больше ${MAX_YIELD}`;
+  if (Number.isNaN(parsed)) return "Not a number";
+  if (parsed <= 0 || parsed > MAX_YIELD) return `Must be greater than 0 and at most ${MAX_YIELD}`;
   return undefined;
 }
 
@@ -70,7 +70,7 @@ export function IngredientForm({
   const localYieldError = yieldError(draft.yieldFactor);
   // A field named by the server takes precedence: it knows rules this does not.
   const serverYieldError = save.error?.fieldError("yield_factor")
-    ? "Сервер отклонил выход"
+    ? "The server rejected the yield"
     : undefined;
 
   const submit = (event: React.FormEvent) => {
@@ -97,11 +97,11 @@ export function IngredientForm({
   return (
     <form onSubmit={submit} className="space-y-3 rounded-2xl border border-slate-200 p-4">
       <h2 className="font-medium">
-        {editing ? `Изменить «${draft.name}»` : "Новый ингредиент"}
+        {editing ? `Edit “${draft.name}”` : "New ingredient"}
       </h2>
 
       <label className="block">
-        <span className="text-sm text-slate-600">Название</span>
+        <span className="text-sm text-slate-600">Name</span>
         <input
           value={draft.name}
           onChange={(event) => setDraft({ ...draft, name: event.target.value })}
@@ -111,46 +111,46 @@ export function IngredientForm({
 
       <div className="grid gap-3 sm:grid-cols-3">
         <DecimalField
-          label="ккал / 100 г"
+          label="kcal / 100 g"
           value={draft.kcal}
           onChange={(kcal) => setDraft({ ...draft, kcal })}
         />
         <DecimalField
-          label="белок / 100 г"
+          label="protein / 100 g"
           value={draft.protein}
           onChange={(protein) => setDraft({ ...draft, protein })}
         />
         <DecimalField
-          label="Выход"
+          label="Yield"
           value={draft.yieldFactor}
           onChange={(yieldFactor) => setDraft({ ...draft, yieldFactor })}
           error={localYieldError ?? serverYieldError}
-          hint="Готовый вес ÷ сырой. 1 — если едят как есть"
+          hint="Cooked weight ÷ raw. 1 if eaten as bought"
         />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         <DecimalField
-          label="Размер упаковки"
+          label="Pack size"
           value={draft.packageSize}
           onChange={(packageSize) => setDraft({ ...draft, packageSize })}
-          placeholder="необязательно"
+          placeholder="optional"
         />
         <label className="block">
-          <span className="text-sm text-slate-600">Единица</span>
+          <span className="text-sm text-slate-600">Unit</span>
           <select
             value={draft.packageUnit}
             onChange={(event) => setDraft({ ...draft, packageUnit: event.target.value })}
             className="min-h-(--spacing-tap) w-full rounded-lg border border-slate-300 px-2"
           >
             <option value="">—</option>
-            <option value="g">г</option>
-            <option value="ml">мл</option>
-            <option value="pcs">шт</option>
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="pcs">pcs</option>
           </select>
         </label>
         <label className="block">
-          <span className="text-sm text-slate-600">Раздел</span>
+          <span className="text-sm text-slate-600">Section</span>
           <select
             value={draft.section}
             onChange={(event) => setDraft({ ...draft, section: event.target.value })}
@@ -177,14 +177,14 @@ export function IngredientForm({
           disabled={save.isPending || Boolean(localYieldError)}
           className="min-h-(--spacing-tap) rounded-lg bg-slate-900 px-4 text-white disabled:opacity-50"
         >
-          Сохранить
+          Save
         </button>
         <button
           type="button"
           onClick={onDone}
           className="min-h-(--spacing-tap) rounded-lg border border-slate-300 px-4"
         >
-          Отмена
+          Cancel
         </button>
       </div>
     </form>

@@ -57,7 +57,7 @@ export function ValidationPanel({
           <section key={day}>
             {day >= 0 && (
               <h3 className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                День {day + 1}
+                Day {day + 1}
               </h3>
             )}
             <ul className="mt-1 space-y-1">

@@ -68,7 +68,7 @@ describe("App", () => {
     });
     renderApp();
     expect(await screen.findByRole("button", { name: "Сегодня" })).toBeInTheDocument();
-    expect(screen.queryByText("Ингредиенты")).not.toBeInTheDocument();
+    expect(screen.queryByText("Ingredients")).not.toBeInTheDocument();
   });
 
   it("gives the follower exactly two destinations", async () => {
@@ -86,6 +86,6 @@ describe("App", () => {
       id: "u", display_name: "П", role: "planner", profile_id: "pr", locale: "ru",
     });
     renderApp();
-    expect(await screen.findByRole("button", { name: "Ингредиенты" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Ingredients" })).toBeInTheDocument();
   });
 });
