@@ -8,6 +8,11 @@ name: Deploy
 # integration suites, the Postgres run, the image build, the end-to-end suite
 # and the client-drift gate; this workflow re-runs none of it and trusts none
 # of it unless it passed.
+#
+# Green CI on main deploys **staging**, automatically. Production is reached
+# only by a deliberate manual run. The direction matters: merging a pull
+# request is a decision about code, and shipping to the people using the app
+# is a separate decision that deserves its own moment.
 on:
   workflow_run:
     workflows: [CI]
@@ -25,31 +30,48 @@ concurrency:
   # Never two deploys to the same app at once. Not cancel-in-progress: a
   # half-finished deploy that gets cancelled is the one state worse than a
   # slow queue.
-  group: deploy-${{ github.event.inputs.environment || 'production' }}
+  group: deploy-${{ github.event.inputs.environment || 'staging' }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+    name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
     runs-on: ubuntu-latest
 
-    # A push to main deploys production only if CI passed. A manual run
-    # deploys whatever it was asked to, which is how staging is reached.
+    # A push to main deploys staging only if CI passed. A manual run deploys
+    # whatever it was asked to, which is the only way production is reached.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
 
+    # The second half of the manual gate, and the half that actually blocks.
+    # The choice above only decides *which* app; this decides *who may say
+    # yes*. With required reviewers configured on the `production`
+    # environment in repository settings, a production run waits here for a
+    # human. Without that configuration this is a label and nothing more —
+    # see docs/release-process.md.
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
     env:
-      APP: ${{ github.event.inputs.environment == 'staging' && 'ration-plan-staging' || 'ration-plan' }}
-      URL: ${{ github.event.inputs.environment == 'staging' && 'https://ration-plan-staging.fly.dev' || 'https://ration-plan.fly.dev' }}
+      # All three expressions below ask the same question, in the same
+      # direction: "is this production?". That is deliberate. The previous
+      # version asked "is this staging?" and defaulted the other way, which
+      # meant reading three `x && a || b` expressions and holding the
+      # negation in your head for each — the comment here used to say the
+      # idiom was impossible to check by reading, and it was right. One
+      # positive condition, repeated verbatim, can be checked by eye.
+      APP: ${{ github.event.inputs.environment == 'production' && 'ration-plan' || 'ration-plan-staging' }}
+      URL: ${{ github.event.inputs.environment == 'production' && 'https://ration-plan.fly.dev' || 'https://ration-plan-staging.fly.dev' }}
       # One token per app, not one for the organisation. Each is scoped to
       # the app it deploys, so a leaked staging token cannot touch
       # production — which an org-wide token would not give us.
       #
-      # If the staging secret were missing this falls through to the
-      # production token, which is then unauthorized for the staging app and
-      # fails the deploy. Wrong-but-safe: it cannot deploy the wrong app.
-      FLY_API_TOKEN: ${{ github.event.inputs.environment == 'staging' && secrets.FLY_API_TOKEN_STAGING || secrets.FLY_API_TOKEN }}
+      # Both failure modes are wrong-but-safe. A missing staging secret
+      # yields an empty token, and the credentials check below skips loudly
+      # rather than deploying. A missing production secret falls through to
+      # the staging token, which Fly then refuses for the production app.
+      # Neither can deploy the wrong image to the wrong place.
+      FLY_API_TOKEN: ${{ github.event.inputs.environment == 'production' && secrets.FLY_API_TOKEN || secrets.FLY_API_TOKEN_STAGING }}
 
     steps:
       - uses: actions/checkout@v4
@@ -66,10 +88,9 @@ jobs:
       - name: Check for deploy credentials
         id: creds
         run: |
-          # Echo the resolved target. The expression picking it is the
-          # `x && 'a' || 'b'` idiom, which is easy to get subtly wrong and
-          # impossible to check by reading — a mistake here deploys staging's
-          # image to production, silently and successfully.
+          # Echo the resolved target. A mistake in the expressions above
+          # deploys one app's image to the other, silently and successfully,
+          # so the target is printed before anything is built.
           echo "Target: app=$APP url=$URL" >> "$GITHUB_STEP_SUMMARY"
           echo "Target: app=$APP url=$URL"
           if [ -n "$FLY_API_TOKEN" ]; then

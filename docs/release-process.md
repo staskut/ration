@@ -20,6 +20,10 @@ From a commit to production, and back again.
   └─────────────────────────────────────────────┘
        │
        ▼
+  https://ration-plan-staging.fly.dev
+       │
+       │   manual run — Actions ▸ Deploy ▸ production
+       ▼
   https://ration-plan.fly.dev
 ```
 
@@ -67,13 +71,23 @@ green-tick list to one that deployed.
 
 | Trigger | Target |
 |---|---|
-| Push to `main`, CI green | production |
+| Push to `main`, CI green | staging, automatically |
 | **Run workflow** → `staging` | staging |
-| **Run workflow** → `production` | production, bypassing the gate |
+| **Run workflow** → `production` | production |
 
-The manual production option exists for one case: redeploying a known-good
-commit when CI is broken for an unrelated reason. It is a deliberate override,
-visible in the Actions log with the name of whoever pressed it.
+Production is never reached by merging. Green CI on `main` ships to staging
+and stops there; releasing to the people using the app is a second decision,
+made by a person, and the Actions log carries the name of whoever made it.
+
+Merging a pull request is a judgement about code. Shipping is a judgement
+about timing — whether staging has been looked at, whether anyone is around
+if it goes wrong. Collapsing the two means the second is never actually made.
+
+The `deploy` job declares `environment: production` for a production run, so
+with required reviewers configured on that environment in repository settings
+the job waits for an approval before it touches Fly. Without that setting the
+choice is still manual, but nothing blocks a single person from making it —
+the environment must be configured for the gate to have teeth.
 
 ## Credentials
 
