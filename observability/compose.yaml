@@ -60,9 +60,40 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+      # Mounted so `promtool test rules` can be run against the same file the
+      # stack loads, rather than against a copy of the expression.
+      - ./prometheus/rules_test.yml:/etc/prometheus/rules_test.yml:ro
       - prometheus-data:/prometheus
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"
+    depends_on: [alertmanager]
+
+  # --------------------------------------------------------- Alertmanager
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    depends_on: [alert-sink]
+
+  # The receiver. Writes each delivered payload to ./alerts/ so a reviewer
+  # reads the alert that was sent rather than a tick saying one was, and so
+  # #60's responder has a file to start from.
+  alert-sink:
+    image: python:3.12-slim
+    command: ["python", "/app/alert_sink.py"]
+    volumes:
+      - ./alert_sink.py:/app/alert_sink.py:ro
+      - ./alerts:/alerts
+    environment:
+      ALERT_DIR: /alerts
+    ports:
+      - "${ALERT_SINK_PORT:-9099}:9099"
 
   # ------------------------------------------------------------------ Loki
   loki:
@@ -107,6 +138,7 @@ services:
 
 volumes:
   prometheus-data:
+  alertmanager-data:
   loki-data:
   tempo-data:
   grafana-data:
