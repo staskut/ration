@@ -90,9 +90,18 @@ SOURCES: Final[Mapping[str, str]] = {
     # --- where a log record was written, from the logging module's own frame
     # information. Code locations, not data: the same three fields a traceback
     # frame carries, and chosen for the same reason (see logs.exception_frames).
-    "code.filepath": "logging's record.pathname",
-    "code.lineno": "logging's record.lineno",
-    "code.function": "logging's record.funcName",
+    #
+    # Both spellings, because the semantic convention renamed them and the two
+    # are a silent no-op apart. QA found the first set inert on #58: the SDK
+    # emits the second, so the allowlist was dropping every code location while
+    # appearing to permit them. Keeping both means the keys survive an SDK
+    # upgrade in either direction.
+    "code.filepath": "logging's record.pathname (pre-1.33 SDK spelling)",
+    "code.lineno": "logging's record.lineno (pre-1.33 SDK spelling)",
+    "code.function": "logging's record.funcName (pre-1.33 SDK spelling)",
+    "code.file.path": "logging's record.pathname",
+    "code.line.number": "logging's record.lineno",
+    "code.function.name": "logging's record.funcName",
     # --- the shape of a log record itself
     "timestamp": "the logging module's clock",
     "level": "the logging level the call used",
