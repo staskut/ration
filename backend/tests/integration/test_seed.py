@@ -159,3 +159,43 @@ class TestProductionIsRefused:
         monkeypatch.setattr(command, "settings", config.settings)
         with pytest.raises(ProductionSeedRefused):
             seed(engine)
+
+
+class TestTheSeededPlanCoversToday:
+    """#75: the demo plan's week used to expire, and nothing failed when it did.
+
+    This is the test that would have caught it — not by checking an arithmetic
+    rule, but by asking the seeded rows the question the follower's screen asks
+    them: is there a day for today?
+    """
+
+    def test_the_plan_has_a_day_for_today(self, engine: Engine) -> None:
+        from datetime import date
+
+        from ration.seed.command import seed
+
+        seed(engine)
+        with Session(engine) as session:
+            plan = session.scalars(
+                select(models.Plan).where(models.Plan.slug == "reference_week_1")
+            ).one()
+            dates = {day.date for day in plan.days}
+
+        assert date.today() in dates, (
+            "the seeded demo plan does not cover today, which is how the "
+            "follower's Today screen became a dead end for a month (#75)"
+        )
+
+    def test_it_still_has_exactly_one_unplanned_day(self, engine: Engine) -> None:
+        """The e2e suite walks to it, and the fixture's partial week is the point."""
+        from ration.seed.command import seed
+
+        seed(engine)
+        with Session(engine) as session:
+            plan = session.scalars(
+                select(models.Plan).where(models.Plan.slug == "reference_week_1")
+            ).one()
+            empty = [day for day in plan.days if not day.entries]
+
+        assert len(plan.days) == 7
+        assert len(empty) == 1
