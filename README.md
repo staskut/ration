@@ -118,6 +118,19 @@ it the accounts get an unusable placeholder hash — so a deployment that
 happens to run the seed cannot hand out a known password. Production refuses
 to seed at all.
 
+### With telemetry
+
+```bash
+docker compose -f observability/compose.yaml up
+```
+
+The same stack plus OpenTelemetry Collector, Prometheus, Loki, Tempo and a
+Grafana at <http://localhost:3000> that needs no login. One request to the
+shopping list produces metrics, a trace whose spans are the pipeline stages,
+and log lines carrying the same trace id.
+[`observability/README.md`](observability/README.md) walks through all three
+with the queries to paste.
+
 ### From source
 
 Prerequisites: **Python 3.12+** with [uv](https://docs.astral.sh/uv/),

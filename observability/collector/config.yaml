@@ -1,0 +1,65 @@
+# The collector: receive OTLP from the app, hand each signal to its store.
+#
+# Everything the application exports arrives here and nowhere else, so the app
+# knows one endpoint and a store can be replaced without touching it.
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Batching is what keeps a slow store from becoming a slow request: the app's
+  # exporter hands over and returns, and this side does the waiting.
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+
+  # A guard rather than a tuning knob. Without it a store that stops answering
+  # turns into an unbounded queue and the collector dies of memory on the
+  # reviewer's laptop.
+  memory_limiter:
+    check_interval: 2s
+    limit_mib: 256
+    spike_limit_mib: 64
+
+exporters:
+  # Prometheus scrapes this. See the comment on the prometheus service in
+  # compose.yaml for why pull rather than remote-write.
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    # service.name / service.version / deployment.environment are *resource*
+    # attributes, and by default the Prometheus exporter parks them in a
+    # separate `target_info` series — so `sum by (service_version)` over the
+    # request metric would return nothing at all. Promoting them to labels on
+    # every series is what lets the dashboard and the alert say which release
+    # the numbers came from (#59).
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+service:
+  telemetry:
+    logs:
+      level: info
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki]

@@ -1,0 +1,43 @@
+# Single-binary Loki, filesystem storage. Enough for a laptop and a demo; it
+# is not a cluster and is not pretending to be.
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # Seven days, matching Prometheus. A log line older than the metric series it
+  # belongs to can only mislead.
+  retention_period: 168h
+  # The app's OTLP log records carry resource attributes; keep them as labels
+  # so a query can select the service and version.
+  allow_structured_metadata: true
+
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: filesystem

@@ -1,0 +1,26 @@
+# Single-binary Tempo, filesystem storage.
+
+server:
+  http_listen_port: 3200
+  log_level: warn
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/blocks
+
+compactor:
+  compaction:
+    # Seven days, matching Prometheus and Loki, for the same reason: three
+    # signals that expire at different times cannot be correlated at the edges.
+    block_retention: 168h

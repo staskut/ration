@@ -1,0 +1,30 @@
+# Overrides the app service from ../docker-compose.yml, and nothing else.
+#
+# Two things happen here. The app is told where the collector is and that
+# telemetry is on — the one environment difference between the plain stack and
+# this one (HLD §6: off locally, on under Compose). And `env_file` names the
+# repo-root `.env`, which carries RATION_SESSION_SECRET; without it the app
+# refuses to start, because an included model does not inherit the invoking
+# project's env file.
+#
+# `.env` and not `../.env`: paths inside an included file resolve against the
+# **first** file of the `include` entry, which is `../docker-compose.yml`, so
+# "here" is the repository root. The same rule is what keeps that file's build
+# context meaning the repo root. It is worth stating because `../.env` looks
+# right from this file's own location and fails with a path one level above the
+# repository.
+
+services:
+  app:
+    env_file:
+      - .env
+    environment:
+      RATION_TELEMETRY_ENABLED: "true"
+      RATION_OTLP_ENDPOINT: http://collector:4318
+      RATION_SERVICE_NAME: ration-api
+      # Overridden by the deploy pipeline in a real environment; "dev" locally
+      # so the dashboard and the alert still have something to say.
+      RATION_VERSION: ${RATION_VERSION:-dev}
+    depends_on:
+      collector:
+        condition: service_started

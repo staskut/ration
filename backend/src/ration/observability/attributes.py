@@ -67,6 +67,12 @@ SOURCES: Final[Mapping[str, str]] = {
     # --- failure, by shape
     "exception.type": "type(exc).__name__",
     "exception.frames": "traceback frames only; never the exception's message",
+    # --- where a log record was written, from the logging module's own frame
+    # information. Code locations, not data: the same three fields a traceback
+    # frame carries, and chosen for the same reason (see logs.exception_frames).
+    "code.filepath": "logging's record.pathname",
+    "code.lineno": "logging's record.lineno",
+    "code.function": "logging's record.funcName",
     # --- the shape of a log record itself
     "timestamp": "the logging module's clock",
     "level": "the logging level the call used",
