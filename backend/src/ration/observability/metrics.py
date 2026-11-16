@@ -14,12 +14,12 @@ Buckets can.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from opentelemetry.metrics import Histogram, Meter
 from opentelemetry.sdk.metrics import MeterProvider
 
-from ration.observability.attributes import checked
+from ration.observability.attributes import checked, set_strict
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from ration.config import Settings
@@ -53,7 +53,45 @@ def configure(settings: Settings) -> None:
     reader = PeriodicExportingMetricReader(
         OTLPMetricExporter(endpoint=f"{settings.otlp_endpoint}/v1/metrics")
     )
-    install(MeterProvider(resource=resource, metric_readers=[reader]))
+    set_strict(not settings.is_production)
+    install(MeterProvider(resource=resource, metric_readers=[reader], views=[duration_view()]))
+
+
+def duration_view() -> Any:
+    """Bucket boundaries for a duration measured in seconds.
+
+    The SDK's default boundaries are (0, 5, 10, 25, … 10000), which suit a
+    histogram measured in milliseconds. Against seconds they put every request
+    under five seconds into one bucket, and `histogram_quantile` over one
+    bucket can only answer "somewhere between 0 and 5 seconds" — a p95 panel
+    that is always wrong and never obviously wrong. These are the boundaries
+    the HTTP semantic convention advises, and this endpoint takes about 10 ms.
+    """
+    from opentelemetry.sdk.metrics import Histogram
+    from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
+
+    return View(
+        instrument_type=Histogram,
+        instrument_name=DURATION,
+        aggregation=ExplicitBucketHistogramAggregation(
+            boundaries=(
+                0.005,
+                0.01,
+                0.025,
+                0.05,
+                0.075,
+                0.1,
+                0.25,
+                0.5,
+                0.75,
+                1.0,
+                2.5,
+                5.0,
+                7.5,
+                10.0,
+            )
+        ),
+    )
 
 
 def install(provider: MeterProvider) -> None:

@@ -23,19 +23,17 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.trace import Status, StatusCode, Tracer
 
-from ration.observability.attributes import checked
+from ration.observability.attributes import checked, set_strict
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from ration.config import Settings
 
 _tracer: Tracer | None = None
 _provider: TracerProvider | None = None
-_strict: bool = True
 
 
 def configure(settings: Settings) -> None:
     """Start tracing, if this environment wants it. Idempotent."""
-    global _strict
     if not settings.telemetry_enabled or _tracer is not None:
         return
 
@@ -81,10 +79,10 @@ def install(provider: TracerProvider, *, strict: bool = True) -> None:
     this service exports was written here and passed `attributes.checked()`.
     Collector-side redaction would let both be true at once; that is #67.
     """
-    global _tracer, _provider, _strict
+    global _tracer, _provider
     _provider = provider
     _tracer = provider.get_tracer("ration")
-    _strict = strict
+    set_strict(strict)
 
 
 def shutdown() -> None:
@@ -117,7 +115,7 @@ class StageRecorder:
 
     def count(self, items_out: int) -> None:
         if self._span is not None:
-            self._span.set_attributes(checked({"ration.items_out": items_out}, strict=_strict))
+            self._span.set_attributes(checked({"ration.items_out": items_out}))
 
 
 @contextmanager
@@ -143,7 +141,7 @@ def stage(name: str, *, items_in: int | None = None) -> Iterator[StageRecorder]:
 
     with current.start_as_current_span(
         name,
-        attributes=checked(attributes, strict=_strict),
+        attributes=checked(attributes),
         record_exception=False,
         set_status_on_exception=False,
     ) as span:
@@ -159,6 +157,6 @@ def stage(name: str, *, items_in: int | None = None) -> Iterator[StageRecorder]:
 def mark_failed(span: trace.Span, exc: BaseException) -> None:
     """Record a failure on `span` without recording what the failure said."""
     name = type(exc).__name__
-    span.set_attributes(checked({"exception.type": name}, strict=_strict))
-    span.add_event("exception", attributes=checked({"exception.type": name}, strict=_strict))
+    span.set_attributes(checked({"exception.type": name}))
+    span.add_event("exception", attributes=checked({"exception.type": name}))
     span.set_status(Status(StatusCode.ERROR, name))

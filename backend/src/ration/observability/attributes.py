@@ -41,6 +41,26 @@ from typing import Any, Final
 
 _logger = logging.getLogger("ration.observability")
 
+# Whether a forbidden key raises or is dropped. True everywhere but production,
+# and it lives here rather than at each call site for the reason QA found on
+# #57: five of the six places that close a request passed no flag, so they
+# raised in production too — a telemetry mistake would have become a 500 for
+# the person using the app, which is the one thing the lenient mode exists to
+# prevent. One switch, set once from the settings, cannot be forgotten at a
+# call site.
+_strict = True
+
+
+def set_strict(strict: bool) -> None:
+    """Set the default mode. Called once, from the telemetry configuration."""
+    global _strict
+    _strict = strict
+
+
+def is_strict() -> bool:
+    return _strict
+
+
 #: Resource attributes, set once per process rather than per signal.
 RESOURCE_SOURCES: Final[Mapping[str, str]] = {
     "service.name": "Settings.service_name, from RATION_SERVICE_NAME",
@@ -101,14 +121,19 @@ class ForbiddenAttributeError(AssertionError):
         self.key = key
 
 
-def checked(attributes: Mapping[str, Any], *, strict: bool = True) -> dict[str, Any]:
+def checked(attributes: Mapping[str, Any], *, strict: bool | None = None) -> dict[str, Any]:
     """Return `attributes` with every key verified against the allowlist.
 
-    `strict` is on everywhere but production, where a key slipping through is
-    dropped rather than raised: a telemetry mistake must degrade the telemetry,
-    never the request. The warning names the key and not the value, because the
-    value is the part that might be somebody's dinner.
+    Strict mode is on everywhere but production, where a key slipping through
+    is dropped rather than raised: a telemetry mistake must degrade the
+    telemetry, never the request. Callers leave `strict` unset and get the mode
+    this environment is in; passing it is for tests and for the two places that
+    are always lenient.
+
+    The warning names the key and not the value, because the value is the part
+    that might be somebody's dinner.
     """
+    strict = _strict if strict is None else strict
     safe: dict[str, Any] = {}
     for key, value in attributes.items():
         if key in ALLOWED:

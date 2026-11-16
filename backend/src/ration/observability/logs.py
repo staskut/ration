@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any
 from opentelemetry import trace
 from opentelemetry.sdk._logs import LoggingHandler as OTelLoggingHandler
 
-from ration.observability.attributes import ALLOWED, DROPPED_MESSAGE, checked
+from ration.observability.attributes import ALLOWED, DROPPED_MESSAGE, checked, set_strict
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from ration.config import Settings
@@ -135,11 +135,14 @@ def configure(settings: Settings) -> None:
     global _configured
     if not settings.telemetry_enabled or _configured:
         return
+    set_strict(not settings.is_production)
     install(level=logging.INFO)
     _ship(settings)
     logging.getLogger(LOGGER_NAME).info(
         Message.TELEMETRY_STARTED,
-        extra={"service.name": settings.service_name, "service.version": settings.service_version},
+        extra=checked(
+            {"service.name": settings.service_name, "service.version": settings.service_version}
+        ),
     )
 
 
@@ -279,6 +282,9 @@ def failed(exc: BaseException, **fields: Any) -> None:
     """Log an exception that nothing converted into a response."""
     logger().error(
         Message.REQUEST_FAILED,
+        # Always lenient: this runs while handling an exception that already
+        # escaped the application, and a second exception from the gate here
+        # would replace a 500 with something far harder to read.
         extra=checked(
             {
                 "exception.type": type(exc).__name__,
