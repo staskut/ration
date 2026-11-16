@@ -38,11 +38,23 @@ const TODAY = {
   ],
 };
 
+// A Monday in the past, deliberately not today. QA caught the first version
+// of this fixture dated today: "the tap lands on the plan's first day" then
+// passed whether or not the button did anything, because the header already
+// showed that date. A test that is vacuous on the day it is written and
+// meaningful the day after is worse than one that simply fails.
+const PLAN_START = "2026-11-02";
+const PLAN_END = "2026-11-08";
 const PLANS = [
-  { id: "p1", name: "Пилотная неделя 1", profile_id: "pr", start_date: "2026-11-16", status: "active" },
+  { id: "p1", name: "Пилотная неделя 1", profile_id: "pr", start_date: PLAN_START, status: "active" },
 ];
 
-function mockApi(body: unknown, status = 200, plans: unknown = PLANS): void {
+function mockApi(
+  body: unknown,
+  status = 200,
+  plans: unknown = PLANS,
+  plansStatus = 200,
+): void {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string) => {
@@ -60,7 +72,7 @@ function mockApi(body: unknown, status = 200, plans: unknown = PLANS): void {
       }
       if (String(url).includes("/plans")) {
         return new Response(JSON.stringify(plans), {
-          status: 200,
+          status: plansStatus,
           headers: { "Content-Type": "application/json" },
         });
       }
@@ -240,7 +252,9 @@ describe("Today outside the plan's week", () => {
     mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404);
     renderWithProviders(<Today />);
 
-    expect(await screen.findByText(/2026-11-16 – 2026-11-22/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(`Неделя плана: ${PLAN_START} – ${PLAN_END}`),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Перейти к плану" })).toBeInTheDocument();
   });
 
@@ -253,15 +267,32 @@ describe("Today outside the plan's week", () => {
     // The header now shows the plan's own first day rather than the date the
     // screen opened on. Matched exactly: the week line below it contains the
     // same date inside a range, and a substring match would pass on that
-    // without the header having moved at all.
-    expect(await screen.findByText("2026-11-16", { exact: true })).toBeInTheDocument();
+    // without the header having moved at all. PLAN_START is a past Monday, so
+    // this cannot pass by the header having been there all along.
+    expect(await screen.findByText(PLAN_START, { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText(todayIsoForTest(), { exact: true })).not.toBeInTheDocument();
   });
 
-  it("says the day is outside the plan even when the plan list is unavailable", async () => {
+  it("says the day is outside the plan when the plan list comes back empty", async () => {
     // The week and the button are an improvement on the message, not a
-    // replacement for it: a follower whose /plans call fails still gets told
-    // where they are.
+    // replacement for it: a follower with no plan to point at still gets told
+    // where they are. Named for what it arranges — QA's note that the previous
+    // name said "unavailable" while the mock returned an empty 200.
     mockApi({ error: { code: "NOT_FOUND", message: "No plan covers this date" } }, 404, []);
+    renderWithProviders(<Today />);
+
+    expect(await screen.findByText(/вне плана/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Завтра")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Перейти к плану" })).not.toBeInTheDocument();
+  });
+
+  it("says it too when the plan list itself fails", async () => {
+    mockApi(
+      { error: { code: "NOT_FOUND", message: "No plan covers this date" } },
+      404,
+      { error: { code: "INTERNAL", message: "boom" } },
+      500,
+    );
     renderWithProviders(<Today />);
 
     expect(await screen.findByText(/вне плана/i)).toBeInTheDocument();
