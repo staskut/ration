@@ -38,15 +38,22 @@ class TestTheAllowlist:
             checked({"ration.ingredient_name": "Куриная грудка"})
         assert "ration.ingredient_name" in str(raised.value)
 
-    def test_an_unlisted_key_is_dropped_rather_than_raised_when_not_strict(self) -> None:
+    def test_an_unlisted_key_is_dropped_rather_than_raised_when_not_strict(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """In production a telemetry mistake degrades telemetry, not the request."""
-        with pytest.warns(RuntimeWarning, match="ration.plan_id"):
+        with caplog.at_level("WARNING"):
             assert checked({"ration.plan_id": "abc"}, strict=False) == {}
+        assert caplog.records[0].message == "telemetry.attribute_dropped"
 
-    def test_the_warning_names_the_key_and_not_the_value(self) -> None:
-        with pytest.warns(RuntimeWarning) as warnings:
+    def test_the_warning_names_the_key_and_not_the_value(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        with caplog.at_level("WARNING"):
             checked({"ration.plan_id": "a-real-plan-id"}, strict=False)
-        assert "a-real-plan-id" not in str(warnings[0].message)
+        record = caplog.records[0]
+        assert getattr(record, "telemetry.dropped_key") == "ration.plan_id"
+        assert "a-real-plan-id" not in caplog.text
 
     def test_nothing_that_identifies_a_person_or_a_meal_is_allowed(self) -> None:
         for forbidden in (

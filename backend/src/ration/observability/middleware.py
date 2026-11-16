@@ -1,4 +1,8 @@
-"""One span per HTTP request, named by route template.
+"""One span, one metric point and two log lines per HTTP request.
+
+All three carry the same route template and the same trace id, which is what
+makes them joinable: a slow route found in the metrics leads to a trace, and
+the trace's id finds the log lines for that exact request (HLD §7).
 
 The route template is the only form of the path that may be recorded. The raw
 path of the instrumented route is `/api/plans/<a plan id>/shopping-list`, and a
@@ -15,33 +19,40 @@ a queue per request for nothing that is needed here.
 from __future__ import annotations
 
 import re
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 from opentelemetry.trace import SpanKind
 
-from ration.observability import names, telemetry
+from ration.observability import logs, metrics, names, telemetry
 from ration.observability.attributes import checked
 
 #: The label for a request that matched no route. One fixed string, so a
 #: hundred probes for /wp-login.php cannot become a hundred time series.
 UNMATCHED_ROUTE = "unmatched"
 
+#: Paths that are measured but not logged. A liveness probe every few seconds
+#: would otherwise be most of the log volume and none of its information.
+UNLOGGED = frozenset({"/health"})
+
 #: `{plan_id}` and `{full_path:path}` alike.
 _PARAMETER = re.compile(r"\{([^{}:]+)(?::[^{}]+)?\}")
 
 
 class TracingMiddleware:
-    """Wraps the application in a server span when telemetry is on."""
+    """Wraps the application in a server span, a timing and two log lines."""
 
     def __init__(self, app: Any) -> None:
         self.app = app
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
-        tracer = telemetry.tracer()
-        if scope["type"] != "http" or tracer is None:
+        if scope["type"] != "http" or not (telemetry.is_enabled() or metrics.is_enabled()):
             await self.app(scope, receive, send)
             return
 
+        method = scope.get("method", "")
         status: dict[str, int] = {}
 
         async def record_status(message: Any) -> None:
@@ -49,25 +60,77 @@ class TracingMiddleware:
                 status["code"] = message["status"]
             await send(message)
 
-        with tracer.start_as_current_span(
-            names.REQUEST_SPAN,
-            kind=SpanKind.SERVER,
-            attributes=checked({"http.request.method": scope.get("method", "")}),
-            record_exception=False,
-            set_status_on_exception=False,
-        ) as span:
+        started = time.perf_counter()
+        with _span(method) as span:
+            quiet = scope.get("path", "") in UNLOGGED
+            if not quiet:
+                logs.logger().debug(
+                    logs.Message.REQUEST_STARTED,
+                    extra=checked({"http.request.method": method}),
+                )
             try:
                 await self.app(scope, receive, record_status)
             except BaseException as exc:
-                _name(span, scope)
                 # An exception that escapes the application is a 500 whether or
                 # not a response start was ever sent.
-                span.set_attributes(checked({"http.response.status_code": 500}))
-                telemetry.mark_failed(span, exc)
+                self._finish(span, scope, method, 500, started, quiet, exc)
                 raise
+            self._finish(span, scope, method, status.get("code", 0), started, quiet, None)
+
+    def _finish(
+        self,
+        span: Any,
+        scope: Any,
+        method: str,
+        code: int,
+        started: float,
+        quiet: bool,
+        exc: BaseException | None,
+    ) -> None:
+        """Close the three signals together, so they agree with each other."""
+        elapsed = time.perf_counter() - started
+        template = route_template(scope)
+
+        if span is not None:
             _name(span, scope)
-            code = status.get("code", 0)
             span.set_attributes(checked({"http.response.status_code": code}))
+            if exc is not None:
+                telemetry.mark_failed(span, exc)
+
+        metrics.record_request(method=method, route=template, status_code=code, seconds=elapsed)
+
+        if quiet:
+            return
+        fields = {
+            "http.request.method": method,
+            "http.route": template,
+            "http.response.status_code": code,
+            "duration_ms": round(elapsed * 1000, 1),
+        }
+        if exc is not None:
+            # Only an exception nothing converted into a response reaches here:
+            # ApiError and HTTPException are handled in api/errors.py and leave
+            # as an ordinary status code.
+            logs.failed(exc, **fields)
+        else:
+            logs.logger().info(logs.Message.REQUEST_FINISHED, extra=checked(fields))
+
+
+@contextmanager
+def _span(method: str) -> Iterator[Any]:
+    """The request span, or nothing when only metrics are on."""
+    tracer = telemetry.tracer()
+    if tracer is None:
+        yield None
+        return
+    with tracer.start_as_current_span(
+        names.REQUEST_SPAN,
+        kind=SpanKind.SERVER,
+        attributes=checked({"http.request.method": method}),
+        record_exception=False,
+        set_status_on_exception=False,
+    ) as span:
+        yield span
 
 
 def _name(span: Any, scope: Any) -> None:
