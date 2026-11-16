@@ -418,9 +418,12 @@ class TestTheHistogramCanAnswerAPercentile:
 
         from ration.observability import metrics as metrics_module
 
+        # A bare provider, deliberately: no view, nothing but what install()
+        # does for itself. QA's note on #57 was that the boundaries lived on
+        # the provider `configure()` builds, so a harness like this one fell
+        # back to the SDK's defaults without saying so.
         reader = InMemoryMetricReader()
-        provider = MeterProvider(metric_readers=[reader], views=[metrics_module.duration_view()])
-        metrics_module.install(provider)
+        metrics_module.install(MeterProvider(metric_readers=[reader]))
         metrics_module.record_request(method="GET", route=ROUTE, status_code=200, seconds=0.012)
 
         point = next(
