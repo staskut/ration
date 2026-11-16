@@ -252,5 +252,5 @@ conversion and raises — a real failure mode of §4's pipeline, not a synthetic
   never included in telemetry attributes, and never sent to the extraction model — extraction sees
   only the recipe text the planner pastes.
 - No secrets in the image. Configuration via environment, `.env.example` committed, `.env` ignored.
-- The de-identified reference plan is the only plan data in the repository. Real plan content
+- The fictional reference plan is the only plan data in the repository. Real plan content
   lives in the database, never in Git.

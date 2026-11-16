@@ -22,8 +22,8 @@ today, and taps to rate a meal.
 > planner's targets and reports whether a plan meets them. That is the whole
 > of its opinion.
 >
-> [`docs/sample-plan-6-days.md`](docs/sample-plan-6-days.md) is **de-identified
-> demo data**. No real plan is in this repository.
+> [`docs/sample-plan-6-days.md`](docs/sample-plan-6-days.md) is **a fictional
+> profile**, written as demo data. No real plan is in this repository.
 
 ## What it computes
 
@@ -54,7 +54,7 @@ Four of the design decisions behind those are load-bearing and non-obvious:
 ## Try it
 
 **<https://ration-plan-staging.fly.dev>** — the demo, carrying the
-de-identified reference plan.
+fictional reference plan.
 
 | Role | Email | Password | Sees |
 |---|---|---|---|
@@ -276,4 +276,4 @@ threadpool worker with no event loop, and a `suppress` swallowed the error.
 
 ## Licence
 
-Unlicensed; a course project. The reference plan is de-identified demo data.
+Unlicensed; a course project. The reference plan is a fictional profile, written as demo data.

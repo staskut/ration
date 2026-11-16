@@ -29,7 +29,7 @@ Read these before changing anything they cover.
 - `docs/mvp-plan.md` — milestones and sequencing
 - `docs/tasks.md` — the backlog
 - `docs/process.md` — how work is organized
-- `docs/sample-plan-6-days.md` — the de-identified reference plan. Fixture, demo, and oracle.
+- `docs/sample-plan-6-days.md` — the fictional reference plan. Fixture, demo, and oracle.
 
 ## Commands
 
@@ -133,7 +133,7 @@ stop and ask rather than implementing the reversal — the reasoning is in `docs
 - Dependencies are added in `pyproject.toml` or `package.json`. **Do not add one without asking.**
 - Do not edit `frontend/src/api/` by hand — it is generated.
 - Do not commit real plan data. `docs/sample-plan-6-days.md` is the only plan content in the
-  repo and it is de-identified. The database holds real data; Git never does.
+  repo and its profile is fictional. The database holds real data; Git never does.
 - Do not put profile data, targets, or feedback into logs or telemetry attributes.
 - Work one task at a time, from the GitHub issues. Read its acceptance criteria before starting
   and again before finishing.
