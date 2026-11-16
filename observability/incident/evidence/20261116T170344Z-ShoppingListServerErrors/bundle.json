@@ -1,0 +1,75 @@
+{
+  "alert": {
+    "alertname": "ShoppingListServerErrors",
+    "environment": "development",
+    "observed_count": "6",
+    "route": "/api/plans/{plan_id}/shopping-list",
+    "runbook": "docs/runbooks/shopping-list-5xx.md",
+    "source_file": "observability/alerts/latest.json",
+    "starts_at": "2026-11-16T17:02:46.167Z",
+    "status": "firing",
+    "tempo_query": "{resource.service.name=\"ration-api\"\n && resource.service.version=\"dev\"\n && span.http.route=\"/api/plans/{plan_id}/shopping-list\"\n && status=error}",
+    "threshold": "3",
+    "version": "dev",
+    "window": "5m"
+  },
+  "gathered_at_utc": "2026-11-16T17:03:44.718884+00:00",
+  "gathered_by": "observability/incident/gather_evidence.py",
+  "incident_id": "20261116T170344Z-ShoppingListServerErrors",
+  "logs": {
+    "line_count": 1,
+    "lines": [
+      {
+        "exception_type": "UnrecognisedUnitError",
+        "level": "ERROR",
+        "message": "request.failed",
+        "route": "/api/plans/{plan_id}/shopping-list",
+        "status_code": "500"
+      }
+    ],
+    "query": "{service_name=\"ration-api\"} | trace_id=`fd546701c0a092448f2bb3f3a78603ac`",
+    "status": "ok"
+  },
+  "metrics": {
+    "first_failure_utc": "2026-11-16T16:24:44.744000+00:00",
+    "minutes_failing": 9,
+    "peak_5xx_in_5m": 5.563407407407407,
+    "query": "sum(increase(http_server_request_duration_seconds_count{http_route=\"/api/plans/{plan_id}/shopping-list\",http_response_status_code=~\"5..\",service_version=\"dev\"}[5m]))",
+    "status": "ok"
+  },
+  "sources": {
+    "loki": "http://localhost:3100",
+    "prometheus": "http://localhost:9090",
+    "tempo": "http://localhost:3200"
+  },
+  "trace": {
+    "exception_message": "withheld by design: the exception message names the catalog row that failed, and telemetry carries no dietary data (HLD \u00a78, #57). Identifying the row is a human step against the database \u2014 see docs/runbooks/shopping-list-5xx.md, step 5.",
+    "exception_type": "UnrecognisedUnitError",
+    "failing_span": "shopping_list.convert_yield",
+    "failing_span_status": "ERROR",
+    "query": "{resource.service.name=\"ration-api\"\n && resource.service.version=\"dev\"\n && span.http.route=\"/api/plans/{plan_id}/shopping-list\"\n && status=error}",
+    "span_count": 5,
+    "stages_completed": [
+      "shopping_list.load_catalog",
+      "shopping_list.load_plan",
+      "shopping_list.expand_entries"
+    ],
+    "stages_seen": [
+      "shopping_list.load_catalog",
+      "shopping_list.load_plan",
+      "shopping_list.expand_entries",
+      "shopping_list.convert_yield"
+    ],
+    "status": "ok",
+    "trace_id": "fd546701c0a092448f2bb3f3a78603ac"
+  },
+  "traffic": {
+    "by_status": {
+      "200": 1.1,
+      "500": 5.4
+    },
+    "query": "sum by (http_response_status_code) (increase(http_server_request_duration_seconds_count{http_route=\"/api/plans/{plan_id}/shopping-list\"}[15m]))",
+    "reason": null,
+    "status": "ok"
+  }
+}

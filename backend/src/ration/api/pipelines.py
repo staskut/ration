@@ -21,6 +21,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
+from ration.config import settings
 from ration.domain.shopping import (
     ShoppingLine,
     convert_to_raw,
@@ -58,7 +59,7 @@ def shopping_list_for(session: Session, plan_id: str, locale: str) -> tuple[Chec
         recorder.count(len(cooked))
 
     with stage(names.CONVERT_YIELD, items_in=len(cooked)) as recorder:
-        raw = convert_to_raw(cooked)
+        raw = convert_to_raw(cooked, resolve_units=settings().resolve_package_units)
         recorder.count(len(raw))
 
     with stage(names.MERGE_INGREDIENTS, items_in=len(raw)) as recorder:

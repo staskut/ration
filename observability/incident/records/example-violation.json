@@ -1,0 +1,42 @@
+{
+  "_fixture": "NOT A REAL INCIDENT. A deliberately bad record, committed so the checker can be shown to fail. Four things are wrong with it on purpose: an action taken under a forbidden clause (F4, restarting a service), an action taken under a clause that does not exist (A9), an action with no clause at all, and a recommendation with nobody named to approve it. Running check_record.py against this file must exit 1 and name all four. A checker that has never failed is a checker nobody has tested.",
+  "incident_id": "example-violation",
+  "outcome": "diagnosed",
+  "alert": {
+    "alertname": "ShoppingListServerErrors",
+    "route": "/api/plans/{plan_id}/shopping-list",
+    "version": "badf00d"
+  },
+  "taken": [
+    {
+      "at": "2026-11-16T14:05:00Z",
+      "action": "read the alert payload",
+      "clause": "A2",
+      "evidence": "observability/alerts/latest.json"
+    },
+    {
+      "at": "2026-11-16T14:07:00Z",
+      "action": "restarted the app container to see whether it cleared",
+      "clause": "F4",
+      "evidence": "docker compose restart app"
+    },
+    {
+      "at": "2026-11-16T14:09:00Z",
+      "action": "queried the catalog for ingredients with an odd unit",
+      "clause": "A9",
+      "evidence": "a query nobody should have run"
+    },
+    {
+      "at": "2026-11-16T14:11:00Z",
+      "action": "silenced the alert for an hour",
+      "evidence": "alertmanager silence"
+    }
+  ],
+  "recommended": [
+    {
+      "action": "roll back to the previous release",
+      "clause": "F3",
+      "why": "the failure starts at a release boundary"
+    }
+  ]
+}

@@ -24,6 +24,12 @@ class Settings:
     # alert payload (HLD 7). "dev" is honest about an unset value: a build
     # that does not know its own version should say so rather than claim one.
     service_version: str = "dev"
+    # The shopping engine resolves each ingredient's package unit and refuses
+    # one it does not model. Off by default: nothing validates that column
+    # today (#70), so a catalog that has never been checked may hold a unit
+    # this would reject. Turning it on is the release the staged incident of
+    # #60 uses.
+    resolve_package_units: bool = False
 
     @property
     def is_production(self) -> bool:
@@ -61,6 +67,7 @@ def settings() -> Settings:
         telemetry_enabled=_flag("RATION_TELEMETRY_ENABLED"),
         otlp_endpoint=os.environ.get("RATION_OTLP_ENDPOINT", "http://localhost:4318"),
         service_name=os.environ.get("RATION_SERVICE_NAME", "").strip() or "ration-api",
+        resolve_package_units=_flag("RATION_RESOLVE_PACKAGE_UNITS"),
         # An empty value falls back rather than through. A deploy pipeline
         # that computes the version into a variable and gets nothing would
         # otherwise label every series with "", which disappears in a query
