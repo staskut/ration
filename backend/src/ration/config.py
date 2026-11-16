@@ -60,8 +60,12 @@ def settings() -> Settings:
         # traffic at an endpoint that is not there.
         telemetry_enabled=_flag("RATION_TELEMETRY_ENABLED"),
         otlp_endpoint=os.environ.get("RATION_OTLP_ENDPOINT", "http://localhost:4318"),
-        service_name=os.environ.get("RATION_SERVICE_NAME", "ration-api"),
-        service_version=os.environ.get("RATION_VERSION", "dev"),
+        service_name=os.environ.get("RATION_SERVICE_NAME", "").strip() or "ration-api",
+        # An empty value falls back rather than through. A deploy pipeline
+        # that computes the version into a variable and gets nothing would
+        # otherwise label every series with "", which disappears in a query
+        # and takes the alert's one actionable field with it.
+        service_version=os.environ.get("RATION_VERSION", "").strip() or "dev",
     )
 
 

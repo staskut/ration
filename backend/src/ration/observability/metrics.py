@@ -14,7 +14,7 @@ Buckets can.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from opentelemetry.metrics import Histogram, Meter
 from opentelemetry.sdk.metrics import MeterProvider
@@ -54,48 +54,55 @@ def configure(settings: Settings) -> None:
         OTLPMetricExporter(endpoint=f"{settings.otlp_endpoint}/v1/metrics")
     )
     set_strict(not settings.is_production)
-    install(MeterProvider(resource=resource, metric_readers=[reader], views=[duration_view()]))
+    install(MeterProvider(resource=resource, metric_readers=[reader]))
+
+
+#: Bucket boundaries for a duration measured in seconds.
+#:
+#: The SDK's defaults are (0, 5, 10, 25, … 10000), which suit a histogram
+#: measured in milliseconds. Against seconds they put every request this
+#: service serves into the first bucket, and `histogram_quantile` over one
+#: bucket can only answer "somewhere between 0 and 5 seconds" — a p95 panel
+#: that is always wrong and never obviously wrong. These are the boundaries the
+#: HTTP semantic convention advises; this endpoint takes about 10 ms.
+BOUNDARIES: Final = (
+    0.005,
+    0.01,
+    0.025,
+    0.05,
+    0.075,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1.0,
+    2.5,
+    5.0,
+    7.5,
+    10.0,
+)
 
 
 def duration_view() -> Any:
-    """Bucket boundaries for a duration measured in seconds.
-
-    The SDK's default boundaries are (0, 5, 10, 25, … 10000), which suit a
-    histogram measured in milliseconds. Against seconds they put every request
-    under five seconds into one bucket, and `histogram_quantile` over one
-    bucket can only answer "somewhere between 0 and 5 seconds" — a p95 panel
-    that is always wrong and never obviously wrong. These are the boundaries
-    the HTTP semantic convention advises, and this endpoint takes about 10 ms.
-    """
+    """The same boundaries as an explicit View, for a caller that wants one."""
     from opentelemetry.sdk.metrics import Histogram
     from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
 
     return View(
         instrument_type=Histogram,
         instrument_name=DURATION,
-        aggregation=ExplicitBucketHistogramAggregation(
-            boundaries=(
-                0.005,
-                0.01,
-                0.025,
-                0.05,
-                0.075,
-                0.1,
-                0.25,
-                0.5,
-                0.75,
-                1.0,
-                2.5,
-                5.0,
-                7.5,
-                10.0,
-            )
-        ),
+        aggregation=ExplicitBucketHistogramAggregation(boundaries=BOUNDARIES),
     )
 
 
 def install(provider: MeterProvider) -> None:
     """Point metrics at `provider`. The seam tests read in memory through.
+
+    The bucket boundaries are applied here rather than on the provider, so a
+    test that builds its own provider measures with the same buckets production
+    does. QA raised this on #57: with the view attached in `configure()` only,
+    an in-memory harness silently fell back to the SDK's defaults, and a later
+    test asserting a latency would have asserted against the wrong instrument.
 
     As with tracing, the global meter provider is left unset on purpose — see
     `telemetry.install()` for the reason, which is the same one.
@@ -107,6 +114,7 @@ def install(provider: MeterProvider) -> None:
         DURATION,
         unit="s",
         description="Duration of an HTTP request, by route template and status.",
+        explicit_bucket_boundaries_advisory=BOUNDARIES,
     )
 
 
