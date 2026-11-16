@@ -36,7 +36,7 @@ from ration.api.routers import (
     profiles,
 )
 from ration.config import settings
-from ration.observability import telemetry
+from ration.observability import logs, metrics, telemetry
 from ration.observability.middleware import TracingMiddleware
 from ration.repositories.database import make_engine, make_session_factory
 
@@ -68,7 +68,9 @@ def create_app(database_url: str | None = None) -> FastAPI:
     # therefore no spans — the application takes exactly the path it took
     # before any of this existed.
     telemetry.configure(settings())
-    if telemetry.is_enabled():
+    metrics.configure(settings())
+    logs.configure(settings())
+    if telemetry.is_enabled() or metrics.is_enabled():
         app.add_middleware(TracingMiddleware)
 
     engine = make_engine(database_url or settings().database_url)
