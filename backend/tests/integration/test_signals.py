@@ -499,3 +499,42 @@ class TestTheOtlpLogCopyIsFilteredToo:
         source = inspect.getsource(logs.AllowlistedLoggingHandler._get_attributes)
         assert "ALLOWED" in source
         assert "ALLOWED" in inspect.getsource(logs.JsonFormatter.format)
+
+
+class TestTheCodeLocationKeysAreTheOnesTheSdkEmits:
+    """QA's finding on #58: an allowlist entry that matches nothing is a lie.
+
+    The semantic convention renamed these, and the allowlist carried only the
+    old spelling — so every code location was being dropped while the list
+    appeared to permit them. Dropping more than intended is the safe direction,
+    which is exactly why nothing failed and nobody noticed.
+    """
+
+    def test_whatever_the_sdk_calls_them_is_on_the_list(self) -> None:
+        import logging as stdlib_logging
+
+        from opentelemetry.sdk._logs import LoggerProvider
+        from opentelemetry.sdk._logs.export import (
+            InMemoryLogExporter,
+            SimpleLogRecordProcessor,
+        )
+
+        exporter = InMemoryLogExporter()
+        provider = LoggerProvider()
+        provider.add_log_record_processor(SimpleLogRecordProcessor(exporter))
+        unfiltered = logs.OTelLoggingHandler(level=stdlib_logging.INFO, logger_provider=provider)
+
+        logger = stdlib_logging.getLogger("ration.test-code-keys")
+        logger.setLevel(stdlib_logging.INFO)
+        logger.addHandler(unfiltered)
+        try:
+            logger.info(logs.Message.REQUEST_FINISHED)
+        finally:
+            logger.removeHandler(unfiltered)
+            provider.shutdown()
+
+        (record,) = exporter.get_finished_logs()
+        emitted = set(record.log_record.attributes or {})
+        code_keys = {key for key in emitted if key.startswith("code.")}
+        assert code_keys, "the SDK stopped emitting code locations entirely"
+        assert code_keys <= ALLOWED, code_keys - ALLOWED

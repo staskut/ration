@@ -212,7 +212,12 @@ def trace_evidence(alert: dict[str, Any]) -> dict[str, Any]:
             "query": query,
         }
 
-    trace_id = traces[0].get("traceID")
+    # Zero-padded to 32. Tempo's search API returns the id with leading zeros
+    # stripped, and a 31-character id finds nothing in Loki — the bundle would
+    # report "no log lines carry this trace id" on about one incident in
+    # sixteen, which reads as missing telemetry rather than as a bug here.
+    # Grafana is unaffected, which is why this only shows up in the script.
+    trace_id = (traces[0].get("traceID") or "").rjust(32, "0")
     detail, error = _get(f"{TEMPO}/api/traces/{trace_id}")
     if error:
         return {"status": "partial", "trace_id": trace_id, "reason": error, "query": query}
