@@ -1,0 +1,65 @@
+# The one alert HLD §7 asks for: 5xx on the shopping-list route over five
+# minutes, carrying the deployed version.
+#
+# Why an absolute count and not a ratio. A 5xx *rate* needs a denominator, and
+# this system has two users. At three in the morning the denominator is zero
+# and the ratio is undefined; at one failed request out of one it is 100% and
+# the page is for a single person refreshing. Three failures in five minutes is
+# a condition that means the same thing at every hour of the day.
+#
+# Why three. One 500 is a blip — a dropped connection, a restart mid-request.
+# Three is a pattern, and the failure mode this exists to catch (an unrecognised
+# unit reaching the raw-weight conversion, #60) fails *every* request for the
+# affected plan, so it clears three in seconds rather than in five minutes.
+#
+# Why no `for:`. The rule is evaluated every minute over a five-minute lookback,
+# so the window is the five minutes, not a wait on top of them. Adding a pending
+# period would mean the third failure is noticed a minute later than it could
+# be, for no extra confidence.
+#
+# What is deliberately not here: a no-data alert. `fly.toml` runs
+# `min_machines_running = 0` with `auto_stop_machines = "suspend"`, so an idle
+# app genuinely emits nothing for hours. Paging about a quiet Tuesday teaches
+# whoever carries this to ignore it. The availability case is #72.
+#
+# Tested by `promtool test rules observability/prometheus/rules_test.yml`
+# against this exact file — not a copy of the expression.
+
+groups:
+  - name: ration
+    interval: 1m
+    rules:
+      - alert: ShoppingListServerErrors
+        expr: |
+          sum by (http_route, service_version, deployment_environment) (
+            increase(
+              http_server_request_duration_seconds_count{
+                http_route="/api/plans/{plan_id}/shopping-list",
+                http_response_status_code=~"5.."
+              }[5m]
+            )
+          ) >= 3
+        labels:
+          severity: page
+          # The interface #60's responder consumes. Route and version are
+          # labels rather than annotations so they survive grouping.
+          route: "{{ $labels.http_route }}"
+          version: "{{ $labels.service_version }}"
+          environment: "{{ $labels.deployment_environment }}"
+        annotations:
+          summary: >-
+            {{ $value | printf "%.0f" }} server errors in 5 minutes on
+            {{ $labels.http_route }} ({{ $labels.service_version }})
+          observed_count: '{{ $value | printf "%.0f" }}'
+          window: 5m
+          threshold: "3"
+          # How to reach the traces behind it. Scoped to the route and the
+          # release, so it finds the failing requests and not every request.
+          # The spans carry no catalog or profile data (#57), which is why the
+          # runbook's next step is a human one against the database.
+          tempo_query: >-
+            {resource.service.name="ration-api"
+             && resource.service.version="{{ $labels.service_version }}"
+             && span.http.route="{{ $labels.http_route }}"
+             && status=error}
+          runbook: docs/runbooks/shopping-list-5xx.md

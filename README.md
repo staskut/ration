@@ -82,7 +82,8 @@ takes about a second.
 |---|---|
 | Backend, frontend, database, containerisation, CI/CD | done |
 | Deployed | staging and production, on Fly.io with Neon Postgres |
-| Issues | 50 of 54 closed; the rest are [#54](https://github.com/staskut/ration/issues/54) (needs a kitchen scale) and the three deployment ones now being verified |
+| Observability | traces, metrics and logs joined by trace id; one alert; an on-call agent with a written autonomy policy. [The report](docs/operations-and-security-report.md) reconstructs one incident |
+| Issues | 55 closed. The open ones are [#54](https://github.com/staskut/ration/issues/54) (needs a kitchen scale) and the follow-ups M5 turned up, #62–#73 |
 
 ## Run it yourself
 
@@ -117,6 +118,19 @@ The seeded password exists only because `RATION_DEV_PASSWORD` was set. Without
 it the accounts get an unusable placeholder hash — so a deployment that
 happens to run the seed cannot hand out a known password. Production refuses
 to seed at all.
+
+### With telemetry
+
+```bash
+docker compose -f observability/compose.yaml up
+```
+
+The same stack plus OpenTelemetry Collector, Prometheus, Loki, Tempo and a
+Grafana at <http://localhost:3000> that needs no login. One request to the
+shopping list produces metrics, a trace whose spans are the pipeline stages,
+and log lines carrying the same trace id.
+[`observability/README.md`](observability/README.md) walks through all three
+with the queries to paste.
 
 ### From source
 
@@ -246,6 +260,14 @@ threadpool worker with no event loop, and a `suppress` swallowed the error.
 | [`docs/testing.md`](docs/testing.md) | the three layers, and what they caught |
 | [`docs/deployment.md`](docs/deployment.md) | Fly and Neon, secrets, rollback |
 | [`docs/release-process.md`](docs/release-process.md) | commit to production, and back |
+| [`docs/operations-and-security-report.md`](docs/operations-and-security-report.md) | one incident end to end, and what telemetry may never carry |
+| [`docs/on-call-autonomy.md`](docs/on-call-autonomy.md) | what the on-call agent may and may not do unattended |
+| [`docs/runbooks/README.md`](docs/runbooks/README.md) | the runbook index |
+| [`docs/runbooks/shopping-list-5xx.md`](docs/runbooks/shopping-list-5xx.md) | responding to server errors on the shopping list |
+| [`docs/runbooks/staging-the-incident.md`](docs/runbooks/staging-the-incident.md) | staging the unrecognised-unit failure, and putting it back |
+| [`observability/README.md`](observability/README.md) | the telemetry stack, its walkthrough, the dashboard and the alert |
+| [`.claude/agents/on-call-responder.md`](.claude/agents/on-call-responder.md) | the responder agent's task definition |
+| [`observability/incident/`](observability/incident/) | the staged incident's artefacts: payloads, evidence, the agent's record |
 | [`docs/decisions.md`](docs/decisions.md) | D1–D10, closed during implementation, with their cost |
 | [`docs/acceptance-audit.md`](docs/acceptance-audit.md) | every closed issue against its own criteria |
 | [`docs/ai-usage-report.md`](docs/ai-usage-report.md) | how this was built with AI, including the failures |

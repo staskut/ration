@@ -16,6 +16,20 @@ class Settings:
     environment: str
     session_secret: str
     session_max_age_days: int = 90
+    telemetry_enabled: bool = False
+    otlp_endpoint: str = "http://localhost:4318"
+    service_name: str = "ration-api"
+    # What release is running. Carried as the `service.version` resource
+    # attribute, which is how it reaches the metrics and, through them, the
+    # alert payload (HLD 7). "dev" is honest about an unset value: a build
+    # that does not know its own version should say so rather than claim one.
+    service_version: str = "dev"
+    # The shopping engine resolves each ingredient's package unit and refuses
+    # one it does not model. Off by default: nothing validates that column
+    # today (#70), so a catalog that has never been checked may hold a unit
+    # this would reject. Turning it on is the release the staged incident of
+    # #60 uses.
+    resolve_package_units: bool = False
 
     @property
     def is_production(self) -> bool:
@@ -47,4 +61,20 @@ def settings() -> Settings:
         environment=environment,
         session_secret=secret,
         session_max_age_days=int(os.environ.get("RATION_SESSION_DAYS", "90")),
+        # Off unless asked for. HLD 6: off locally, on under Compose, staging
+        # and production. A default of on would send a developer's local
+        # traffic at an endpoint that is not there.
+        telemetry_enabled=_flag("RATION_TELEMETRY_ENABLED"),
+        otlp_endpoint=os.environ.get("RATION_OTLP_ENDPOINT", "http://localhost:4318"),
+        service_name=os.environ.get("RATION_SERVICE_NAME", "").strip() or "ration-api",
+        resolve_package_units=_flag("RATION_RESOLVE_PACKAGE_UNITS"),
+        # An empty value falls back rather than through. A deploy pipeline
+        # that computes the version into a variable and gets nothing would
+        # otherwise label every series with "", which disappears in a query
+        # and takes the alert's one actionable field with it.
+        service_version=os.environ.get("RATION_VERSION", "").strip() or "dev",
     )
+
+
+def _flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}

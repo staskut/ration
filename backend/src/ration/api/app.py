@@ -36,6 +36,8 @@ from ration.api.routers import (
     profiles,
 )
 from ration.config import settings
+from ration.observability import logs, metrics, telemetry
+from ration.observability.middleware import TracingMiddleware
 from ration.repositories.database import make_engine, make_session_factory
 
 
@@ -61,6 +63,16 @@ def create_app(database_url: str | None = None) -> FastAPI:
         redoc_url=None,
     )
 
+    # Telemetry is off unless this environment asked for it (HLD §6). When it
+    # is off nothing is installed: no provider, no exporter, no middleware, and
+    # therefore no spans — the application takes exactly the path it took
+    # before any of this existed.
+    telemetry.configure(settings())
+    metrics.configure(settings())
+    logs.configure(settings())
+    if telemetry.is_enabled() or metrics.is_enabled():
+        app.add_middleware(TracingMiddleware)
+
     engine = make_engine(database_url or settings().database_url)
     app.state.engine = engine
     app.state.session_factory = make_session_factory(engine)
@@ -81,7 +93,15 @@ def create_app(database_url: str | None = None) -> FastAPI:
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:
-        return {"status": "ok"}
+        """Liveness, and which release is answering.
+
+        The version is here because telemetry is not everywhere yet (#62): a
+        Fly machine ships no signals, so the only way to ask a deployed
+        environment what it is running is to ask it directly. It is out of
+        `openapi.yaml` on purpose — `include_in_schema=False` — so this adds
+        nothing to the contract and regenerates no client.
+        """
+        return {"status": "ok", "version": settings().service_version}
 
     _serve_frontend(app)
     return app

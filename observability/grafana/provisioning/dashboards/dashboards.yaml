@@ -1,0 +1,17 @@
+# Loads every dashboard JSON in the mounted directory. The dashboard itself
+# arrives with #59; this is the loader that makes it appear without anybody
+# importing anything.
+
+apiVersion: 1
+
+providers:
+  - name: ration
+    orgId: 1
+    folder: Ration
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

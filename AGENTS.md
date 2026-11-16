@@ -17,6 +17,14 @@ Read these before changing anything they cover.
 - `docs/testing.md` — the three test layers, the golden tests, and what they have caught
 - `docs/deployment.md` — Fly and Neon, secrets, rollback
 - `docs/release-process.md` — commit to production, and back
+- `docs/operations-and-security-report.md` — one incident end to end, and what telemetry may never carry
+- `docs/on-call-autonomy.md` — what the on-call agent may and may not do unattended, by clause
+- `docs/runbooks/README.md` — the runbook index
+- `docs/runbooks/shopping-list-5xx.md` — responding to server errors on the shopping list
+- `docs/runbooks/staging-the-incident.md` — staging the unrecognised-unit failure, and putting it back
+- `observability/README.md` — the telemetry stack, its walkthrough, the dashboard and the alert
+- `.claude/agents/on-call-responder.md` — the responder agent's task definition
+- `observability/incident/` — the artefacts of the staged incident: payloads, evidence, the agent's record
 - `docs/ai-usage-report.md` — how this was built with AI, including the failures
 - `docs/mvp-plan.md` — milestones and sequencing
 - `docs/tasks.md` — the backlog
@@ -46,6 +54,7 @@ Repo root:
 
 - `make check-client` — regenerate the client and fail on a diff
 - `docker compose up` — full system with Postgres
+- `docker compose -f observability/compose.yaml up` — the same, with telemetry and Grafana
 
 ## Architecture
 

@@ -1,0 +1,146 @@
+{
+  "uid": "ration-shopping-list",
+  "title": "Shopping list — the instrumented path",
+  "description": "Request rate, error rate and p95 latency for GET /plans/{id}/shopping-list, the path HLD §7 instruments. Labels are route templates and never raw paths: a raw path carries a plan id.",
+  "tags": ["ration"],
+  "timezone": "browser",
+  "editable": true,
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "version",
+        "label": "Release",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(http_server_request_duration_seconds_count, service_version)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "What this shows",
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "`GET /plans/{id}/shopping-list` is the one instrumented path (HLD §7): the most computation-heavy endpoint, and the one whose failure the follower notices standing in a shop. Every series is labelled by **route template** and by the **release** that served it — never by a raw path, which would carry a plan id.\n\nThe alert fires on **3 or more 5xx in 5 minutes**. Runbook: `docs/runbooks/shopping-list-5xx.md`."
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Request rate",
+      "description": "Requests per second on the instrumented route, by release.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "fillOpacity": 10, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service_version) (rate(http_server_request_duration_seconds_count{http_route=\"/api/plans/{plan_id}/shopping-list\", service_version=~\"$version\"}[5m]))",
+          "legendFormat": "{{service_version}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Error rate (5xx)",
+      "description": "Server errors per second, with the alert threshold of 3 in 5 minutes drawn as 0.01/s for reference.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "fillOpacity": 20, "lineWidth": 2 },
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0.01 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service_version) (rate(http_server_request_duration_seconds_count{http_route=\"/api/plans/{plan_id}/shopping-list\", http_response_status_code=~\"5..\", service_version=~\"$version\"}[5m]))",
+          "legendFormat": "5xx {{service_version}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 latency",
+      "description": "Computed from the histogram's buckets by this query. The app reports buckets, not percentiles: a per-process percentile cannot be summed across processes.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "fillOpacity": 10, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, service_version) (rate(http_server_request_duration_seconds_bucket{http_route=\"/api/plans/{plan_id}/shopping-list\", service_version=~\"$version\"}[5m])))",
+          "legendFormat": "p95 {{service_version}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Release serving this route",
+      "description": "Which version the plotted series came from. 'dev' means a build that was not told its version.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 12 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "name",
+        "colorMode": "none"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (service_version, deployment_environment) (http_server_request_duration_seconds_count{http_route=\"/api/plans/{plan_id}/shopping-list\"})",
+          "legendFormat": "{{service_version}} · {{deployment_environment}}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Requests by status code",
+      "description": "The app labels a point with its status and judges none of them. Which status counts as an error is the alert's decision, not the application's.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 16, "x": 8, "y": 12 },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "fillOpacity": 10 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count{http_route=\"/api/plans/{plan_id}/shopping-list\", service_version=~\"$version\"}[5m]))",
+          "legendFormat": "{{http_response_status_code}}"
+        }
+      ]
+    }
+  ]
+}

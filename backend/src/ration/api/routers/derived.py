@@ -12,6 +12,7 @@ from fastapi import APIRouter, Request
 from ration.api.broadcast import notify
 from ration.api.deps import CurrentUserDep, OwnedPlanDep, SessionDep
 from ration.api.errors import not_found
+from ration.api.pipelines import shopping_list_for
 from ration.api.routers.plans import _report
 from ration.api.schemas.derived import (
     CheckedPatch,
@@ -22,7 +23,6 @@ from ration.api.schemas.derived import (
 )
 from ration.api.schemas.plans import ValidationReport
 from ration.domain.prep import prep_plan
-from ration.domain.shopping import shopping_list
 from ration.repositories import models
 from ration.repositories.repositories import CatalogRepository, PlanRepository
 
@@ -38,28 +38,29 @@ def get_validation(plan: OwnedPlanDep, session: SessionDep) -> ValidationReport:
 def get_shopping_list(
     plan: OwnedPlanDep, session: SessionDep, user: CurrentUserDep
 ) -> ShoppingListIO:
-    catalog = CatalogRepository(session).load()
-    domain_plan = PlanRepository(session).load(plan.id)
-    assert domain_plan is not None
-    checked = PlanRepository(session).checked_ingredients(plan.id)
+    """The most computation-heavy endpoint, and the instrumented one (HLD §7).
 
+    The pipeline runs in `api/pipelines.py`, stage by stage, so each stage of
+    HLD §4 is its own span. This handler assembles the response and nothing
+    else.
+    """
     return ShoppingListIO(
         plan_id=plan.id,
         lines=[
             ShoppingLineIO(
-                ingredient_id=line.ingredient_id,
-                name=line.name,
-                shop_section=line.shop_section,  # type: ignore[arg-type]
-                needed_raw_g=line.needed_raw_g,
-                purchase_amount=line.purchase_amount,
-                overage_g=line.overage_g,
-                packages=line.packages,
-                package_unit=line.package_unit,
-                checked=line.ingredient_id in checked,
-                size_is_critical=line.size_is_critical,
-                is_staple=line.is_staple,
+                ingredient_id=entry.line.ingredient_id,
+                name=entry.line.name,
+                shop_section=entry.line.shop_section,  # type: ignore[arg-type]
+                needed_raw_g=entry.line.needed_raw_g,
+                purchase_amount=entry.line.purchase_amount,
+                overage_g=entry.line.overage_g,
+                packages=entry.line.packages,
+                package_unit=entry.line.package_unit,
+                checked=entry.checked,
+                size_is_critical=entry.line.size_is_critical,
+                is_staple=entry.line.is_staple,
             )
-            for line in shopping_list(domain_plan, catalog, locale=user.locale)
+            for entry in shopping_list_for(session, plan.id, user.locale)
         ],
     )
 

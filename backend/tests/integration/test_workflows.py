@@ -128,14 +128,14 @@ class TestRulesFireThroughTheApi:
 
 class TestTheTwoPersonLoop:
     def test_the_follower_rates_and_the_planner_sees_it(
-        self, planner: TestClient, follower: TestClient, seeded_plan: str
+        self, planner: TestClient, follower: TestClient, seeded_plan: str, seeded_day
     ) -> None:
         entry = planner.get(f"/api/plans/{seeded_plan}").json()["days"][0]["entries"][0]
         follower.put(
             f"/api/plans/{seeded_plan}/entries/{entry['id']}/feedback",
             json={"rating": "disliked", "note": "слишком много"},
         )
-        today = planner.get("/api/today", params={"date": "2026-10-12"}).json()
+        today = planner.get("/api/today", params={"date": seeded_day(0)}).json()
         rated = [
             e
             for s in today["slots"]
@@ -153,16 +153,16 @@ class TestTheTwoPersonLoop:
         assert next(x for x in lines if x["ingredient_id"] == "banana")["checked"]
 
     def test_a_planner_change_shows_on_the_followers_today(
-        self, planner: TestClient, follower: TestClient, seeded_plan: str
+        self, planner: TestClient, follower: TestClient, seeded_plan: str, seeded_day
     ) -> None:
-        before = follower.get("/api/today", params={"date": "2026-10-18"}).json()
+        before = follower.get("/api/today", params={"date": seeded_day(6)}).json()
         assert all(s["entries"] == [] for s in before["slots"])
 
         planner.post(
             f"/api/plans/{seeded_plan}/days/6/entries",
             json={"slot": "dinner", "module_id": "dinner_squid_pepper"},
         )
-        after = follower.get("/api/today", params={"date": "2026-10-18"}).json()
+        after = follower.get("/api/today", params={"date": seeded_day(6)}).json()
         dinner = next(s for s in after["slots"] if s["slot"] == "dinner")
         assert dinner["entries"][0]["module_id"] == "dinner_squid_pepper"
 

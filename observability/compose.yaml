@@ -1,0 +1,144 @@
+# The whole system, with telemetry attached.
+#
+#   docker compose -f observability/compose.yaml up
+#
+# brings up the application and Postgres exactly as the root compose file
+# describes them, plus the chain HLD §5 fixes:
+#
+#   app --OTLP/HTTP--> collector --> Prometheus (metrics)
+#                                --> Loki       (logs)
+#                                --> Tempo      (traces)
+#                                        |
+#                                     Grafana, provisioned from this repo
+#
+# The application is not restated here. `include` pulls in the root file and
+# then `telemetry.yaml` overrides the app service's environment, so there is
+# exactly one definition of the app and of the database (criterion: `git diff`
+# shows docker-compose.yml unchanged).
+#
+# Relative paths inside an included file resolve against that file's own
+# directory, so the root file's build context still means the repo root.
+
+include:
+  - path:
+      - ../docker-compose.yml
+      - ./telemetry.yaml
+
+services:
+  # ------------------------------------------------------------- collector
+  # The only writer to the three stores. The app speaks to this and to nothing
+  # else, so a store can be swapped without the application knowing.
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.115.1
+    command: ["--config=/etc/collector.yaml"]
+    volumes:
+      - ./collector/config.yaml:/etc/collector.yaml:ro
+    ports:
+      # OTLP/HTTP, which is what the app exports on. Published so a developer
+      # running the app from source can point RATION_OTLP_ENDPOINT at it.
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+      # The collector's own Prometheus exporter, scraped by Prometheus below.
+      - "${OTEL_METRICS_PORT:-8889}:8889"
+    depends_on: [prometheus, loki, tempo]
+
+  # ------------------------------------------------------------ Prometheus
+  # Scrape, rather than remote-write: the collector exposes the metrics it has
+  # received and Prometheus pulls them. Pull keeps the failure obvious — a
+  # target that stops answering is visible as "down" in Prometheus itself,
+  # where a push that stops arriving just looks like a quiet service. It also
+  # needs no extra flag on Prometheus and no credentials anywhere.
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      # Seven days. This is a laptop stack for one person's demo, and an
+      # unbounded TSDB on a developer's disk is a surprise nobody asked for.
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=512MB
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+      # Mounted so `promtool test rules` can be run against the same file the
+      # stack loads, rather than against a copy of the expression.
+      - ./prometheus/rules_test.yml:/etc/prometheus/rules_test.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    depends_on: [alertmanager]
+
+  # --------------------------------------------------------- Alertmanager
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    depends_on: [alert-sink]
+
+  # The receiver. Writes each delivered payload to ./alerts/ so a reviewer
+  # reads the alert that was sent rather than a tick saying one was, and so
+  # #60's responder has a file to start from.
+  alert-sink:
+    image: python:3.12-slim
+    command: ["python", "/app/alert_sink.py"]
+    volumes:
+      - ./alert_sink.py:/app/alert_sink.py:ro
+      - ./alerts:/alerts
+    environment:
+      ALERT_DIR: /alerts
+    ports:
+      - "${ALERT_SINK_PORT:-9099}:9099"
+
+  # ------------------------------------------------------------------ Loki
+  loki:
+    image: grafana/loki:3.2.1
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+
+  # ----------------------------------------------------------------- Tempo
+  tempo:
+    image: grafana/tempo:2.6.1
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "${TEMPO_PORT:-3200}:3200"
+
+  # --------------------------------------------------------------- Grafana
+  # Anonymous admin: a reviewer types no credentials and the repository holds
+  # none. This is a local stack with no route to anything real; the same
+  # setting on a deployed Grafana would be a hole, which is why it is here and
+  # not in fly.toml.
+  grafana:
+    image: grafana/grafana:11.4.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_FEATURE_TOGGLES_ENABLE: traceToMetrics
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on: [prometheus, loki, tempo]
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+  loki-data:
+  tempo-data:
+  grafana-data:

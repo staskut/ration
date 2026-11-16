@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from datetime import timedelta
+from datetime import date, timedelta
 
 from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
@@ -23,6 +23,27 @@ from ration.domain.types import Template
 from ration.repositories import models
 from ration.repositories.database import make_engine
 from ration.seed.loader import ReferenceData, load_reference
+
+
+def demo_start_date(today: date | None = None) -> date:
+    """The Monday of the week the seed is running in.
+
+    The fixture pins the reference week to 2026-10-12 because
+    `docs/sample-plan-6-days.md` is the oracle for three golden tests and its
+    dates are part of what they check. The *seeded* plan is a demo, and a demo
+    whose follower screen shows a week that ended a month ago is broken — which
+    is exactly what happened: the plan's week passed on 18 October 2026, the
+    follower's Today screen became an error state with no way out, and nothing
+    noticed until CI next ran four weeks later (#75).
+
+    Monday, not today, because `day_index` 0 is Monday in the fixture and the
+    templates hang off the weekday: training falls on days 0 and 3, the long
+    shift on day 2. Shifting by anything but whole weeks would silently change
+    what the demo demonstrates.
+    """
+    today = today or date.today()
+    return today - timedelta(days=today.weekday())
+
 
 # .example is the IANA-reserved documentation TLD. .local and .test are
 # special-use names that email validators reject, which would make these
@@ -45,8 +66,16 @@ class ProductionSeedRefused(RuntimeError):
     """Raised rather than writing demo data into a real person's database."""
 
 
-def seed(engine: Engine, *, reset: bool = False) -> ReferenceData:
-    """Load the reference fixture. Safe to call repeatedly."""
+def seed(engine: Engine, *, reset: bool = False, today: date | None = None) -> ReferenceData:
+    """Load the reference fixture. `today` picks the week the plan lands in.
+
+    The clock is injectable so a test can seed as if it were a fortnight ago
+    and read the result now — which is the only way to check what happens to
+    this demo *after* the seed, and precisely the case that went unnoticed for
+    a month (#75). Production passes nothing and gets the current week.
+
+    Safe to call repeatedly.
+    """
     if settings().is_production:
         raise ProductionSeedRefused(
             "Refusing to seed a production database: the reference plan is demo data."
@@ -61,7 +90,7 @@ def seed(engine: Engine, *, reset: bool = False) -> ReferenceData:
         ingredient_ids = _upsert_ingredients(session, reference)
         module_ids = _upsert_modules(session, reference, ingredient_ids)
         profile_id, follower_id = _upsert_identity_and_profile(session, reference, ingredient_ids)
-        _upsert_plan(session, reference, profile_id, module_ids)
+        _upsert_plan(session, reference, profile_id, module_ids, today)
         session.commit()
 
     assert follower_id  # the pairing is what makes the follower's screens work
@@ -287,6 +316,7 @@ def _upsert_plan(
     reference: ReferenceData,
     profile_id: str,
     module_ids: dict[str, str],
+    today: date | None = None,
 ) -> str:
     row = session.scalars(
         select(models.Plan).where(models.Plan.slug == reference.plan.id)
@@ -295,9 +325,10 @@ def _upsert_plan(
         row = models.Plan(slug=reference.plan.id)
         session.add(row)
 
+    start = demo_start_date(today)
     row.profile_id = profile_id
     row.name = reference.plan.name
-    row.start_date = reference.plan.start_date
+    row.start_date = start
     row.status = reference.plan.status
 
     # Replaced wholesale, so re-seeding cannot accumulate days or entries.
@@ -308,7 +339,7 @@ def _upsert_plan(
         [
             models.PlanDay(
                 day_index=day.day_index,
-                date=reference.plan.start_date + timedelta(days=day.day_index),
+                date=start + timedelta(days=day.day_index),
                 day_template=day.day_template,
                 notes=day.notes,
                 entries=[

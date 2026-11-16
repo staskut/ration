@@ -23,6 +23,17 @@ check() {
 check "health responds" "200" \
   "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/health")"
 
+# A release that cannot say which release it is leaves an alert payload saying
+# "dev" in production, and nothing to roll back to. Losing this plumbing is
+# silent everywhere else, so it fails the deploy here.
+version=$(curl -s "$BASE/health" | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+if [ -n "$version" ]; then
+  printf 'ok    health names its release (%s)\n' "$version"
+else
+  printf 'FAIL  health does not name its release\n'
+  failures=$((failures + 1))
+fi
+
 check "the frontend is served" "200" \
   "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/")"
 

@@ -1,0 +1,23 @@
+# Prometheus scrapes the collector's exporter. Nothing scrapes the app
+# directly: the app speaks OTLP and only OTLP (HLD §5).
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+rule_files:
+  - /etc/prometheus/rules.yml
+
+scrape_configs:
+  - job_name: ration-collector
+    static_configs:
+      - targets: ["collector:8889"]
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

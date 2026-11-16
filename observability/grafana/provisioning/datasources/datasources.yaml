@@ -1,0 +1,52 @@
+# Provisioned from this file, so a reviewer who runs `up` adds nothing by hand.
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 15s
+
+  - name: Loki
+    type: loki
+    uid: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      # A log line's trace id becomes a link to the trace. This is the
+      # correlation of HLD §7 made clickable rather than described.
+      #
+      # `matcherType: label`, not a regex over the line. The line body is the
+      # message constant — `request.finished` — and everything else travels as
+      # OTLP attributes, which Loki 3 stores as structured metadata. A regex
+      # looking for the id inside the text finds nothing, which is a link that
+      # is present and silently dead.
+      derivedFields:
+        - name: TraceID
+          matcherType: label
+          matcherRegex: trace_id
+          url: "${__value.raw}"
+          datasourceUid: tempo
+
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      # From a span, jump to that request's log lines — the same trace id, the
+      # other signal.
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        filterByTraceID: true
+      tracesToMetrics:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true

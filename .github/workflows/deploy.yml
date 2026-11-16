@@ -85,9 +85,22 @@ jobs:
 
       # Builds the image, runs `alembic upgrade head` as the release command,
       # then rolls machines one at a time behind the healthcheck in fly.toml.
+      # The short SHA of the commit CI tested, not of main: the checkout above
+      # pins head_sha for exactly that reason, and a version that names a
+      # different tree than the one deployed is worse than no version at all.
+      - name: Version this release
+        if: steps.creds.outputs.configured == 'true'
+        id: version
+        run: |
+          VERSION=$(git rev-parse --short HEAD)
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Deploy
         if: steps.creds.outputs.configured == 'true'
-        run: flyctl deploy --app "$APP" --remote-only
+        run: |
+          flyctl deploy --app "$APP" --remote-only \
+            --build-arg RATION_VERSION="${{ steps.version.outputs.value }}"
 
       # Separate from the deploy so a smoke failure is its own red step with
       # its own name, rather than a line buried in deploy output.
@@ -105,7 +118,7 @@ jobs:
           elif [ "${{ job.status }}" = "success" ]; then
             echo "### Deployed to \`$APP\`" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "<$URL> — smoke test passed." >> "$GITHUB_STEP_SUMMARY"
+            echo "<$URL> — smoke test passed, running \`${{ steps.version.outputs.value }}\`." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "### Deploy to \`$APP\` failed" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"

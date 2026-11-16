@@ -21,6 +21,29 @@ class Dimension(StrEnum):
     COUNT = "pcs"
 
 
+class UnrecognisedUnitError(ValueError):
+    """A quantity carries a unit this system does not model.
+
+    Grams, millilitres and pieces are the three dimensions Ration models
+    (PRD §6.2). A catalog row carrying anything else — `kg`, `tbsp`, a typo —
+    cannot be converted, and guessing would corrupt a shopping list in a way
+    nobody would notice.
+
+    The message names the ingredient, which is why it never reaches telemetry:
+    an ingredient id is part of one real person's dietary record (HLD §8). The
+    span and the log line carry `exception.type` and the failing stage; the row
+    is found against the database, by a human, with a runbook.
+    """
+
+    def __init__(self, unit: str, ingredient_id: str) -> None:
+        super().__init__(
+            f"{ingredient_id}: {unit!r} is not a unit this system models. "
+            f"Expected one of {', '.join(d.value for d in Dimension)}."
+        )
+        self.unit = unit
+        self.ingredient_id = ingredient_id
+
+
 class DimensionMismatchError(TypeError):
     """Raised when quantities of different dimensions are combined."""
 
@@ -83,3 +106,19 @@ def millilitres(amount: Decimal | int | str) -> Quantity:
 def pieces(amount: Decimal | int | str) -> Quantity:
     """Build a count quantity, for things sold by the item."""
     return Quantity(Decimal(amount), Dimension.COUNT)
+
+
+def dimension_for(unit: str | None, ingredient_id: str) -> Dimension | None:
+    """The dimension a unit names, or None when there is no unit.
+
+    Raises `UnrecognisedUnitError` for a unit outside the three this system
+    models. Refusing is the specified behaviour rather than a gap to work
+    around: a unit nobody has defined has no conversion, and inventing one is
+    how a shopping list becomes confidently wrong.
+    """
+    if unit is None:
+        return None
+    try:
+        return Dimension(unit)
+    except ValueError:
+        raise UnrecognisedUnitError(unit, ingredient_id) from None
