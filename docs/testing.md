@@ -143,5 +143,5 @@ testing in general.
 
 - A test name says what must be true, not what it calls. `test_a_second_main_in_a_slot_is_409`, not `test_create_entry_conflict`.
 - Where a test exists because of a specific past failure, its docstring says so. The reason is the part that stops someone deleting it later.
-- Tolerances carry their justification. The golden shopping list is 15% because §12 says "около 30 г", not because 15% felt safe.
+- Tolerances carry their justification. The golden shopping list is 15% because §12 says "about 30 g", not because 15% felt safe.
 - Integration tests stay under a minute in total. They run on every push.

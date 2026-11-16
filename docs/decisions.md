@@ -36,8 +36,8 @@ sanity bound.
 Three things settled it:
 
 1. **The document defers to labels itself.** Its own status note says values are
-   approximate and *"после выбора конкретных продуктов значения нужно уточнить по
-   этикеткам"*. It never claimed to be the authority on nutrition.
+   approximate and *"once specific products are chosen, the values need to be
+   refined from their labels"*. It never claimed to be the authority on nutrition.
 2. **The figures are over-determined and provably inconsistent.** 170 g of white
    fish is credited with ~35 g of protein in one dinner and ~29 g in another,
    implying 20.6 and 17.4 g/100 g for the same ingredient. No value set satisfies
@@ -93,7 +93,7 @@ Exceeding a protein target does not. A ceiling flags a plan for being *better th
 it was asked to be*, and 13 of the 21 breaches under reference values were exactly
 that — days running 125–136 g against a stated target of 110.
 
-The document writes *"ориентир по белку: около 105–120 г"* as a range, but the
+The document writes *"protein guideline: about 105–120 g"* as a range, but the
 operative constraint is the floor. Keeping the field nullable means a different
 profile could still set a ceiling if it had a reason to; this one has none.
 
@@ -148,7 +148,7 @@ and seeds, another fifth to the oven. Shopping still merges on `ingredient_id`,
 so §12's single pepper line stays a single line.
 
 **Consequence:** the pepper requirement drops from 8 pieces to 7, which is inside
-§12's stated "7–8 средних".
+§12's stated "7–8 medium".
 
 ---
 
