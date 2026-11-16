@@ -30,6 +30,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 from opentelemetry import trace
+from opentelemetry.sdk._logs import LoggingHandler as OTelLoggingHandler
 
 from ration.observability.attributes import ALLOWED, DROPPED_MESSAGE, checked
 
@@ -42,6 +43,7 @@ LOGGER_NAME = "ration"
 STRUCTURE = ("timestamp", "level", "logger", "message")
 
 _configured = False
+_logger_provider: Any = None
 
 
 class Message(StrEnum):
@@ -56,6 +58,29 @@ class Message(StrEnum):
     REQUEST_FAILED = "request.failed"
     TELEMETRY_STARTED = "telemetry.started"
     TELEMETRY_ATTRIBUTE_DROPPED = DROPPED_MESSAGE
+
+
+class AllowlistedLoggingHandler(OTelLoggingHandler):  # type: ignore[misc,valid-type]
+    """The OTLP log handler, with the same allowlist in front of it.
+
+    The SDK builds a record's attributes from everything on the `LogRecord`,
+    which is a wider door than the JSON formatter's: anything a caller passes
+    in `extra`, and anything the logging module or another library attaches,
+    would travel. Running the same list here means one allowlist governs all
+    three signals and both log destinations, rather than two that will
+    eventually disagree.
+
+    The filtering is silent, which is the one place in this package that drops
+    a key without saying so. The warning belongs where a key is *set* — this is
+    where the SDK's own bookkeeping arrives, and a warning here would be logged
+    on this handler, whose attributes would be filtered, which would warn. That
+    is not a hypothetical: it was a RecursionError on the first request.
+    """
+
+    @staticmethod
+    def _get_attributes(record: logging.LogRecord) -> Any:
+        attributes = OTelLoggingHandler._get_attributes(record)
+        return {key: value for key, value in attributes.items() if key in ALLOWED}
 
 
 class TraceCorrelationFilter(logging.Filter):
@@ -96,16 +121,22 @@ class JsonFormatter(logging.Formatter):
 
 
 def configure(settings: Settings) -> None:
-    """Install the JSON handler, if this environment wants telemetry.
+    """Install the JSON handler and the shipper, if telemetry is wanted.
 
     Idempotent, and a no-op when telemetry is off: with it off the application
     installs no handler at all and logs exactly as much as it did before any of
     this existed, which is nothing.
+
+    Two destinations, on purpose. The JSON on stdout is what `docker logs` and
+    `fly logs` show, and it is what a person reads when the collector is the
+    thing that is broken. The OTLP copy is what reaches Loki, so a trace id
+    found in Tempo can be pasted into a log query (HLD §7).
     """
     global _configured
     if not settings.telemetry_enabled or _configured:
         return
     install(level=logging.INFO)
+    _ship(settings)
     logging.getLogger(LOGGER_NAME).info(
         Message.TELEMETRY_STARTED,
         extra={"service.name": settings.service_name, "service.version": settings.service_version},
@@ -146,6 +177,39 @@ def install(stream: Any = None, level: int = logging.INFO) -> None:
     _configured = True
 
 
+def _ship(settings: Settings) -> None:
+    """Send a copy of every record to the collector, for Loki."""
+    global _logger_provider
+    from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+    from opentelemetry.sdk._logs import LoggerProvider
+    from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+    from opentelemetry.sdk.resources import Resource
+
+    provider = LoggerProvider(
+        resource=Resource.create(
+            checked(
+                {
+                    "service.name": settings.service_name,
+                    "service.version": settings.service_version,
+                    "deployment.environment": settings.environment,
+                }
+            )
+        )
+    )
+    provider.add_log_record_processor(
+        BatchLogRecordProcessor(OTLPLogExporter(endpoint=f"{settings.otlp_endpoint}/v1/logs"))
+    )
+    _logger_provider = provider
+    handler = AllowlistedLoggingHandler(level=logging.INFO, logger_provider=provider)
+    # On this service's own logger, never on the root one. The OTLP handler
+    # runs exporter code, and exporter code logs; on the root logger each of
+    # those records would be exported in turn, which is a RecursionError on the
+    # first request rather than a subtle leak — it took the stack down on the
+    # first try. Attaching here also means Loki holds this service's records
+    # rather than every library's.
+    logging.getLogger(LOGGER_NAME).addHandler(handler)
+
+
 def _undisable() -> None:
     """Re-enable this service's loggers, in case something turned them off.
 
@@ -162,11 +226,19 @@ def _undisable() -> None:
 
 
 def reset() -> None:
-    """Remove the handler. Used between tests; harmless in production."""
-    global _configured
+    """Remove the handlers. Used between tests; harmless in production."""
+    global _configured, _logger_provider
     root = logging.getLogger()
-    for handler in [h for h in root.handlers if isinstance(h.formatter, JsonFormatter)]:
-        root.removeHandler(handler)
+    for handler in list(root.handlers):
+        if isinstance(handler.formatter, JsonFormatter):
+            root.removeHandler(handler)
+    own = logging.getLogger(LOGGER_NAME)
+    for handler in list(own.handlers):
+        if isinstance(handler, AllowlistedLoggingHandler):
+            own.removeHandler(handler)
+    if _logger_provider is not None:
+        _logger_provider.shutdown()
+        _logger_provider = None
     logging.getLogger("uvicorn.access").disabled = False
     logging.getLogger(LOGGER_NAME).setLevel(logging.NOTSET)
     _configured = False
