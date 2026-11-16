@@ -9,6 +9,9 @@ dependencies = [
     "email-validator>=2.2",
     "fastapi>=0.115",
     "itsdangerous>=2.2",
+    "opentelemetry-api>=1.45.1",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.1",
+    "opentelemetry-sdk>=1.45.1",
     "psycopg[binary]>=3.2",
     "pyyaml>=6.0",
     "sqlalchemy>=2.0",
@@ -85,6 +88,21 @@ forbidden_modules = [
     "httpx",
     "starlette",
     "yaml",
+    "opentelemetry",
     "ration.api",
     "ration.repositories",
+    "ration.observability",
+]
+
+[[tool.importlinter.contracts]]
+# Telemetry formats counts and route templates. If it could reach a domain
+# type or an ORM row it could format one, and the privacy rule in HLD 8 would
+# be back to being a convention somebody has to remember.
+name = "Observability knows nothing about the data it is observing"
+type = "forbidden"
+source_modules = ["ration.observability"]
+forbidden_modules = [
+    "ration.domain",
+    "ration.repositories",
+    "ration.api",
 ]
