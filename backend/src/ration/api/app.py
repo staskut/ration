@@ -93,7 +93,15 @@ def create_app(database_url: str | None = None) -> FastAPI:
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:
-        return {"status": "ok"}
+        """Liveness, and which release is answering.
+
+        The version is here because telemetry is not everywhere yet (#62): a
+        Fly machine ships no signals, so the only way to ask a deployed
+        environment what it is running is to ask it directly. It is out of
+        `openapi.yaml` on purpose — `include_in_schema=False` — so this adds
+        nothing to the contract and regenerates no client.
+        """
+        return {"status": "ok", "version": settings().service_version}
 
     _serve_frontend(app)
     return app

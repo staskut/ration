@@ -1,0 +1,87 @@
+# Unit tests for the alert rule, run against the rule file the stack loads:
+#
+#   docker compose -f observability/compose.yaml exec prometheus \
+#     promtool test rules /etc/prometheus/rules_test.yml
+#
+# Four cases, and the two that matter are the ones that must *not* fire. An
+# alert that fires correctly is easy; an alert that stays quiet on a quiet
+# Tuesday and on two unlucky requests is what decides whether anybody still
+# reads it in a month.
+#
+# Every case runs at 15s, the scrape interval `prometheus.yml` actually uses,
+# and this is load-bearing rather than tidiness. `increase()` extrapolates from
+# the samples inside the range, and at a coarse resolution three real errors
+# evaluate to 2.5 — the alert would be written as ">= 3" and would not fire on
+# the third error. At 15s the same three errors evaluate to 3.3 and the fourth
+# case still stays quiet. A rule tested at a resolution the system does not run
+# at is a rule tested against a different rule.
+
+rule_files:
+  - rules.yml
+
+evaluation_interval: 15s
+
+tests:
+  # ---------------------------------------------------------------- fires
+  - interval: 15s
+    name: three failures in five minutes fires
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{http_route="/api/plans/{plan_id}/shopping-list",http_response_status_code="500",service_version="abc1234",deployment_environment="production"}'
+        # Flat, then one failure a minute for three minutes.
+        values: "0x4 1x4 2x4 3x7"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ShoppingListServerErrors
+        exp_alerts:
+          - exp_labels:
+              severity: page
+              http_route: "/api/plans/{plan_id}/shopping-list"
+              service_version: abc1234
+              deployment_environment: production
+              route: "/api/plans/{plan_id}/shopping-list"
+              version: abc1234
+              environment: production
+            exp_annotations:
+              summary: >-
+                3 server errors in 5 minutes on
+                /api/plans/{plan_id}/shopping-list (abc1234)
+              observed_count: "3"
+              window: 5m
+              threshold: "3"
+              tempo_query: >-
+                {resource.service.name="ration-api"
+                 && resource.service.version="abc1234"
+                 && span.http.route="/api/plans/{plan_id}/shopping-list"
+                 && status=error}
+              runbook: docs/runbooks/shopping-list-5xx.md
+
+  # ------------------------------------------------------------ stays quiet
+  - interval: 15s
+    name: two failures in five minutes does not fire
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{http_route="/api/plans/{plan_id}/shopping-list",http_response_status_code="500",service_version="abc1234",deployment_environment="production"}'
+        values: "0x4 1x4 2x11"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ShoppingListServerErrors
+        exp_alerts: []
+
+  - interval: 15s
+    name: no traffic at all does not fire
+    # The quiet Tuesday. fly.toml suspends the machine when nobody is using it,
+    # so this is the normal state of this system, not an edge case.
+    input_series: []
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ShoppingListServerErrors
+        exp_alerts: []
+
+  - interval: 15s
+    name: a stream of successful requests does not fire
+    input_series:
+      - series: 'http_server_request_duration_seconds_count{http_route="/api/plans/{plan_id}/shopping-list",http_response_status_code="200",service_version="abc1234",deployment_environment="production"}'
+        values: "0+20x20"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ShoppingListServerErrors
+        exp_alerts: []

@@ -1,0 +1,5 @@
+# Alert payloads delivered by Alertmanager land here, one file each.
+# Committed empty so the directory exists; the payloads themselves are
+# written at runtime and the staged incident of #60 commits the one it fired.
+*.json
+!.gitignore

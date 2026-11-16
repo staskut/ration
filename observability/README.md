@@ -35,13 +35,15 @@ deployment.
 | App | <http://localhost:8000> | the thing being observed |
 | Grafana | <http://localhost:3000> | all three signals |
 | Prometheus | <http://localhost:9090> | metrics, and the alert rules |
+| Alertmanager | <http://localhost:9093> | where a firing alert goes |
+| Alert sink | <http://localhost:9099/latest> | the payload that was delivered |
 | Loki | <http://localhost:3100> | logs |
 | Tempo | <http://localhost:3200> | traces |
 | Collector | <http://localhost:4318> | OTLP/HTTP, for an app run from source |
 
 Every published port has an override: `RATION_PORT`, `GRAFANA_PORT`,
 `PROMETHEUS_PORT`, `LOKI_PORT`, `TEMPO_PORT`, `OTEL_HTTP_PORT`,
-`OTEL_METRICS_PORT`.
+`OTEL_METRICS_PORT`, `ALERTMANAGER_PORT`, `ALERT_SINK_PORT`.
 
 **If port 8000 is already taken** — most likely by `docker compose up` from the
 root, which publishes the same port, or by an app you are running from source —
@@ -136,6 +138,109 @@ nothing.
 The same thing without leaving the trace: in Tempo, the **Logs for this span**
 button runs that query for you, and in Loki each line's `TraceID` field links
 back. That is the correlation of HLD §7, clickable.
+
+## The dashboard
+
+**Shopping list — the instrumented path**, in the Ration folder, provisioned
+from `grafana/dashboards/shopping-list.json`. Request rate, error rate and p95
+latency for the one instrumented route, with a release picker, and a panel
+breaking requests down by status code.
+
+p95 is computed by the query from the histogram's buckets. The application
+reports buckets and never a percentile: a percentile computed per process and
+per scrape interval cannot be summed with another one, so an app that reports
+its own p95 reports a number nobody can aggregate.
+
+The bucket boundaries are set explicitly, and that detail decides whether the
+panel means anything. The SDK's defaults — 0, 5, 10, 25, … — suit a histogram
+measured in milliseconds; against a duration in seconds every request this
+service serves falls into the first bucket, and `histogram_quantile` over one
+bucket can only answer "somewhere between 0 and 5 seconds". That is a panel
+that is always wrong and never obviously wrong. With the semantic convention's
+boundaries the same traffic reads p95 ≈ 17 ms.
+
+## The alert
+
+One rule, in `prometheus/rules.yml`: **three or more 5xx on
+`/api/plans/{plan_id}/shopping-list` in five minutes**, evaluated every minute,
+no pending period, carrying the deployed version.
+
+An absolute count rather than a ratio, because this system has two users: a
+ratio is undefined at three in the morning when the denominator is zero, and
+100% when one request out of one fails. Three rather than one, because one 500
+is a blip and the failure this exists to catch — an unrecognised unit reaching
+the raw-weight conversion ([#60](https://github.com/staskut/ration/issues/60))
+— fails every request for the affected plan and clears three in seconds.
+
+There is deliberately **no no-data alert**. `fly.toml` runs
+`min_machines_running = 0`, so an idle app genuinely emits nothing for hours,
+and paging about a quiet Tuesday teaches whoever carries this to ignore it. The
+availability case is [#72](https://github.com/staskut/ration/issues/72).
+
+### Test the rule
+
+Against the same file the stack loads, not a copy of the expression:
+
+```bash
+docker compose -f observability/compose.yaml exec prometheus \
+  promtool test rules /etc/prometheus/rules_test.yml
+```
+
+Four cases: three failures fire; two do not; no traffic at all does not; a
+stream of successful requests does not. They run at 15s, the scrape interval
+`prometheus.yml` uses, and that is load-bearing — `increase()` extrapolates
+from the samples in the range, and at a coarse resolution three real errors
+evaluate to 2.5 and the rule would not fire on the third error.
+
+### Watch it fire
+
+```bash
+python3 observability/fire_alert.py
+```
+
+About a minute and a half: it reports 5xx points for the route to the collector,
+raising the counter one step at a time with a real pause between steps, because
+Prometheus *scrapes* — a counter that arrives already at four looks flat and
+`increase()` over five minutes is zero.
+
+Then <http://localhost:9090/alerts> shows the rule firing, and the delivered
+payload is in `observability/alerts/latest.json`, also readable at
+<http://localhost:9099/latest> and as one line in
+`docker compose -f observability/compose.yaml logs alert-sink`.
+
+This exercises the rule, the routing and the payload — the alert that fires is
+the one the stack loaded. It does **not** exercise the application failing:
+there is no route in the image that can be made to return 500 on demand, because
+a deployable artefact with a break-glass endpoint in it is a worse idea than a
+slow demo. The real pipeline failing is #60's staged incident.
+
+### The payload, field by field
+
+It is the interface #60's responder consumes, so it is documented rather than
+merely produced.
+
+| Field | | |
+|---|---|---|
+| `labels.alertname` | `ShoppingListServerErrors` | which rule |
+| `labels.route` | `/api/plans/{plan_id}/shopping-list` | route **template** |
+| `labels.version` | e.g. `a1b2c3d` | the release that is failing |
+| `labels.environment` | `development` · `staging` · `production` | where |
+| `labels.severity` | `page` | |
+| `annotations.observed_count` | e.g. `4` | how many 5xx |
+| `annotations.window` · `threshold` | `5m` · `3` | over what, against what |
+| `annotations.tempo_query` | TraceQL | the failing traces, scoped to that route and release |
+| `annotations.runbook` | `docs/runbooks/shopping-list-5xx.md` | what to do |
+| `annotations.summary` | one sentence | all of the above, for a human |
+
+`version` is `dev` when the build was not told which release it is — never
+blank, never missing. The deploy workflow passes the short SHA of the commit CI
+tested, so the version in an alert is something that can be checked out and
+rolled back, and `GET /health` returns the same string for any environment you
+can reach.
+
+There is no plan id, profile id, ingredient, target or feedback value anywhere
+in it, and there cannot be: every field is a route template, a release, a count
+or a constant.
 
 ## What is deliberately not in here
 

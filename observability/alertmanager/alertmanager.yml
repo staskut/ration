@@ -1,0 +1,27 @@
+# Routes the one alert to the one receiver.
+#
+# The receiver writes the payload to a file rather than sending it anywhere.
+# That is deliberate for now: the payload is an interface before it is a
+# notification — #60's on-call responder reads it, and #61 reconstructs an
+# incident from it. Email, Slack or a push notification, with the credential
+# handling that implies, is #73.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: alert-sink
+  # Group by the two labels that decide what you would do about it: which route
+  # is failing and which release is failing it.
+  group_by: [alertname, route, version]
+  group_wait: 10s
+  group_interval: 1m
+  # An hour, not the default four. A responder that has acted wants to know
+  # within the hour whether it worked.
+  repeat_interval: 1h
+
+receivers:
+  - name: alert-sink
+    webhook_configs:
+      - url: http://alert-sink:9099/alert
+        send_resolved: true

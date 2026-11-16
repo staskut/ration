@@ -131,4 +131,16 @@ class TestPasswordHandling:
 
 class TestHealth:
     def test_health_needs_no_session(self, api: TestClient) -> None:
-        assert api.get("/health").json() == {"status": "ok"}
+        body = api.get("/health").json()
+        assert body["status"] == "ok"
+
+    def test_health_names_the_release_it_is_serving(self, api: TestClient) -> None:
+        """#59: the only way to ask a deployed environment what it runs.
+
+        A Fly machine ships no telemetry yet (#62), and an alert that names a
+        release is worth nothing if the release cannot be checked. "dev" when
+        the build was not told — never empty, never absent.
+        """
+        body = api.get("/health").json()
+        assert body["version"]
+        assert set(body) == {"status", "version"}
