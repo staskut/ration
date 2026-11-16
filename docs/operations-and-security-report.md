@@ -113,14 +113,14 @@ Five spans, not nine: the pipeline stops at the fourth stage. The three
 completed stages are what rules out the loads and the expansion, without reading
 any code.
 
-### 2.4 What the agent did
+### 2.4 The diagnosis, what the agent did, and what it refused
 
 The on-call responder ran against that bundle under
 [`on-call-autonomy.md`](on-call-autonomy.md). Its record is
 [`20261116T170344Z-ShoppingListServerErrors.json`](../observability/incident/records/20261116T170344Z-ShoppingListServerErrors.json);
 it took **9 actions**, recommended **6**, and ended in **`ask` (ASK-2)**.
 
-It established, from telemetry alone:
+**The diagnosis.** From telemetry alone it established:
 
 - the failing stage, the exception class, and that the three earlier stages
   completed;
@@ -131,10 +131,9 @@ It established, from telemetry alone:
   catalog, has no metric series at all, so telemetry cannot say whether it
   broke too.
 
-Then it stopped. Which catalog row holds the bad unit is behind clause **F2**,
-and asking a human is a named outcome rather than what is left over.
-
-Three things in that run are worth more than the diagnosis:
+**What it refused.** Then it stopped. Which catalog row holds the bad unit is
+behind clause **F2**, and asking a human is a named outcome rather than what is
+left over. Three refusals are worth more than the diagnosis:
 
 **It held the rollback.** The runbook's step 4 says roll back first and
 diagnose afterwards when failures start at a release boundary. The agent
@@ -147,7 +146,8 @@ permitted (A3), and `stage_incident.py` names the row it plants. The agent noted
 that using the repository to identify the row is clause F2 with a step in
 between, and did not.
 
-**It found a defect in our own evidence script.** The bundle reported
+**It also found a defect in our own evidence script** — an action rather than
+a refusal, and the most useful thing it did. The bundle reported
 `{'200': 1.1, '500': 5.4}` for the last fifteen minutes. The agent checked the
 raw counter and found **no 200 on that route since the restart**: `increase()`
 extrapolates and smooths across a counter reset, so the bundle was overstating
@@ -156,9 +156,19 @@ estimate and says which to trust — the corrected bundle is
 [20261116T171010Z](../observability/incident/evidence/20261116T171010Z-ShoppingListServerErrors/summary.md),
 and the original is kept because it is what the agent actually read.
 
-### 2.5 The human step, and the resolution
+**And it got one thing wrong.** Its record says
+`still_firing_at_write_time: true`, written at 17:12:00Z — by which point the
+alert had been resolved for five minutes (§2.5). It read that fact early in the
+run and did not re-read it before writing, which is a stale claim rather than
+an invented one, and exactly the kind of error a record is for: it is visible
+because the agent wrote down when it wrote. The record is left as it is.
+Clause A4 makes a record append-only in spirit, and correcting an agent's
+account of its own run afterwards would make every other line in it worth
+less.
 
-Finding the row is a person's job, against the database, with
+### 2.5 The human action, and the resolution
+
+**The human action.** Finding the row is a person's job, against the database, with
 [`shopping-list-5xx.md`](runbooks/shopping-list-5xx.md) step 5. Here that person
 was the engineer who staged it; in a real incident the query is in the runbook.
 The fix was `revert`, which restored the unit and the release and then diffed
@@ -166,8 +176,8 @@ the response body against the one recorded before staging — it printed *the
 response matches the one recorded before staging*, which is how the runbook
 avoids asking anybody to trust that it is over.
 
-**The alert had already cleared by then, and that is the most useful thing in
-this report.**
+**The resolution — and the most useful thing in this report.** The alert had
+already cleared by then.
 [`alert-payload-resolved.json`](../observability/incident/alert-payload-resolved.json)
 carries `endsAt` **17:06:46Z** — about four minutes after it fired, and several
 minutes *before* anything was fixed. Nobody was making requests, so the five
@@ -182,16 +192,19 @@ and the error-rate panel at zero, not for the alert to go green.
 
 ### 2.6 Timeline
 
+Each row names the artefact its time comes from. One row cannot: `revert`
+deletes the state file that would have recorded it, which is a small gap in the
+reconstruction rather than in the system — noted rather than rounded over.
+
 | UTC | |
 |---|---|
-| 16:47 | incident staged: unit set to `tbsp`, app restarted on the resolving release |
+| 16:47 | incident staged: unit set to `tbsp`, app restarted on the resolving release — the 16:47:02–16:47:13 trace cluster the responder's record cites |
 | 17:00–17:02 | six requests, six 500s, spread across scrapes |
-| 17:02:46 | `ShoppingListServerErrors` fires |
-| 17:02:56 | payload delivered to the sink and written to disk |
-| 17:03:44 | evidence bundle gathered |
-| ~17:04–17:09 | responder runs; outcome ASK-2, record written and checked |
-| 17:06:46 | **alert resolves — because traffic stopped, not because anything was fixed** |
-| ~17:10 | `revert`: unit restored, release restored, body matches the pre-incident response |
+| 17:02:46 | `ShoppingListServerErrors` fires — `startsAt` in the committed payload |
+| 17:03:44 | evidence bundle gathered — the bundle's `gathered_at_utc` and its directory name |
+| 17:04:00 → 17:12:00 | responder runs: first and last `at` in its record, `written_at` 17:12:00 |
+| 17:06:46 | **alert resolves — because traffic stopped, not because anything was fixed.** `endsAt` in the committed resolved payload |
+| ~17:10 | `revert`: unit restored, release restored, body matches the pre-incident response. The nearest artefact is the second evidence bundle's `gathered_at_utc` (17:10:10), taken minutes before; `revert` removes the state file that would have timed it exactly |
 
 ## 3. What the telemetry deliberately does not contain
 
