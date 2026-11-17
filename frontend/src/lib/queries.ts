@@ -48,6 +48,7 @@ export const keys = {
   shoppingList: (id: string) => ["plan", id, "shopping-list"] as const,
   prepPlan: (id: string) => ["plan", id, "prep-plan"] as const,
   today: (date?: string) => ["today", date ?? ""] as const,
+  demoAccess: () => ["demo-access"] as const,
 } as const;
 
 /**
@@ -350,6 +351,51 @@ export function useProfile(profileId: string | undefined): UseQueryResult<Profil
     queryKey: keys.profile(profileId ?? ""),
     queryFn: () => api.get<Profile>(`/profiles/${profileId}`),
     enabled: Boolean(profileId),
+  });
+}
+
+export type DemoAccess = Schema<"DemoAccess">;
+
+/**
+ * Whether this deployment offers one-click demo entry.
+ *
+ * Asked before anyone has signed in, which is why it is public. Production
+ * always answers no, so the buttons simply never render there rather than
+ * rendering and failing.
+ */
+export function useDemoAccess(): UseQueryResult<DemoAccess, ApiError> {
+  return useQuery({
+    queryKey: keys.demoAccess(),
+    queryFn: () => api.get<DemoAccess>("/auth/demo"),
+    staleTime: Infinity,
+    retry: false,
+  });
+}
+
+export function useDemoSignIn(): UseMutationResult<void, ApiError, "planner" | "follower"> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (role) => api.post<void>("/auth/demo", { role }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries();
+    },
+  });
+}
+
+/**
+ * Sign out, then drop every cached answer.
+ *
+ * `invalidateQueries` alone would refetch as the next person; `clear` is what
+ * makes sure the previous session's plan is not briefly on screen behind the
+ * sign-in form.
+ */
+export function useLogout(): UseMutationResult<void, ApiError, void> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<void>("/auth/logout", {}),
+    onSuccess: () => {
+      queryClient.clear();
+    },
   });
 }
 

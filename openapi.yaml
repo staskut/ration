@@ -57,6 +57,48 @@ paths:
         "401": {$ref: "#/components/responses/Unauthorized"}
         "422": {$ref: "#/components/responses/Unprocessable"}
 
+  /auth/demo:
+    get:
+      tags: [auth]
+      operationId: getDemoAccess
+      security: []
+      summary: Whether this deployment offers one-click demo sign-in
+      description: >-
+        Public so the sign-in page can decide what to render before anyone has
+        signed in. Always reports unavailable in production.
+      responses:
+        "200":
+          description: Whether demo sign-in is offered, and as whom
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/DemoAccess"}
+    post:
+      tags: [auth]
+      operationId: signInAsDemo
+      security: []
+      summary: Sign in as a seeded demo account, without a password
+      description: >-
+        Issues a session for one of the seeded accounts. Refused outside a demo
+        deployment: the seed never runs in production, so there is no demo
+        account there to be.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: {$ref: "#/components/schemas/Role_User"}
+      responses:
+        "204":
+          description: Signed in; session cookie set
+          headers:
+            Set-Cookie:
+              schema: {type: string}
+        "403": {$ref: "#/components/responses/Forbidden"}
+        "422": {$ref: "#/components/responses/Unprocessable"}
+
   /auth/logout:
     post:
       tags: [auth]
@@ -751,6 +793,17 @@ components:
       type: string
       enum: [planner, follower]
 
+    DemoAccess:
+      type: object
+      required: [available, roles]
+      properties:
+        available:
+          type: boolean
+          description: False in production, and wherever the seed has not run.
+        roles:
+          type: array
+          items: {$ref: "#/components/schemas/Role_User"}
+          description: Empty when unavailable.
     CurrentUser:
       type: object
       required: [id, display_name, role, profile_id, locale]
@@ -759,7 +812,7 @@ components:
         display_name: {type: string}
         role: {$ref: "#/components/schemas/Role_User"}
         profile_id: {type: string}
-        locale: {type: string, default: ru}
+        locale: {type: string}
 
     Ingredient:
       type: object

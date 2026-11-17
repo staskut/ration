@@ -116,5 +116,6 @@ type Components = NonNullable<
       CookSession: paths["/plans/{planId}/prep-plan"]["get"]["responses"][200]["content"]["application/json"][number];
       TodayView: paths["/today"]["get"]["responses"][200]["content"]["application/json"];
       CurrentUser: paths["/auth/me"]["get"]["responses"][200]["content"]["application/json"];
+      DemoAccess: paths["/auth/demo"]["get"]["responses"][200]["content"]["application/json"];
     }
   : never;

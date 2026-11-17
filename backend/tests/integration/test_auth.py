@@ -144,3 +144,57 @@ class TestHealth:
         body = api.get("/health").json()
         assert body["version"]
         assert set(body) == {"status", "version"}
+
+
+class TestDemoSignIn:
+    """One-click entry for the public demo, and the one thing that stops it.
+
+    The guard is not "is this endpoint enabled" but "did the seed run here",
+    which is the same question the seed already refuses to answer in
+    production. Restating the refusal is what keeps the two from drifting.
+    """
+
+    def test_a_seeded_deployment_offers_both_roles(self, api: TestClient) -> None:
+        response = api.get("/api/auth/demo")
+        assert response.status_code == 200
+        assert response.json() == {"available": True, "roles": ["follower", "planner"]}
+
+    def test_signing_in_as_the_planner_needs_no_password(self, api: TestClient) -> None:
+        response = api.post("/api/auth/demo", json={"role": "planner"})
+        assert response.status_code == 204
+        assert SESSION_COOKIE_NAME in response.cookies
+
+        me = api.get("/api/auth/me")
+        assert me.status_code == 200
+        assert me.json()["role"] == "planner"
+
+    def test_signing_in_as_the_follower_lands_on_the_follower(self, api: TestClient) -> None:
+        assert api.post("/api/auth/demo", json={"role": "follower"}).status_code == 204
+        assert api.get("/api/auth/me").json()["role"] == "follower"
+
+    def test_an_unknown_role_is_refused_before_it_reaches_the_database(
+        self, api: TestClient
+    ) -> None:
+        assert api.post("/api/auth/demo", json={"role": "admin"}).status_code == 422
+
+    def test_production_offers_no_demo(
+        self, api: TestClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The accounts exist in this database — the fixture seeded them. The
+        # refusal has to come from the environment rather than from their
+        # absence, because a production database that somehow holds a demo
+        # account is exactly the case where this must not hand out a session.
+        #
+        # Driven through the real environment variable rather than a patched
+        # dependency, so what is under test is the same chain production runs:
+        # RATION_ENV to Settings.is_production to the refusal.
+        from ration.config import settings
+
+        monkeypatch.setenv("RATION_ENV", "production")
+        monkeypatch.setenv("RATION_SESSION_SECRET", "x" * 43)
+        settings.cache_clear()
+        try:
+            assert api.get("/api/auth/demo").json() == {"available": False, "roles": []}
+            assert api.post("/api/auth/demo", json={"role": "planner"}).status_code == 403
+        finally:
+            settings.cache_clear()

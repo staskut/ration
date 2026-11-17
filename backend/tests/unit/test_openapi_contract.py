@@ -100,9 +100,19 @@ def test_every_authenticated_operation_declares_401() -> None:
     assert missing == []
 
 
-def test_login_is_the_only_unauthenticated_operation() -> None:
+# Reaching the API without a session. Kept as an explicit list, so widening it
+# is a deliberate edit here rather than a `security: []` nobody reviewed.
+#
+# `getDemoAccess` and `signInAsDemo` are public because the sign-in page has to
+# ask before anyone has signed in. `signInAsDemo` issues a session for the
+# asking, which is only acceptable because it refuses outside a non-production
+# deployment that the seed has actually run in — see the handler.
+PUBLIC_OPERATIONS = ["getDemoAccess", "login", "signInAsDemo"]
+
+
+def test_only_sign_in_is_unauthenticated() -> None:
     public = [op["operationId"] for _, _, op in operations() if op.get("security") == []]
-    assert public == ["login"]
+    assert sorted(public) == PUBLIC_OPERATIONS
 
 
 # Mutations both roles may perform. Everything else must be able to answer 403.

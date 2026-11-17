@@ -18,7 +18,7 @@ from datetime import date, timedelta
 from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
-from ration.config import settings
+from ration.config import FOLLOWER_EMAIL, PLANNER_EMAIL, settings
 from ration.domain.types import Template
 from ration.repositories import models
 from ration.repositories.database import make_engine
@@ -45,11 +45,9 @@ def demo_start_date(today: date | None = None) -> date:
     return today - timedelta(days=today.weekday())
 
 
-# .example is the IANA-reserved documentation TLD. .local and .test are
-# special-use names that email validators reject, which would make these
-# accounts unusable through the API.
-PLANNER_EMAIL = "planner@ration.example"
-FOLLOWER_EMAIL = "follower@ration.example"
+# Re-exported: these moved to `ration.config` so the API can recognise a demo
+# account without importing the seeder. Tests and scripts import them from here.
+__all__ = ["FOLLOWER_EMAIL", "PLANNER_EMAIL", "ReferenceData", "main", "seed"]
 
 # The seeded accounts get a hash that cannot verify, so an unseeded or
 # half-configured deployment has no working credentials by accident.

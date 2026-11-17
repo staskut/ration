@@ -10,6 +10,18 @@ from functools import lru_cache
 SESSION_COOKIE_NAME = "ration_session"
 
 
+# The seeded demo accounts. They live here rather than in `ration.seed` so that
+# the API can recognise them without importing the seeder: the API answering
+# "is this a demo deployment" and the seeder creating the accounts are two
+# users of one fact, not one depending on the other.
+#
+# .example is the IANA-reserved documentation TLD. .local and .test are
+# special-use names that email validators reject, which would make these
+# accounts unusable through the API.
+PLANNER_EMAIL = "planner@ration.example"
+FOLLOWER_EMAIL = "follower@ration.example"
+
+
 @dataclass(frozen=True, slots=True)
 class Settings:
     database_url: str
