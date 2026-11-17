@@ -13,8 +13,26 @@ import {
   useIngredients,
   type Ingredient,
 } from "../../lib/queries";
+import { type Translator } from "../../lib/i18n";
 import { useSession } from "../../lib/session";
 import { IngredientForm } from "./IngredientForm";
+
+/**
+ * How the ingredient is bought.
+ *
+ * `package_size` is always a weight — the shopping engine divides raw grams by
+ * it to get a package count — and `package_unit` says how the shop counts what
+ * that weight comes in. For `pcs` the two together mean "one of these weighs
+ * 170 g", so rendering them as "170 pcs" read as a hundred and seventy
+ * avocados. They are different facts and they need different sentences.
+ */
+function packaging(t: Translator, ingredient: Ingredient): string {
+  if (!ingredient.package_size) return "—";
+  const size = t.grams(ingredient.package_size);
+  if (ingredient.package_unit === "pcs") return t.t("catalog.pack_each", { size });
+  if (ingredient.package_unit === "ml") return t.t("catalog.pack_ml", { size });
+  return t.t("catalog.pack_g", { size });
+}
 
 export function Catalog() {
   const { t } = useSession();
@@ -90,13 +108,13 @@ export function Catalog() {
             <tr key={ingredient.id} className="border-t border-slate-100">
               <td className="py-2">{t.name(ingredient.names, ingredient.id)}</td>
               <td className="py-2 text-right tabular-nums">
-                {t.number(ingredient.kcal_per_100g)}
+                {t.kcal(ingredient.kcal_per_100g)}
               </td>
               <td className="py-2 text-right tabular-nums">
-                {t.number(ingredient.protein_per_100g)}
+                {t.grams(ingredient.protein_per_100g)}
               </td>
               <td className="py-2 text-right tabular-nums">
-                {t.number(ingredient.yield_factor)}
+                {t.factor(ingredient.yield_factor)}
                 {ingredient.yield_source === "estimated" && (
                   // Visible because it is the shakiest input in the system and
                   // the backlog for fixing it is otherwise invisible (#54).
@@ -109,10 +127,8 @@ export function Catalog() {
                   </span>
                 )}
               </td>
-              <td className="py-2 text-right tabular-nums text-slate-500">
-                {ingredient.package_size
-                  ? `${t.number(ingredient.package_size)} ${ingredient.package_unit ?? ""}`
-                  : "—"}
+              <td className="py-2 pr-4 text-right tabular-nums text-slate-500">
+                {packaging(t, ingredient)}
               </td>
               <td className="py-2 text-slate-500">{t.section(ingredient.shop_section)}</td>
               <td className="py-2 text-right whitespace-nowrap">

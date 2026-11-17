@@ -134,8 +134,8 @@ export function ModuleEditor() {
               >
                 <span className="block truncate">{module.name}</span>
                 <span className="text-xs opacity-70">
-                  {t.slot(module.slot)} · {t.number(module.kcal)} kcal ·{" "}
-                  {t.number(module.protein_g)} g
+                  {t.slot(module.slot)} · {t.kcal(module.kcal)} kcal ·{" "}
+                  {t.grams(module.protein_g)} g
                 </span>
               </button>
             </li>
@@ -149,8 +149,8 @@ export function ModuleEditor() {
             shopping list uses. */}
         {editing && (
           <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm">
-            <strong>{t.number(editing.kcal)} kcal</strong> ·{" "}
-            <strong>{t.number(editing.protein_g)} g protein</strong>
+            <strong>{t.kcal(editing.kcal)} kcal</strong> ·{" "}
+            <strong>{t.grams(editing.protein_g)} g protein</strong>
             <span className="ml-2 text-slate-400">computed by the server</span>
           </p>
         )}

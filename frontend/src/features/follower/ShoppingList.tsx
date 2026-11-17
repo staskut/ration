@@ -25,7 +25,7 @@ function Item({
   const amount =
     line.packages != null && line.package_unit === "pcs"
       ? t.t("shopping.amount_pcs", { count: line.packages })
-      : t.t("shopping.amount_g", { amount: t.number(line.purchase_amount) });
+      : t.t("shopping.amount_g", { amount: t.grams(line.purchase_amount) });
 
   return (
     <li>

@@ -102,6 +102,9 @@ const ru: Catalog = {
     "auth.email": "Почта",
     "auth.password": "Пароль",
     "auth.failed": "Почта или пароль неверны",
+    "catalog.pack_g": "{size} г",
+    "catalog.pack_ml": "{size} мл",
+    "catalog.pack_each": "по {size} г",
     "auth.submit": "Войти",
   },
 };
@@ -186,6 +189,9 @@ const en: Catalog = {
     "auth.email": "Email",
     "auth.password": "Password",
     "auth.failed": "Wrong email or password",
+    "catalog.pack_g": "{size} g",
+    "catalog.pack_ml": "{size} ml",
+    "catalog.pack_each": "{size} g each",
     "auth.submit": "Sign in",
   },
 };
