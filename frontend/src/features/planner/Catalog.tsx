@@ -5,7 +5,7 @@
  * reintroduce exactly the rounding the whole system uses Decimal to avoid, in
  * the place it would be hardest to notice.
  */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Empty, ErrorState, Loading } from "../../components/Status";
 import {
@@ -32,6 +32,64 @@ function packaging(t: Translator, ingredient: Ingredient): string {
   if (ingredient.package_unit === "pcs") return t.t("catalog.pack_each", { size });
   if (ingredient.package_unit === "ml") return t.t("catalog.pack_ml", { size });
   return t.t("catalog.pack_g", { size });
+}
+
+/** One labelled figure on the narrow layout, where there is no column head. */
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex justify-between gap-2">
+      <dt>{label}</dt>
+      <dd className="tabular-nums text-slate-700">{children}</dd>
+    </div>
+  );
+}
+
+/**
+ * Visible because the yield factor is the shakiest input in the system and the
+ * backlog for measuring it is otherwise invisible (#54).
+ */
+function Estimated({ t, ingredient }: { t: Translator; ingredient: Ingredient }) {
+  if (ingredient.yield_source !== "estimated") return null;
+  const note = t.t("catalog.estimated");
+  return (
+    <span className="ml-1 text-amber-600" title={note} aria-label={note}>
+      ≈
+    </span>
+  );
+}
+
+function RowActions({
+  t,
+  ingredient,
+  onEdit,
+  onDelete,
+}: {
+  t: Translator;
+  ingredient: Ingredient;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <span className="whitespace-nowrap">
+      <button
+        type="button"
+        onClick={onEdit}
+        className="min-h-(--spacing-tap) px-2 text-slate-500 hover:text-slate-900"
+      >
+        {t.t("catalog.edit")}
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
+        className="min-h-(--spacing-tap) px-2 text-slate-400 hover:text-rose-700"
+        aria-label={t.t("catalog.delete_named", {
+          name: t.name(ingredient.names, ingredient.id),
+        })}
+      >
+        ×
+      </button>
+    </span>
+  );
 }
 
 export function Catalog() {
@@ -91,15 +149,62 @@ export function Catalog() {
 
       {data?.length === 0 && <Empty>Nothing found</Empty>}
 
-      <table className="mt-4 w-full text-sm">
+      {/* Two renderings of one row, chosen by width rather than squeezed
+          into one. Seven columns at 375 px overlapped to the point of being
+          unreadable, and the usual escapes — a horizontal scroller, or
+          shrinking the type — both answer "can it be displayed" rather than
+          "can it be read". The planner's board may stay desktop-first; the
+          catalog is data management, and that happens on whatever is to
+          hand. */}
+      <ul className="mt-4 space-y-2 sm:hidden">
+        {data?.map((ingredient) => (
+          <li
+            key={ingredient.id}
+            className="rounded-xl border border-slate-200 p-3 text-sm"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-medium">
+                {t.name(ingredient.names, ingredient.id)}
+              </span>
+              <RowActions
+                t={t}
+                ingredient={ingredient}
+                onEdit={() => {
+                  setCreating(false);
+                  setEditing(ingredient);
+                }}
+                onDelete={() => remove.mutate(ingredient.id)}
+              />
+            </div>
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-500">
+              <Fact label={t.t("catalog.kcal_per_100g")}>
+                {t.kcal(ingredient.kcal_per_100g)}
+              </Fact>
+              <Fact label={t.t("catalog.protein")}>
+                {t.grams(ingredient.protein_per_100g)}
+              </Fact>
+              <Fact label={t.t("catalog.yield")}>
+                {t.factor(ingredient.yield_factor)}
+                <Estimated t={t} ingredient={ingredient} />
+              </Fact>
+              <Fact label={t.t("catalog.pack")}>{packaging(t, ingredient)}</Fact>
+              <Fact label={t.t("catalog.section")}>
+                {t.section(ingredient.shop_section)}
+              </Fact>
+            </dl>
+          </li>
+        ))}
+      </ul>
+
+      <table className="mt-4 hidden w-full text-sm sm:table">
         <thead className="text-left text-slate-500">
           <tr>
-            <th className="py-2">Name</th>
-            <th className="py-2 text-right">kcal/100 g</th>
-            <th className="py-2 text-right">protein</th>
-            <th className="py-2 text-right">yield</th>
-            <th className="py-2 text-right">pack</th>
-            <th className="py-2">section</th>
+            <th className="py-2">{t.t("catalog.name")}</th>
+            <th className="py-2 text-right">{t.t("catalog.kcal_per_100g")}</th>
+            <th className="py-2 text-right">{t.t("catalog.protein")}</th>
+            <th className="py-2 text-right">{t.t("catalog.yield")}</th>
+            <th className="py-2 pr-4 text-right">{t.t("catalog.pack")}</th>
+            <th className="py-2">{t.t("catalog.section")}</th>
             <th className="py-2" />
           </tr>
         </thead>
@@ -115,41 +220,22 @@ export function Catalog() {
               </td>
               <td className="py-2 text-right tabular-nums">
                 {t.factor(ingredient.yield_factor)}
-                {ingredient.yield_source === "estimated" && (
-                  // Visible because it is the shakiest input in the system and
-                  // the backlog for fixing it is otherwise invisible (#54).
-                  <span
-                    className="ml-1 text-amber-600"
-                    title="An estimate, not a measurement. Cooked weight ÷ raw"
-                    aria-label="An estimate, not a measurement"
-                  >
-                    ≈
-                  </span>
-                )}
+                <Estimated t={t} ingredient={ingredient} />
               </td>
               <td className="py-2 pr-4 text-right tabular-nums text-slate-500">
                 {packaging(t, ingredient)}
               </td>
               <td className="py-2 text-slate-500">{t.section(ingredient.shop_section)}</td>
               <td className="py-2 text-right whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => {
+                <RowActions
+                  t={t}
+                  ingredient={ingredient}
+                  onEdit={() => {
                     setCreating(false);
                     setEditing(ingredient);
                   }}
-                  className="px-2 text-slate-500 hover:text-slate-900"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => remove.mutate(ingredient.id)}
-                  className="px-2 text-slate-400 hover:text-rose-700"
-                  aria-label={`Delete ${t.name(ingredient.names, ingredient.id)}`}
-                >
-                  ×
-                </button>
+                  onDelete={() => remove.mutate(ingredient.id)}
+                />
               </td>
             </tr>
           ))}
