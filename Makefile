@@ -56,11 +56,22 @@ check-client:
 	fi
 	@echo "API client matches openapi.yaml"
 
+# 8000 is a popular port. Override to publish elsewhere; the health check and
+# the browsers both follow this, so one variable moves the whole target.
+RATION_PORT ?= 8000
+
 test-e2e:
 	@# Two browser contexts against the compose stack. The stack is reset
 	@# first: these write to a real database, and one of them fills the plan's
 	@# last unplanned day, so a second run has nothing left to fill.
-	docker compose down -v
-	docker compose up -d --build
-	@until curl -sf http://localhost:8000/health >/dev/null 2>&1; do sleep 2; done
-	cd e2e && npm test
+	RATION_PORT=$(RATION_PORT) docker compose down -v
+	RATION_PORT=$(RATION_PORT) docker compose up -d --build
+	@# Wait for OUR app, not for whatever else is on the port. This loop used to
+	@# accept any 200 on /health, and an unrelated service holding 127.0.0.1:8000
+	@# answered it: Docker had *:8000, curl resolved loopback first, and the whole
+	@# suite ran against somebody else's application. Eight failures that read as
+	@# our regression and were not. `version` is in our payload and not in theirs.
+	@until curl -sf http://localhost:$(RATION_PORT)/health 2>/dev/null | grep -q '"version"'; do \
+		sleep 2; \
+	done
+	cd e2e && RATION_BASE_URL=http://localhost:$(RATION_PORT) npm test
