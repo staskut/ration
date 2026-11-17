@@ -74,20 +74,37 @@ export function ModuleEditor() {
   const save = useSaveModule();
 
   const [selected, setSelected] = useState<string | null>(null);
+  // Distinct from `selected === null`, which used to mean both "nothing
+  // chosen" and "composing a new module". Conflating them is why the screen
+  // opened on a blank form already complaining about itself.
+  const [creating, setCreating] = useState(false);
+  const [attempted, setAttempted] = useState(false);
+  const [search, setSearch] = useState("");
+  const [slotFilter, setSlotFilter] = useState("");
   const [draft, setDraft] = useState<Draft>(() => toDraft());
 
   if (isLoading) return <Loading t={t} />;
 
   const editing = modules?.find((module) => module.id === selected);
+  const open = creating || Boolean(editing);
   const noLines = draft.lines.length === 0;
+
+  const listed = (modules ?? [])
+    .filter((module) => !slotFilter || module.slot === slotFilter)
+    .filter((module) => module.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   const choose = (module: Module | null) => {
     setSelected(module?.id ?? null);
+    setCreating(module === null);
+    setAttempted(false);
     setDraft(toDraft(module ?? undefined));
   };
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
+    // Flagged on the attempt rather than on arrival. A rule the planner has
+    // not had a chance to break yet is a hint, not an error.
+    setAttempted(true);
     if (noLines) return;
     save.mutate({
       ...(selected ? { id: selected } : {}),
@@ -120,8 +137,34 @@ export function ModuleEditor() {
             New
           </button>
         </div>
+        <div className="mb-2 space-y-2">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t.t("modules.search")}
+            aria-label={t.t("modules.search")}
+            className="min-h-(--spacing-tap) w-full rounded-lg border border-slate-300 px-2 text-sm"
+          />
+          <select
+            value={slotFilter}
+            onChange={(event) => setSlotFilter(event.target.value)}
+            aria-label={t.t("modules.all_meals")}
+            className="min-h-(--spacing-tap) w-full rounded-lg border border-slate-300 px-2 text-sm"
+          >
+            <option value="">{t.t("modules.all_meals")}</option>
+            {SLOTS.map((slot) => (
+              <option key={slot} value={slot}>{t.slot(slot)}</option>
+            ))}
+          </select>
+        </div>
+
+        {listed.length === 0 && (
+          <p className="px-1 text-sm text-slate-500">{t.t("modules.nothing_found")}</p>
+        )}
+
         <ul className="space-y-1">
-          {modules?.map((module) => (
+          {listed.map((module) => (
             <li key={module.id}>
               <button
                 type="button"
@@ -143,6 +186,10 @@ export function ModuleEditor() {
         </ul>
       </aside>
 
+      {!open ? (
+        // An editor with nothing in it should invite, not accuse.
+        <p className="py-8 text-sm text-slate-500">{t.t("modules.none_selected")}</p>
+      ) : (
       <form onSubmit={submit} className="space-y-4 py-4">
         {/* Read-only, from the server. Two implementations of the same
             arithmetic disagree eventually, and the server's is the one the
@@ -207,8 +254,11 @@ export function ModuleEditor() {
         <section>
           <h2 className="text-sm font-medium text-slate-600">Composition, cooked weight</h2>
           {noLines && (
-            <p className="mt-1 text-sm text-rose-700">
-              At least one ingredient is required
+            <p
+              className={`mt-1 text-sm ${attempted ? "text-rose-700" : "text-slate-500"}`}
+              {...(attempted ? { role: "alert" } : {})}
+            >
+              {t.t("modules.needs_ingredient")}
             </p>
           )}
           <ul className="mt-2 space-y-2">
@@ -328,12 +378,13 @@ export function ModuleEditor() {
 
         <button
           type="submit"
-          disabled={save.isPending || noLines}
+          disabled={save.isPending}
           className="min-h-(--spacing-tap) rounded-lg bg-slate-900 px-4 text-white disabled:opacity-50"
         >
           Save
         </button>
       </form>
+      )}
     </main>
   );
 }

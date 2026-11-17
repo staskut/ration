@@ -44,9 +44,20 @@ export function PlanBuilder({ planId }: { planId: string }) {
   const failure =
     addEntry.error ?? removeEntry.error ?? setTemplate.error ?? setPortion.error;
 
+  // A plan is always seven days (PRD 6). The reference week fills six of them
+  // on purpose, so the seventh is not a gap to hide — but shown as "0 kcal
+  // against a target of 1,700" it reads as a day that failed rather than a
+  // day nobody has written yet.
+  const planned = plan.days.filter((day) => day.entries.length > 0).length;
+
   return (
     <main className="mx-auto max-w-6xl px-4 pb-16">
-      <h1 className="py-4 text-xl font-semibold">{plan.name}</h1>
+      <div className="py-4">
+        <h1 className="text-xl font-semibold">{plan.name}</h1>
+        <p className="text-sm text-slate-500">
+          {t.t("plan.days_planned", { planned, total: plan.days.length })}
+        </p>
+      </div>
 
       {failure && (
         <p role="alert" className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-900">
@@ -72,6 +83,9 @@ export function PlanBuilder({ planId }: { planId: string }) {
                   <h2 className="font-medium">
                     Day {day.day_index + 1} · {day.date}
                   </h2>
+                  {day.entries.length === 0 ? (
+                    <p className="text-sm text-slate-400">{t.t("plan.day_unplanned")}</p>
+                  ) : (
                   <p className="text-sm text-slate-500">
                     {t.kcal(day.kcal)} kcal
                     {profile && (
@@ -90,6 +104,7 @@ export function PlanBuilder({ planId }: { planId: string }) {
                       </span>
                     )}
                   </p>
+                  )}
                 </div>
                 <select
                   value={day.day_template}
