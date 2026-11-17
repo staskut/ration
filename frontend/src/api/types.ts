@@ -21,6 +21,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Whether this deployment offers one-click demo sign-in
+         * @description Public so the sign-in page can decide what to render before anyone has signed in. Always reports unavailable in production.
+         */
+        get: operations["getDemoAccess"];
+        put?: never;
+        /**
+         * Sign in as a seeded demo account, without a password
+         * @description Issues a session for one of the seeded accounts. Refused outside a demo deployment: the seed never runs in production, so there is no demo account there to be.
+         */
+        post: operations["signInAsDemo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -469,12 +493,17 @@ export interface components {
         ShopSection: "meat_fish" | "dairy" | "produce" | "fruit" | "grains" | "nuts_pastes" | "oils_sauces" | "supplements" | "treats" | "other";
         /** @enum {string} */
         Role_User: "planner" | "follower";
+        DemoAccess: {
+            /** @description False in production, and wherever the seed has not run. */
+            available: boolean;
+            /** @description Empty when unavailable. */
+            roles: components["schemas"]["Role_User"][];
+        };
         CurrentUser: {
             id: string;
             display_name: string;
             role: components["schemas"]["Role_User"];
             profile_id: string;
-            /** @default ru */
             locale: string;
         };
         Ingredient: {
@@ -929,6 +958,53 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["Unauthorized"];
+            422: components["responses"]["Unprocessable"];
+        };
+    };
+    getDemoAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Whether demo sign-in is offered, and as whom */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoAccess"];
+                };
+            };
+        };
+    };
+    signInAsDemo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    role: components["schemas"]["Role_User"];
+                };
+            };
+        };
+        responses: {
+            /** @description Signed in; session cookie set */
+            204: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Forbidden"];
             422: components["responses"]["Unprocessable"];
         };
     };
