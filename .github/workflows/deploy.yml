@@ -33,6 +33,11 @@ concurrency:
   group: deploy-${{ github.event.inputs.environment || 'staging' }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  # Only so a failed deploy can say so somewhere a person will see it.
+  issues: write
+
 jobs:
   deploy:
     name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
@@ -145,3 +150,49 @@ jobs:
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "The previous release is still serving. See \`docs/release-process.md\`." >> "$GITHUB_STEP_SUMMARY"
           fi
+
+      # The event half of #78. `deployment-drift.yml` catches the condition —
+      # an environment serving a stale release, however it got there — and
+      # this catches the moment it happens, which is the half that lets
+      # somebody roll forward the same day instead of a month later.
+      #
+      # An issue rather than a chat message because it needs no secret, no
+      # third-party service and no #73: GitHub already notifies on an issue,
+      # and five red workflow runs went unread for a month, so the channel
+      # that failed is the one not being reused here.
+      - name: Say so, somewhere a person will see it
+        if: failure() && steps.creds.outputs.configured == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const app = process.env.APP;
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}` +
+              `/actions/runs/${context.runId}`;
+            const title = `Deploy to ${app} failed`;
+            const body = [
+              `The deploy of \`${context.sha.slice(0, 7)}\` to \`${app}\` failed.`,
+              "**The previous release is still serving**, which is why this is",
+              "not visible to anyone using the app — and is exactly how #78",
+              "went unnoticed for a month.",
+              "",
+              run,
+              "",
+              "See `docs/release-process.md` for rolling forward, and",
+              "`docs/runbooks/` for the environment itself.",
+            ].join("\n");
+
+            // Don't stack an issue per attempt on a failure that repeats.
+            const open = await github.rest.issues.listForRepo({
+              ...context.repo, state: "open", labels: "deploy-failed", per_page: 20,
+            });
+            const already = open.data.find((issue) => issue.title === title);
+
+            if (already) {
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: already.number, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                ...context.repo, title, body, labels: ["deploy-failed"],
+              });
+            }
