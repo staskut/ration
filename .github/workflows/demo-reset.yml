@@ -58,5 +58,31 @@ jobs:
       - name: Check the demo still works
         if: steps.creds.outputs.configured == 'true'
         run: |
+          set -euo pipefail
           scripts/smoke-test.sh "$URL"
-          echo "Demo reset, reference week restored." >> "$GITHUB_STEP_SUMMARY"
+
+          # Both ways in, because the reset can break them independently.
+          #
+          # `--reset` deletes the user rows and writes them back, and
+          # `_upsert_user` only sets a usable password when RATION_DEV_PASSWORD
+          # is present. If it is not set on this app, the documented
+          # credentials in the README come back broken — silently, since
+          # one-click entry needs no password and would still work.
+          demo=$(curl -fsS -o /dev/null -w '%{http_code}' -X POST \
+            -H 'Content-Type: application/json' -d '{"role":"planner"}' \
+            "$URL/api/auth/demo")
+          [ "$demo" = "204" ] || { echo "One-click demo entry returned $demo"; exit 1; }
+
+          login=$(curl -fsS -o /dev/null -w '%{http_code}' -X POST \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"planner@ration.example","password":"correct-horse-battery"}' \
+            "$URL/api/auth/login")
+          if [ "$login" != "204" ]; then
+            echo "::error title=Demo credentials broken::The README documents \
+          planner@ration.example / correct-horse-battery, and sign-in returned \
+          $login after the reset. Set RATION_DEV_PASSWORD on $APP."
+            exit 1
+          fi
+
+          echo "Demo reset: reference week restored, both ways in still work." \
+            >> "$GITHUB_STEP_SUMMARY"
