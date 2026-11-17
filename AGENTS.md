@@ -12,11 +12,11 @@ Read these before changing anything they cover.
 - `docs/product-spec.md` — the PRD. What and why. **Owns scope.**
 - `docs/hld.md` — architecture, component boundaries, eight numbered decisions (AD-1…AD-8)
 - `docs/lld.md` — schema, domain signatures, endpoints, test plan
-- `docs/decisions.md` — decisions closed during implementation (D1…D10), with their cost
+- `docs/decisions.md` — decisions closed during implementation (D1…D14), with their cost
 - `docs/acceptance-audit.md` — closed issues checked against their own criteria
 - `docs/testing.md` — the three test layers, the golden tests, and what they have caught
 - `docs/deployment.md` — Fly and Neon, secrets, rollback
-- `docs/release-process.md` — commit to production, and back
+- `docs/release-process.md` — commit to production, and back, including the drift checks
 - `docs/operations-and-security-report.md` — one incident end to end, and what telemetry may never carry
 - `docs/on-call-autonomy.md` — what the on-call agent may and may not do unattended, by clause
 - `docs/runbooks/README.md` — the runbook index
@@ -53,6 +53,8 @@ Frontend commands run in `frontend/`.
 Repo root:
 
 - `make check-client` — regenerate the client and fail on a diff
+- `scripts/check-deployed-version.sh <url> <max-drift-seconds>` — is that environment
+  serving a recent release? (D14)
 - `docker compose up` — full system with Postgres
 - `docker compose -f observability/compose.yaml up` — the same, with telemetry and Grafana
 
@@ -126,6 +128,10 @@ stop and ask rather than implementing the reversal — the reasoning is in `docs
   `docs/sample-plan-6-days.md`, written by a human before the code existed. If a golden test
   fails, the engine is wrong until proven otherwise.
 - Conventional commits. Commit regularly.
+- **Numbers are rounded for a reader at the edge, never earlier, and never through a
+  float** (D12). `t.kcal`, `t.grams` and `t.factor` pick the precision; `t.exact` is for a
+  value on its way into an input. Rounding is string arithmetic — `Number(…)` anywhere in the
+  display path reintroduces exactly the drift `Decimal` exists to prevent.
 - **Every string that reaches a screen comes from the catalog** in
   `frontend/src/lib/i18n/messages.ts`, including units — `г` and `ккал` were literals in the
   follower's screens for a while, which no locale setting could reach. Both catalogs are

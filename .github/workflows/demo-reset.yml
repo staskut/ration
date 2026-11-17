@@ -1,0 +1,62 @@
+name: Reset the demo
+
+# The public demo lets anyone in as either role, with full write access to a
+# shared database (`POST /auth/demo`). Visitors will rename ingredients, empty
+# the plan and delete modules, which is exactly what a demo is for — but the
+# next visitor should still meet the reference week.
+#
+# `ration-seed` upserts, so the release command already restores anything a
+# visitor *changed* on every deploy. It cannot restore what they *deleted*,
+# and between deploys it does not run at all. `--reset` clears first.
+#
+# Staging only, and not by configuration: `seed()` raises
+# ProductionSeedRefused when RATION_ENV is production, so the guard is in the
+# command rather than in this file's choice of app name. Both agree, and the
+# one that matters is the one that cannot be edited by mistake here.
+on:
+  schedule:
+    # 04:00 UTC, when a visitor is least likely to be mid-click.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: demo-reset
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    name: Restore the reference week on staging
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      APP: ration-plan-staging
+      URL: https://ration-plan-staging.fly.dev
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for credentials
+        id: creds
+        run: |
+          if [ -n "$FLY_API_TOKEN" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Not reset::FLY_API_TOKEN_STAGING is not set."
+          fi
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: steps.creds.outputs.configured == 'true'
+
+      - name: Reseed
+        if: steps.creds.outputs.configured == 'true'
+        run: |
+          flyctl ssh console --app "$APP" --command "ration-seed --reset"
+
+      # The reset deletes every row and writes them again. If that left the
+      # app unable to answer, the demo is worse off than before this ran.
+      - name: Check the demo still works
+        if: steps.creds.outputs.configured == 'true'
+        run: |
+          scripts/smoke-test.sh "$URL"
+          echo "Demo reset, reference week restored." >> "$GITHUB_STEP_SUMMARY"

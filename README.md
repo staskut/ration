@@ -1,7 +1,35 @@
 # Ration
 
+[![CI](https://github.com/staskut/ration/actions/workflows/ci.yml/badge.svg)](https://github.com/staskut/ration/actions/workflows/ci.yml)
+[![Deploy](https://github.com/staskut/ration/actions/workflows/deploy.yml/badge.svg)](https://github.com/staskut/ration/actions/workflows/deploy.yml)
+[![Demo](https://img.shields.io/badge/demo-ration--plan--staging.fly.dev-0b7285)](https://ration-plan-staging.fly.dev)
+
 A weekly nutrition planner for two people: one who **builds** the plan and one
 who **eats** it.
+
+**[Open the demo](https://ration-plan-staging.fly.dev)** — one click in as
+either role, no password. Fictional data, restored nightly.
+
+<details>
+<summary><strong>Thirty seconds, if that is all you have</strong></summary>
+
+- **The problem.** A hand-maintained Markdown eating plan. Swapping one dinner
+  meant recomputing the day's totals, re-checking the week's fish-twice rule,
+  editing the shopping list and re-deriving raw weights from cooked ones.
+- **The system.** The planner arranges reusable meal *modules* into a week.
+  Totals, rule validation, the shopping list and the batch-cooking schedule
+  are all computed. The follower opens one screen and sees today.
+- **The interesting constraint.** The nutrition catalog is never tuned to make
+  a plan pass. A catalog fitted to the plan cannot report a plan that fails,
+  which is the one thing this system is for — [what went
+  wrong](#what-went-wrong) is the honest version of that story.
+- **The shape.** FastAPI + React + Postgres. `domain/` is pure and CI enforces
+  it with an import-linter contract; `openapi.yaml` is hand-written and the
+  TypeScript client is generated from it, with CI failing on drift.
+- **Where to look first.** [`backend/src/ration/domain/`](backend/src/ration/domain/)
+  — four engines, all pure functions, no I/O.
+
+</details>
 
 It replaces a Markdown document. A family member needed a structured eating
 plan, so one was written by hand after an interview — seven days, every meal,
@@ -56,16 +84,24 @@ Four of the design decisions behind those are load-bearing and non-obvious:
 **<https://ration-plan-staging.fly.dev>** — the demo, carrying the
 fictional reference plan.
 
+The sign-in page offers **Enter as the planner** and **Enter as the follower**
+— one click, no password. The credentials still work if you would rather type
+them:
+
 | Role | Email | Password | Sees |
 |---|---|---|---|
 | Planner | `planner@ration.example` | `correct-horse-battery` | plan board, module library, validation, shopping list |
 | Follower | `follower@ration.example` | `correct-horse-battery` | today, and a tap to rate |
 
+The demo's database is shared and writable, so edit anything you like: a
+scheduled job clears it and reloads the reference week every night.
+
 Open the two in separate browser profiles to watch a planner's edit land on
 the follower's screen over the WebSocket.
 
-The planner's board expects a desktop viewport; the follower's screens are
-designed for a phone and tested at 375px.
+The follower's screens are designed for a phone and tested at 375 px, as is
+the planner's ingredient catalog. The planner's week board expects a desktop
+viewport.
 
 Production is at **<https://ration-plan.fly.dev>** and is **deliberately
 empty** — it holds one real person's dietary information, so the demo
@@ -268,7 +304,7 @@ threadpool worker with no event loop, and a `suppress` swallowed the error.
 | [`observability/README.md`](observability/README.md) | the telemetry stack, its walkthrough, the dashboard and the alert |
 | [`.claude/agents/on-call-responder.md`](.claude/agents/on-call-responder.md) | the responder agent's task definition |
 | [`observability/incident/`](observability/incident/) | the staged incident's artefacts: payloads, evidence, the agent's record |
-| [`docs/decisions.md`](docs/decisions.md) | D1–D10, closed during implementation, with their cost |
+| [`docs/decisions.md`](docs/decisions.md) | D1–D12, closed during implementation, with their cost |
 | [`docs/acceptance-audit.md`](docs/acceptance-audit.md) | every closed issue against its own criteria |
 | [`docs/ai-usage-report.md`](docs/ai-usage-report.md) | how this was built with AI, including the failures |
 | [`docs/process.md`](docs/process.md) | the PM / Engineer / QA split and why it is strict |
@@ -276,4 +312,8 @@ threadpool worker with no event loop, and a `suppress` swallowed the error.
 
 ## Licence
 
-Unlicensed; a course project. The reference plan is a fictional profile, written as demo data.
+[MIT](LICENSE). The code is yours to use.
+
+The one thing that is not code: [`docs/sample-plan-6-days.md`](docs/sample-plan-6-days.md)
+and the seed data are a **fictional profile**, written as demo data, and are
+not nutrition advice for anybody.
