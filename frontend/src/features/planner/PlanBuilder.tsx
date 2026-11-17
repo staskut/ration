@@ -73,20 +73,20 @@ export function PlanBuilder({ planId }: { planId: string }) {
                     Day {day.day_index + 1} · {day.date}
                   </h2>
                   <p className="text-sm text-slate-500">
-                    {t.number(day.kcal)} kcal
+                    {t.kcal(day.kcal)} kcal
                     {profile && (
                       // Totals mean nothing without the target beside them.
                       <span className="text-slate-400">
                         {" "}
-                        / {t.number(profile.daily_kcal_target)} ±{" "}
-                        {t.number(profile.daily_kcal_tolerance)}
+                        / {t.kcal(profile.daily_kcal_target)} ±{" "}
+                        {t.kcal(profile.daily_kcal_tolerance)}
                       </span>
                     )}{" "}
-                    · {t.number(day.protein_g)} g protein
+                    · {t.grams(day.protein_g)} g protein
                     {profile && (
                       <span className="text-slate-400">
                         {" "}
-                        / min {t.number(profile.daily_protein_min)}
+                        / min {t.grams(profile.daily_protein_min)}
                       </span>
                     )}
                   </p>
@@ -118,7 +118,7 @@ export function PlanBuilder({ planId }: { planId: string }) {
                     <div key={slot} className="rounded-xl bg-slate-50 p-2">
                       <p className="flex justify-between text-xs text-slate-500">
                         <span>{t.slot(slot)}</span>
-                        {totals && <span>{t.number(totals.kcal)}</span>}
+                        {totals && <span>{t.kcal(totals.kcal)}</span>}
                       </p>
 
                       {entries.map((entry) => (
@@ -150,7 +150,7 @@ export function PlanBuilder({ planId }: { planId: string }) {
                               aria-label={`Portion factor for ${entry.module_name}`}
                             />
                             <span className="tabular-nums">
-                              ×{t.number(entry.portion_factor)}
+                              ×{t.factor(entry.portion_factor)}
                             </span>
                           </label>
                           <button

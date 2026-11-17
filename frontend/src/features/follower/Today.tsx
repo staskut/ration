@@ -78,8 +78,8 @@ export function Today() {
       {data && (
         <p className="mt-2 text-center text-sm text-slate-600">
           {t.t("today.day_total", {
-            kcal: t.number(data.kcal),
-            protein: t.number(data.protein_g),
+            kcal: t.kcal(data.kcal),
+            protein: t.grams(data.protein_g),
           })}
         </p>
       )}
@@ -151,7 +151,7 @@ export function Today() {
                 <span>
                   {slot.time} · {t.slot(slot.slot)}
                 </span>
-                <span>{t.t("today.slot_kcal", { kcal: t.number(slot.kcal) })}</span>
+                <span>{t.t("today.slot_kcal", { kcal: t.kcal(slot.kcal) })}</span>
               </h2>
 
               {slot.entries.map((entry) => (
@@ -164,9 +164,9 @@ export function Today() {
                       <h3 className="font-medium">{entry.module_name}</h3>
                       <p className="text-sm text-slate-500">
                         {t.t("today.entry_line", {
-                          grams: t.number(entry.portion_grams),
-                          kcal: t.number(entry.kcal),
-                          protein: t.number(entry.protein_g),
+                          grams: t.grams(entry.portion_grams),
+                          kcal: t.kcal(entry.kcal),
+                          protein: t.grams(entry.protein_g),
                         })}
                       </p>
                       {entry.home_only && (

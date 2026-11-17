@@ -122,7 +122,7 @@ describe("ValidationPanel", () => {
   it("renders findings as sentences, not codes", async () => {
     mockApi(REPORT);
     renderWithProviders(<ValidationPanel planId="p1" />);
-    expect(await screen.findByText(/День 1: 1577,6 ккал/)).toBeInTheDocument();
+    expect(await screen.findByText(/День 1: 1[\s\u00a0]578 ккал/)).toBeInTheDocument();
   });
 
   it("translates the slot name", async () => {
@@ -150,7 +150,7 @@ describe("ValidationPanel", () => {
     mockApi(REPORT);
     const onSelect = vi.fn();
     renderWithProviders(<ValidationPanel planId="p1" onSelect={onSelect} />);
-    await userEvent.click(await screen.findByText(/День 1: 1577,6 ккал/));
+    await userEvent.click(await screen.findByText(/День 1: 1[\s\u00a0]578 ккал/));
     expect(onSelect).toHaveBeenCalledWith(0);
   });
 });

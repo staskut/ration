@@ -3,7 +3,14 @@ import { join, relative, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { CATALOGS, createTranslator, renderFinding, type Locale } from "../src/lib/i18n";
+import {
+  CATALOGS,
+  createTranslator,
+  formatQuantity,
+  renderFinding,
+  roundDecimal,
+  type Locale,
+} from "../src/lib/i18n";
 
 const LOCALES: Locale[] = ["ru", "en"];
 
@@ -141,8 +148,8 @@ describe("rendering a finding", () => {
 
   it("interpolates the numbers into a sentence", () => {
     const text = renderFinding(finding, "en");
-    expect(text).toContain("1577.6");
-    expect(text).toContain("1650.0");
+    expect(text).toContain("1,578");
+    expect(text).toContain("1,650");
   });
 
   it("shows a one-based day, because day 0 means nothing to a reader", () => {
@@ -150,9 +157,17 @@ describe("rendering a finding", () => {
     expect(renderFinding(finding, "ru")).toContain("День 1");
   });
 
-  it("uses the locale's decimal separator", () => {
-    expect(renderFinding(finding, "ru")).toContain("1577,6");
-    expect(renderFinding(finding, "en")).toContain("1577.6");
+  it("uses the locale's separators", () => {
+    // Russian groups thousands with a space, because a comma there is its
+    // decimal point. A protein finding keeps the tenth a kcal one drops.
+    expect(renderFinding(finding, "ru")).toContain("1\u00a0578");
+    expect(renderFinding(finding, "en")).toContain("1,578");
+    const protein = {
+      ...finding,
+      message_key: "validation.day_protein_below_min",
+      params: { actual: "98.44", min: "105" },
+    };
+    expect(renderFinding(protein, "ru")).toContain("98,4");
   });
 
   it("translates the slot name rather than printing the enum", () => {
@@ -220,8 +235,86 @@ describe("the translator", () => {
     expect(createTranslator("ru").t("nothing.here")).toBe("nothing.here");
   });
 
-  it("formats numbers for the locale", () => {
-    expect(createTranslator("ru").number("553.8")).toBe("553,8");
-    expect(createTranslator("en").number("553.8")).toBe("553.8");
+  it("formats numbers for the locale, at the precision each quantity earns", () => {
+    expect(createTranslator("ru").grams("553.8")).toBe("553,8");
+    expect(createTranslator("en").grams("553.8")).toBe("553.8");
+    expect(createTranslator("en").kcal("553.8")).toBe("554");
+    expect(createTranslator("en").factor("0.65")).toBe("0.65");
+    // `exact` is for a value on its way into an input, where rounding would
+    // silently rewrite what the planner stored.
+    expect(createTranslator("en").exact("0.6500")).toBe("0.6500");
+  });
+});
+
+describe("numbers for a reader", () => {
+  it("rounds half-up without going through a float", () => {
+    // 1577.59 is not representable in binary; the point of rounding the
+    // string is that this answer never depends on that.
+    expect(roundDecimal("1577.59", 0)).toBe("1578");
+    expect(roundDecimal("1577.59", 1)).toBe("1577.6");
+    expect(roundDecimal("128.404", 1)).toBe("128.4");
+    expect(roundDecimal("31.764", 1)).toBe("31.8");
+    expect(roundDecimal("0.5", 0)).toBe("1");
+    expect(roundDecimal("0.45", 1)).toBe("0.5");
+  });
+
+  it("carries across nines", () => {
+    expect(roundDecimal("9.99", 1)).toBe("10.0");
+    expect(roundDecimal("99.95", 1)).toBe("100.0");
+    expect(roundDecimal("999.5", 0)).toBe("1000");
+  });
+
+  it("never reports minus zero", () => {
+    expect(roundDecimal("-0.04", 1)).toBe("0.0");
+    expect(formatQuantity("-0.04", "en", 1)).toBe("0");
+    expect(roundDecimal("-1.26", 1)).toBe("-1.3");
+  });
+
+  it("leaves a value it does not recognise alone", () => {
+    // Better to show the raw string than to invent a number for it.
+    expect(roundDecimal("", 1)).toBe("");
+    expect(roundDecimal("1e3", 1)).toBe("1e3");
+  });
+
+  it("drops a trailing zero rather than claiming precision", () => {
+    expect(formatQuantity("2000", "en", 1)).toBe("2,000");
+    expect(formatQuantity("2000.04", "en", 1)).toBe("2,000");
+  });
+
+  it("groups thousands the way each locale reads them", () => {
+    expect(formatQuantity("1577.59", "en", 0)).toBe("1,578");
+    // A comma between thousands would read as a decimal point in Russian.
+    expect(formatQuantity("1577.59", "ru", 0)).toBe("1 578");
+    expect(formatQuantity("128.404", "ru", 1)).toBe("128,4");
+    expect(formatQuantity("-1577.5", "en", 0)).toBe("-1,578");
+  });
+
+  it("keeps the second decimal of a factor, which changes the meal", () => {
+    expect(formatQuantity("0.65", "en", 2)).toBe("0.65");
+    expect(formatQuantity("1.2", "en", 2)).toBe("1.2");
+  });
+
+  it("rounds a finding to match the screen beside it", () => {
+    const finding = {
+      level: "error" as const,
+      code: "day_kcal_out_of_range",
+      message_key: "validation.day_kcal_out_of_range",
+      params: { actual: "1577.59", min: "1650", max: "1750" },
+      day_index: 2,
+    };
+    // The day header for the same day reads "1,578 kcal". One number, shown
+    // twice, must not look like two.
+    expect(renderFinding(finding, "en")).toBe("Day 3: 1,578 kcal, target 1,650–1,750");
+  });
+
+  it("keeps a tenth of a gram in a protein finding", () => {
+    const finding = {
+      level: "error" as const,
+      code: "day_protein_below_min",
+      message_key: "validation.day_protein_below_min",
+      params: { actual: "98.44", min: "105" },
+      day_index: 0,
+    };
+    expect(renderFinding(finding, "en")).toBe("Day 1: 98.4 g protein, minimum 105");
   });
 });

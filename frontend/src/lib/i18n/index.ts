@@ -21,11 +21,77 @@ export interface Finding {
   entry_id?: string | null;
 }
 
-const DECIMAL_SEPARATOR: Record<Locale, string> = { ru: ",", en: "." };
+/**
+ * How each locale writes a number. The thousands separator matters as much as
+ * the decimal one: a comma between thousands reads as a decimal point to a
+ * Russian reader, so `1,578` there would say "one and a half".
+ */
+const NUMBER_FORMATS: Record<Locale, { decimal: string; group: string }> = {
+  ru: { decimal: ",", group: " " },
+  en: { decimal: ".", group: "," },
+};
 
 /** Render a decimal string in the locale's convention, without rounding it. */
 export function formatNumber(value: string, locale: Locale): string {
-  return value.replace(".", DECIMAL_SEPARATOR[locale]);
+  return value.replace(".", NUMBER_FORMATS[locale].decimal);
+}
+
+const DECIMAL = /^(-?)(\d+)(?:\.(\d*))?$/;
+
+/** Add one to a string of digits, carrying leftwards: "199" becomes "200". */
+function carry(digits: string): string {
+  const out = [...digits];
+  for (let index = out.length - 1; index >= 0; index -= 1) {
+    if (out[index] !== "9") {
+      out[index] = String(Number(out[index]) + 1);
+      return out.join("");
+    }
+    out[index] = "0";
+  }
+  return `1${out.join("")}`;
+}
+
+/**
+ * Round a decimal string half-up to `places`, as string arithmetic.
+ *
+ * Decimals cross the API as strings precisely so that no binary float ever
+ * touches them. Parsing one here to round it would put the drift back at the
+ * last step before a reader — the one place nobody would catch it, because
+ * the number still looks plausible. Returns the input unchanged if it is not
+ * a plain decimal, so an unexpected shape degrades to showing the raw value.
+ */
+export function roundDecimal(value: string, places: number): string {
+  const parts = DECIMAL.exec(value.trim());
+  if (!parts) return value;
+  const [, sign = "", whole = "0", fraction = ""] = parts;
+
+  let digits = whole + fraction.slice(0, places).padEnd(places, "0");
+  if ((fraction[places] ?? "0") >= "5") digits = carry(digits);
+
+  const point = digits.length - places;
+  const rounded =
+    places === 0 ? digits : `${digits.slice(0, point)}.${digits.slice(point)}`;
+  // A value that rounds to nothing is zero, not minus zero.
+  return /^0(\.0*)?$/.test(rounded) ? rounded : sign + rounded;
+}
+
+/** Drop zeros that say nothing: "1578.0" is "1578", "31.80" is "31.8". */
+function trimZeros(value: string): string {
+  return value.includes(".") ? value.replace(/\.?0+$/, "") : value;
+}
+
+/**
+ * A number as a reader wants it: rounded, with thousands grouped.
+ *
+ * `places` is a maximum, not a width. A plan whose day comes to exactly 2000
+ * kcal should say "2,000", not "2,000.0" — the trailing zero reads as
+ * precision that was never measured.
+ */
+export function formatQuantity(value: string, locale: Locale, places: number): string {
+  const { decimal, group } = NUMBER_FORMATS[locale];
+  const [whole = "", fraction] = trimZeros(roundDecimal(value, places)).split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, group);
+  return fraction ? grouped + decimal + fraction : grouped;
 }
 
 function interpolate(template: string, params: Record<string, string>): string {
@@ -47,6 +113,12 @@ export function translate(
  *
  * Day indexes are zero-based internally and one-based for a reader: "day 0"
  * means nothing to someone looking at a week.
+ *
+ * Numbers are rounded to match the screen the finding is read beside. A panel
+ * reporting "1,577.59 kcal" next to a day header reading "1,578 kcal" invites
+ * the reader to wonder which of the two the engine actually used, and the
+ * answer — both, it is one number shown twice — is not one they can reach
+ * from the screen.
  */
 export function renderFinding(finding: Finding, locale: Locale): string {
   const catalog = CATALOGS[locale];
@@ -57,9 +129,12 @@ export function renderFinding(finding: Finding, locale: Locale): string {
     return finding.code;
   }
 
+  const places = finding.message_key.includes("kcal") ? 0 : 1;
   const params: Record<string, string> = {};
   for (const [key, value] of Object.entries(finding.params)) {
-    params[key] = /^-?\d+(\.\d+)?$/.test(value) ? formatNumber(value, locale) : value;
+    params[key] = /^-?\d+(\.\d+)?$/.test(value)
+      ? formatQuantity(value, locale, places)
+      : value;
   }
   if (finding.day_index !== null && finding.day_index !== undefined) {
     params.day = String(finding.day_index + 1);
@@ -96,7 +171,18 @@ export function createTranslator(locale: Locale) {
      */
     name: (names: Record<string, string | undefined>, fallback: string): string =>
       names[locale] ?? Object.values(names).find(Boolean) ?? fallback,
-    number: (value: string): string => formatNumber(value, locale),
+
+    // Three precisions, because the quantities differ in what a reader can
+    // act on. Nobody shops to a tenth of a calorie; a portion factor of 1.2
+    // rounded to 1 would be a different meal.
+    /** Energy, to the calorie: "1,578". */
+    kcal: (value: string): string => formatQuantity(value, locale, 0),
+    /** A weight, to a tenth of a gram: "128.4". */
+    grams: (value: string): string => formatQuantity(value, locale, 1),
+    /** A multiplier, where the second decimal is the point: "0.65". */
+    factor: (value: string): string => formatQuantity(value, locale, 2),
+    /** The stored value exactly as it is, for anything being edited. */
+    exact: (value: string): string => formatNumber(value, locale),
     finding: (finding: Finding): string => renderFinding(finding, locale),
   };
 }

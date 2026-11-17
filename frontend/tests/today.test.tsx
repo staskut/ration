@@ -134,10 +134,13 @@ describe("Today", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders numbers with the Russian decimal separator", async () => {
+  it("rounds for a reader and separates the way Russian does", async () => {
     mockApi(TODAY);
     renderWithProviders(<Today />);
-    expect(await screen.findByText(/1577,59/)).toBeInTheDocument();
+    // 1577.59 kcal, to the calorie, with a space between thousands: a comma
+    // there would read as a decimal point. Protein keeps its tenth.
+    expect(await screen.findByText(/1[\s\u00a0]578 ккал/)).toBeInTheDocument();
+    expect(screen.getByText(/118,2 г/)).toBeInTheDocument();
   });
 
   it("hides empty slots rather than listing five blank rows", async () => {
