@@ -138,6 +138,48 @@ session to do it.
 
 It fails the run, loudly, with a non-zero exit and a per-check `FAIL` line.
 
+## Is it actually out there?
+
+The smoke test runs *inside* the deploy job, after the deploy step. When the
+deploy step fails the job stops and the smoke test never runs: it validates a
+release that landed, not the absence of one. That gap is how production came
+to serve an Oct 15 build for a month (#78), with five failed releases behind
+it and `GET /health` answering `{"status":"ok"}` the entire time.
+
+Two checks close it from opposite sides.
+
+**The event.** `deploy.yml` opens an issue when a deploy fails. An issue
+rather than a chat message because it needs no secret and no third-party
+service — and because the channel that already existed, a red workflow run,
+is the one that went unread for a month.
+
+**The condition.**
+[`scripts/check-deployed-version.sh`](../scripts/check-deployed-version.sh),
+run daily by `deployment-drift.yml`, compares the commit each environment
+reports on `/health` against the head of `main` and fails when it has been
+superseded for too long. This is the one that also catches a deploy that
+never ran, that ran against the wrong app, or that someone rolled back by
+hand and forgot.
+
+It measures **age, not equality**, because the environments ship differently:
+
+| Environment | Allowance | Why |
+|---|---|---|
+| staging | 2 hours | deploys automatically on green `main`; the only normal drift is a deploy in flight |
+| production | 7 days | deployed by hand on purpose, so "behind `main`" is the normal state after any merge |
+
+Alerting on mere inequality would fire on every merge and teach everyone to
+ignore it, which is worse than no alert — it would look like coverage.
+
+Run it by hand against any environment:
+
+```bash
+scripts/check-deployed-version.sh https://ration-plan.fly.dev 604800
+```
+
+It exits 0 when current, 1 when stale, unreachable, unversioned, or serving a
+commit this repository does not contain.
+
 ## Rolling back
 
 ```bash
