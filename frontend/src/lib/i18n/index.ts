@@ -88,6 +88,14 @@ export function createTranslator(locale: Locale) {
     slot: (slot: string): string => catalog.slot[slot] ?? slot,
     template: (value: string): string => catalog.template[value] ?? value,
     section: (value: string): string => catalog.section[value] ?? value,
+    /**
+     * An entity's own name, which is data rather than a catalog key.
+     * Falls back the way the server's `_display` does: the reader's
+     * locale, then any name there is, then the identifier. A row named in
+     * one language only still reads better in that language than as a slug.
+     */
+    name: (names: Record<string, string | undefined>, fallback: string): string =>
+      names[locale] ?? Object.values(names).find(Boolean) ?? fallback,
     number: (value: string): string => formatNumber(value, locale),
     finding: (finding: Finding): string => renderFinding(finding, locale),
   };

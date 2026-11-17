@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { DecimalField } from "../../components/DecimalField";
 import { useSaveIngredient, type Ingredient } from "../../lib/queries";
+import { useSession } from "../../lib/session";
 
 const SECTIONS = [
   "meat_fish", "dairy", "produce", "fruit", "grains",
@@ -34,9 +35,9 @@ function emptyDraft(): Draft {
   };
 }
 
-function fromIngredient(ingredient: Ingredient): Draft {
+function fromIngredient(ingredient: Ingredient, name: string): Draft {
   return {
-    name: ingredient.names.ru ?? "",
+    name,
     kcal: ingredient.kcal_per_100g,
     protein: ingredient.protein_per_100g,
     yieldFactor: ingredient.yield_factor,
@@ -62,9 +63,10 @@ export function IngredientForm({
   editing?: Ingredient;
   onDone: () => void;
 }) {
+  const { t } = useSession();
   const save = useSaveIngredient();
   const [draft, setDraft] = useState<Draft>(
-    editing ? fromIngredient(editing) : emptyDraft(),
+    editing ? fromIngredient(editing, t.name(editing.names, "")) : emptyDraft(),
   );
 
   const localYieldError = yieldError(draft.yieldFactor);
@@ -80,7 +82,12 @@ export function IngredientForm({
       {
         id: editing?.id,
         body: {
-          names: { ru: draft.name },
+          // Merged, not replaced. The server swaps the whole names
+          // collection for what it is sent, so writing a bare
+          // `{ ru: draft.name }` from an English screen would show the
+          // planner a Russian name, save their English edit under `ru`,
+          // and delete the English name that was already there.
+          names: { ...editing?.names, [t.locale]: draft.name },
           kcal_per_100g: draft.kcal,
           protein_per_100g: draft.protein,
           yield_factor: draft.yieldFactor,

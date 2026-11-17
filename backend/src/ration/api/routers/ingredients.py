@@ -167,9 +167,9 @@ def check_yield(factor: object, source: str | None) -> None:
 @router.get("/ingredients", operation_id="listIngredients")
 def list_ingredients(
     session: SessionDep,
-    _user: CurrentUserDep,
+    user: CurrentUserDep,
     q: Annotated[str | None, Query()] = None,
-    locale: Annotated[str, Query()] = "ru",
+    locale: Annotated[str | None, Query()] = None,
     section: Annotated[str | None, Query()] = None,
 ) -> list[IngredientResponse]:
     """Search the catalog. Both roles may read it.
@@ -203,7 +203,11 @@ def list_ingredients(
             or any(needle in a.alias.casefold() for a in row.aliases)
         ]
 
-    rows.sort(key=lambda r: _display(r, locale))
+    # Sorted in the reader's language, not in Russian. This defaulted to "ru"
+    # regardless of who was asking, so an English catalog came back in
+    # Russian alphabetical order — Avocado, Pineapple, Peanut butter — which
+    # reads as no order at all.
+    rows.sort(key=lambda r: _display(r, locale or user.locale))
     return [to_response(row) for row in rows]
 
 

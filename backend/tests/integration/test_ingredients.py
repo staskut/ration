@@ -43,8 +43,19 @@ class TestListAndSearch:
     def test_an_unmatched_search_is_empty_not_an_error(self, planner: TestClient) -> None:
         assert planner.get("/api/ingredients", params={"q": "zzzz"}).json() == []
 
-    def test_results_are_sorted_by_localised_name(self, planner: TestClient) -> None:
-        names = [i["names"]["ru"] for i in planner.get("/api/ingredients").json()]
+    def test_results_are_sorted_in_the_callers_language(self, planner: TestClient) -> None:
+        """Not in Russian regardless of who is asking, which is what it used to do.
+
+        The seeded profile is `en`, so an English reader gets Avocado, Bananas,
+        Pineapple. Sorting that by Russian name would have produced Ананас,
+        Авокадо, Бананы — an order with no relation to the words on screen.
+        """
+        names = [i["names"]["en"] for i in planner.get("/api/ingredients").json()]
+        assert names == sorted(names)
+
+    def test_an_explicit_locale_overrides_the_callers(self, planner: TestClient) -> None:
+        rows = planner.get("/api/ingredients", params={"locale": "ru"}).json()
+        names = [i["names"]["ru"] for i in rows]
         assert names == sorted(names)
 
 

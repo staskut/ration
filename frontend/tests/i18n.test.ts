@@ -96,6 +96,38 @@ describe("no component spells a string itself", () => {
 
     expect(offenders).toEqual([]);
   });
+
+  // `ingredient.names.ru` is ASCII, so the sweep above cannot see it. It is
+  // the same defect in a different disguise: a component deciding the
+  // reader's language for itself. It rendered a Russian catalog under an
+  // English UI, and the edit form wrote the name straight back to `ru`.
+  it("leaves the choice of name to the translator", () => {
+    const offenders = sourceFiles(root)
+      .filter((path) => path !== catalog)
+      .filter((path) => /\bnames\.(ru|en)\b/.test(readFileSync(path, "utf8")))
+      .map((path) => relative(root, path));
+
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("naming a thing the catalog does not own", () => {
+  it("prefers the reader's locale", () => {
+    const t = createTranslator("en");
+    expect(t.name({ ru: "Бананы", en: "Bananas" }, "banana")).toBe("Bananas");
+  });
+
+  it("falls back to any name before the identifier", () => {
+    // Half the catalog could be named in one language only. A slug is a
+    // worse answer than the name somebody actually wrote.
+    const t = createTranslator("en");
+    expect(t.name({ ru: "Бананы" }, "banana")).toBe("Бананы");
+  });
+
+  it("falls back to the identifier when there is no name at all", () => {
+    const t = createTranslator("en");
+    expect(t.name({}, "banana")).toBe("banana");
+  });
 });
 
 describe("rendering a finding", () => {

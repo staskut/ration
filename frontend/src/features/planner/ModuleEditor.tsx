@@ -225,7 +225,7 @@ export function ModuleEditor() {
                 >
                   {ingredients?.map((ingredient) => (
                     <option key={ingredient.id} value={ingredient.id}>
-                      {ingredient.names.ru ?? ingredient.id}
+                      {t.name(ingredient.names, ingredient.id)}
                     </option>
                   ))}
                 </select>
