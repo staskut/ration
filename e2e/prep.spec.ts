@@ -17,8 +17,8 @@ test.describe("the planner's prep plan", () => {
 
     // Both batch modules in the reference week, by name rather than by count,
     // so a wrong-but-plausible list fails rather than passes.
-    await expect(planner.getByRole("heading", { name: "Рисовая лапша с индейкой" })).toBeVisible();
-    await expect(planner.getByRole("heading", { name: "Ролл с куриным бедром" })).toBeVisible();
+    await expect(planner.getByRole("heading", { name: "Rice noodles with turkey" })).toBeVisible();
+    await expect(planner.getByRole("heading", { name: "Chicken thigh roll" })).toBeVisible();
   });
 
   test("shows raw and per-container weights as different figures", async ({ planner }) => {
@@ -27,12 +27,12 @@ test.describe("the planner's prep plan", () => {
 
     const card = planner
       .getByRole("article")
-      .filter({ hasText: "Рисовая лапша с индейкой" });
+      .filter({ hasText: "Rice noodles with turkey" });
     await expect(card).toBeVisible();
 
     // 553.8 g of raw turkey, 120 g into each of three boxes. Asserting both
     // is the point: a screen showing one number would look fine.
-    const row = card.getByRole("row").filter({ hasText: "Бедро индейки" });
+    const row = card.getByRole("row").filter({ hasText: "Turkey thigh" });
     await expect(row).toContainText("553.8");
     await expect(row).toContainText("120");
 

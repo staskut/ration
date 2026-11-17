@@ -59,7 +59,9 @@ describe("App", () => {
   it("shows a sign-in form when nobody is signed in", async () => {
     mockSession(null);
     renderApp();
-    expect(await screen.findByRole("button", { name: "Войти" })).toBeInTheDocument();
+    // Nobody is signed in, so no profile locale has loaded: the sign-in form
+    // renders in the fallback locale.
+    expect(await screen.findByRole("button", { name: "Sign in" })).toBeInTheDocument();
   });
 
   it("sends a follower to Today, not to the plan builder", async () => {

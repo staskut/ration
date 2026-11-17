@@ -391,10 +391,18 @@ specification was under-stated.
 
 The follower's screens and the ingredient catalog must support **Russian**. The catalog stores
 one name per locale from the start (§3.1) — retrofitting that is expensive, adding a locale
-later is not.
+later is not. That requirement is what made the change below cheap: the catalogs, the
+per-locale ingredient names and the `message_key` split were all already there.
 
-UI language: Russian for the follower's screens. The planner's screens may remain English in
-the MVP. Documentation, code, comments, and this specification are English.
+UI language: **English on both sides**, as a property of the profile rather than of the
+product. `profiles.locale` selects the catalog, both catalogs are complete, and a profile set
+to `ru` still renders Russian throughout. The reference profile ships `en`. Documentation,
+code, comments, and this specification are English.
+
+This reverses the MVP's "Russian for the follower's screens", which held while the plan it
+served was Russian. Module names are the one thing the reversal is not clean about: `modules`
+carries a single `name` column with no locale, so those are English outright rather than
+translated. Giving modules per-locale names is a schema change, not a string change — see D11.
 
 ## 9. Success criteria
 

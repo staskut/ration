@@ -26,6 +26,7 @@
 
 - slug: milk_1_2
   name_ru: "Молоко 1–2%"
+  name_en: "Milk, 1–2%"
   kcal_per_100g: "44"
   protein_per_100g: "3.3"
   yield_factor: "1"
@@ -35,6 +36,7 @@
 
 - slug: whey_protein
   name_ru: "Сывороточный протеин"
+  name_en: "Whey protein"
   kcal_per_100g: "375"
   protein_per_100g: "75"
   yield_factor: "1"
@@ -44,6 +46,7 @@
 
 - slug: yogurt_natural
   name_ru: "Натуральный йогурт без сахара"
+  name_en: "Natural yogurt, unsweetened"
   kcal_per_100g: "60"
   protein_per_100g: "4.5"
   yield_factor: "1"
@@ -53,6 +56,7 @@
 
 - slug: yogurt_pack
   name_ru: "Готовая упаковка натурального йогурта"
+  name_en: "Natural yogurt, single pack"
   kcal_per_100g: "60"
   protein_per_100g: "4.5"
   yield_factor: "1"
@@ -62,6 +66,7 @@
 
 - slug: cottage_cheese_5
   name_ru: "Творог 5%"
+  name_en: "Cottage cheese, 5%"
   kcal_per_100g: "121"
   protein_per_100g: "16"
   yield_factor: "1"
@@ -71,6 +76,7 @@
 
 - slug: egg
   name_ru: "Яйца"
+  name_en: "Eggs"
   kcal_per_100g: "143"
   protein_per_100g: "12.6"
   yield_factor: "1"
@@ -80,6 +86,7 @@
 
 - slug: turkey_thigh
   name_ru: "Бедро индейки без кожи"
+  name_en: "Turkey thigh, skinless"
   kcal_per_100g: "185"
   protein_per_100g: "28"
   yield_factor: "0.65"
@@ -90,6 +97,7 @@
 
 - slug: chicken_thigh
   name_ru: "Куриное бедро без кожи"
+  name_en: "Chicken thigh, skinless"
   kcal_per_100g: "185"
   protein_per_100g: "26"
   yield_factor: "0.65"
@@ -100,6 +108,7 @@
 
 - slug: white_fish
   name_ru: "Филе белой рыбы"
+  name_en: "White fish fillet"
   kcal_per_100g: "105"
   protein_per_100g: "23"
   yield_factor: "0.72"
@@ -110,6 +119,7 @@
 
 - slug: shrimp
   name_ru: "Креветки очищенные"
+  name_en: "Peeled shrimp"
   kcal_per_100g: "99"
   protein_per_100g: "24"
   yield_factor: "0.58"
@@ -120,6 +130,7 @@
 
 - slug: squid
   name_ru: "Кальмар очищенный"
+  name_en: "Cleaned squid"
   kcal_per_100g: "130"
   protein_per_100g: "18"
   yield_factor: "0.62"
@@ -130,6 +141,7 @@
 
 - slug: salted_salmon
   name_ru: "Красная соленая рыба"
+  name_en: "Salted salmon"
   kcal_per_100g: "200"
   protein_per_100g: "22"
   yield_factor: "0.9"
@@ -139,6 +151,7 @@
 
 - slug: herring_fillet
   name_ru: "Филе сельди"
+  name_en: "Herring fillet"
   kcal_per_100g: "210"
   protein_per_100g: "17"
   yield_factor: "0.83"
@@ -148,6 +161,7 @@
 
 - slug: spinach
   name_ru: "Шпинат"
+  name_en: "Spinach"
   kcal_per_100g: "23"
   protein_per_100g: "2.9"
   yield_factor: "1"
@@ -157,6 +171,7 @@
 
 - slug: napa_cabbage
   name_ru: "Пекинская капуста"
+  name_en: "Napa cabbage"
   kcal_per_100g: "16"
   protein_per_100g: "1.2"
   yield_factor: "1"
@@ -166,6 +181,7 @@
 
 - slug: bell_pepper
   name_ru: "Сладкий перец"
+  name_en: "Bell pepper"
   kcal_per_100g: "31"
   protein_per_100g: "1"
   yield_factor: "1"
@@ -175,6 +191,7 @@
 
 - slug: carrot
   name_ru: "Морковь"
+  name_en: "Carrot"
   kcal_per_100g: "41"
   protein_per_100g: "0.9"
   yield_factor: "0.77"
@@ -184,6 +201,7 @@
 
 - slug: pumpkin
   name_ru: "Тыква"
+  name_en: "Pumpkin"
   kcal_per_100g: "34"
   protein_per_100g: "1.1"
   yield_factor: "0.55"
@@ -193,6 +211,7 @@
 
 - slug: cucumber
   name_ru: "Огурцы"
+  name_en: "Cucumbers"
   kcal_per_100g: "15"
   protein_per_100g: "0.7"
   yield_factor: "1"
@@ -202,6 +221,7 @@
 
 - slug: tomato
   name_ru: "Помидоры"
+  name_en: "Tomatoes"
   kcal_per_100g: "18"
   protein_per_100g: "0.9"
   yield_factor: "1"
@@ -211,6 +231,7 @@
 
 - slug: tomato_passata
   name_ru: "Томатная пассата"
+  name_en: "Tomato passata"
   kcal_per_100g: "35"
   protein_per_100g: "1.5"
   yield_factor: "1"
@@ -220,6 +241,7 @@
 
 - slug: avocado
   name_ru: "Авокадо"
+  name_en: "Avocado"
   kcal_per_100g: "160"
   protein_per_100g: "2"
   yield_factor: "0.5"
@@ -229,6 +251,7 @@
 
 - slug: banana
   name_ru: "Бананы"
+  name_en: "Bananas"
   kcal_per_100g: "89"
   protein_per_100g: "1.1"
   yield_factor: "1"
@@ -238,6 +261,7 @@
 
 - slug: strawberry
   name_ru: "Клубника"
+  name_en: "Strawberries"
   kcal_per_100g: "33"
   protein_per_100g: "0.7"
   yield_factor: "1"
@@ -247,6 +271,7 @@
 
 - slug: pineapple
   name_ru: "Ананас"
+  name_en: "Pineapple"
   kcal_per_100g: "50"
   protein_per_100g: "0.5"
   yield_factor: "1"
@@ -256,6 +281,7 @@
 
 - slug: kiwi
   name_ru: "Киви"
+  name_en: "Kiwi"
   kcal_per_100g: "61"
   protein_per_100g: "1.1"
   yield_factor: "1"
@@ -265,6 +291,7 @@
 
 - slug: rice_noodles
   name_ru: "Рисовая лапша"
+  name_en: "Rice noodles"
   kcal_per_100g: "109"
   protein_per_100g: "0.9"
   yield_factor: "2.85"
@@ -275,6 +302,7 @@
 
 - slug: oats
   name_ru: "Овсяные хлопья"
+  name_en: "Rolled oats"
   kcal_per_100g: "379"
   protein_per_100g: "13.2"
   yield_factor: "1"
@@ -284,6 +312,7 @@
 
 - slug: tortilla_wholegrain
   name_ru: "Цельнозерновая лепешка"
+  name_en: "Wholegrain tortilla"
   kcal_per_100g: "310"
   protein_per_100g: "9"
   yield_factor: "1"
@@ -293,6 +322,7 @@
 
 - slug: crispbread
   name_ru: "Цельнозерновые хлебцы"
+  name_en: "Wholegrain crispbread"
   kcal_per_100g: "360"
   protein_per_100g: "10"
   yield_factor: "1"
@@ -302,6 +332,7 @@
 
 - slug: nuts
   name_ru: "Несоленые орехи"
+  name_en: "Unsalted nuts"
   kcal_per_100g: "620"
   protein_per_100g: "15"
   yield_factor: "1"
@@ -311,6 +342,7 @@
 
 - slug: nut_butter
   name_ru: "Арахисовая или миндальная паста"
+  name_en: "Peanut or almond butter"
   kcal_per_100g: "600"
   protein_per_100g: "25"
   yield_factor: "1"
@@ -320,6 +352,7 @@
 
 - slug: tahini
   name_ru: "Тахини"
+  name_en: "Tahini"
   kcal_per_100g: "595"
   protein_per_100g: "17"
   yield_factor: "1"
@@ -329,6 +362,7 @@
 
 - slug: cocoa
   name_ru: "Какао без сахара"
+  name_en: "Cocoa, unsweetened"
   kcal_per_100g: "230"
   protein_per_100g: "20"
   yield_factor: "1"
@@ -339,6 +373,7 @@
 
 - slug: olive_oil
   name_ru: "Оливковое масло"
+  name_en: "Olive oil"
   kcal_per_100g: "884"
   protein_per_100g: "0"
   yield_factor: "1"
@@ -349,6 +384,7 @@
 
 - slug: sesame_oil
   name_ru: "Кунжутное масло"
+  name_en: "Sesame oil"
   kcal_per_100g: "884"
   protein_per_100g: "0"
   yield_factor: "1"
@@ -359,6 +395,7 @@
 
 - slug: soy_sauce
   name_ru: "Соевый соус"
+  name_en: "Soy sauce"
   kcal_per_100g: "53"
   protein_per_100g: "8"
   yield_factor: "1"
@@ -369,6 +406,7 @@
 
 - slug: dry_wine
   name_ru: "Сухое вино"
+  name_en: "Dry wine"
   kcal_per_100g: "83"
   protein_per_100g: "0"
   yield_factor: "1"
@@ -378,6 +416,7 @@
 
 - slug: dark_chocolate
   name_ru: "Темный шоколад"
+  name_en: "Dark chocolate"
   kcal_per_100g: "550"
   protein_per_100g: "7"
   yield_factor: "1"
@@ -387,6 +426,7 @@
 
 - slug: ice_cream
   name_ru: "Мороженое"
+  name_en: "Ice cream"
   kcal_per_100g: "207"
   protein_per_100g: "3.5"
   yield_factor: "1"

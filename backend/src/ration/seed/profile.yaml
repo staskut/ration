@@ -4,8 +4,8 @@
 # planner; the system only stores and enforces them.
 
 id: reference
-name: "Эталонный профиль"
-locale: ru
+name: "Reference profile"
+locale: en
 
 daily_kcal_target: "1700"
 daily_kcal_tolerance: "50"

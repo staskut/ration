@@ -9,16 +9,16 @@
 # rather than missing data because "untried" and "rejected" are different facts.
 
 - {module: cottage_cheese_box, status: tried, rating: liked,
-   note: "Использовалась все дни пилота."}
+   note: "Used on every day of the pilot."}
 - {module: lunch_rice_noodles_turkey, status: tried, rating: liked}
 - {module: lunch_roll_chicken, status: tried, rating: liked,
-   note: "Лепешки куплены 45 г вместо 75 г, начинка не заворачивалась."}
+   note: "Tortillas bought at 45 g instead of 75 g; the filling would not wrap."}
 - {module: snack_banana_nuts, status: tried, rating: liked,
-   note: "Основной перекус."}
+   note: "The main snack."}
 - {module: dinner_fish_pumpkin_carrot, status: tried, rating: liked,
-   note: "Гарнир заменялся самостоятельно."}
+   note: "The side was swapped out independently."}
 - {module: dinner_fish_tomato_spinach, status: tried, rating: liked,
-   note: "Гарнир заменялся самостоятельно."}
+   note: "The side was swapped out independently."}
 - {module: dinner_shrimp_asian, status: tried, rating: liked}
 
 - {module: shake_strawberry_banana, status: not_tried}

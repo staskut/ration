@@ -298,3 +298,57 @@ approved. Recording them so the exception is visible rather than silent:
 
 Going forward the rule applies as written: a dependency not named in an approved
 issue gets asked about first.
+
+---
+
+## D11 — The UI is English on both sides, and locale stays a profile property
+
+**Status:** decided and implemented.
+
+### The problem
+
+The planner's screens were translated to English, the reference plan with them, and the
+follower's screens were deliberately left Russian because `AGENTS.md` said follower-facing
+strings are Russian. Asked to make the whole interface English, the obvious move was to flip
+the reference profile's `locale` to `en` and stop.
+
+That would not have worked, and the reason is the interesting part. The follower's screens
+were already driven by the catalog — except for their units. `г`, `ккал`, `шт` and `г белка`
+sat in `Today.tsx` and `ShoppingList.tsx` as literals, and one more, `г`, was formatted into a
+critical note on the server. No locale setting can reach a string that was never a key, so an
+`en` profile would have rendered "510 г · 480 ккал" on an otherwise English screen.
+
+The completeness test could not catch it either: it compares the two catalogs' key sets
+against each other and against the backend's message codes. The keys were fine. They simply
+were not used.
+
+### What was decided
+
+Units became whole templates in both catalogs — `"{grams} g · {kcal} kcal · {protein} g
+protein"`, not a number glued to a unit — because the file's own rule says a sentence
+assembled from fragments is correct only in the language it was written in. Sign-in moved into
+the catalog too, and the pre-auth fallback locale moved from `ru` to `en`, since no profile has
+loaded at that point.
+
+Locale remains a property of the **profile**, not of the product. Both catalogs stay complete
+and tested. A profile set to `ru` still renders Russian everywhere a string comes from the
+catalog. What changed is which locale the reference profile ships: `en`.
+
+`tests/i18n.test.ts` now reads every component's source and fails if any of them contains
+Cyrillic. That is the check that would have caught the units, and the one the key-set
+comparison structurally could not.
+
+### What this costs
+
+**Module names are English outright, not translated.** `modules` carries a single `name`
+column with no locale, unlike `ingredients`, which has had per-locale names since §3.1 of the
+PRD. So the nineteen seeded module names were rewritten in place, matching the already-English
+reference document. A `ru` profile now sees Russian ingredient names, Russian sections and
+Russian findings — and English dish names.
+
+Fixing that properly means a `module_names` table and a migration, which is a schema change
+rather than a string change. It is worth doing only if a second locale is ever actually
+served; until then this is a known, recorded inconsistency rather than an accident.
+
+The reference profile's seeded Russian names are kept in `name_ru` alongside the new `name_en`,
+so nothing was deleted to get here.

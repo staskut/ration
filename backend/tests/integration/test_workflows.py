@@ -16,7 +16,7 @@ pytestmark = pytest.mark.integration
 @pytest.fixture
 def seeded_plan(planner: TestClient) -> str:
     plans = planner.get("/api/plans").json()
-    return next(p["id"] for p in plans if p["name"] == "Пилотная неделя 1")
+    return next(p["id"] for p in plans if p["name"] == "Pilot week 1")
 
 
 class TestBuildingAWeekFromNothing:

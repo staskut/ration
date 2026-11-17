@@ -120,13 +120,17 @@ stop and ask rather than implementing the reversal — the reasoning is in `docs
 - Python 3.12, type hints everywhere, `Decimal` for all nutrition and weight arithmetic. Never
   `float` — rounding drift in a shopping list destroys trust in the whole output.
 - Domain validation findings carry a `message_key` and `params`, never a formatted sentence. The
-  follower's UI is Russian; English strings in the domain layer are untranslatable.
+  UI is translated at the edge; a sentence built on the server is untranslatable.
 - Unit tests for `domain/` touch no database. Integration tests use real Postgres.
 - Tests the reference plan must satisfy are "golden" tests — their expected values come from
   `docs/sample-plan-6-days.md`, written by a human before the code existed. If a golden test
   fails, the engine is wrong until proven otherwise.
 - Conventional commits. Commit regularly.
-- Follower-facing UI strings are Russian; code, comments, docs, and planner UI are English.
+- **Every string that reaches a screen comes from the catalog** in
+  `frontend/src/lib/i18n/messages.ts`, including units — `г` and `ккал` were literals in the
+  follower's screens for a while, which no locale setting could reach. Both catalogs are
+  complete and a test fails the build when one falls behind. `locale` is a property of the
+  profile, so a profile set to `ru` still renders Russian; the reference profile is `en` (D11).
 
 ## Rules
 

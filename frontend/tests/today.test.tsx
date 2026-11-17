@@ -238,7 +238,10 @@ describe("Today outside the plan's week", () => {
     renderWithProviders(<Today />);
 
     const before = (await screen.findByText(todayIsoForTest())).textContent;
-    await userEvent.click(screen.getByLabelText("Завтра"));
+    // findBy, not getBy: this renders Today directly rather than through App,
+    // which gates on the session loading, so the first paint uses the
+    // fallback locale and the label is still English.
+    await userEvent.click(await screen.findByLabelText("Завтра"));
 
     await waitFor(() => {
       expect(screen.queryByText(before ?? "")).not.toBeInTheDocument();

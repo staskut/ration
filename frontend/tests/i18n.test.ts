@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
@@ -65,6 +65,36 @@ describe("validation message completeness", () => {
     expect(Object.keys(CATALOGS[locale].ui).sort()).toEqual(
       Object.keys(CATALOGS[other].ui).sort(),
     );
+  });
+});
+
+/**
+ * Every component, so the sweep cannot miss one by being written after it.
+ */
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return sourceFiles(path);
+    return /\.tsx?$/.test(entry.name) ? [path] : [];
+  });
+}
+
+describe("no component spells a string itself", () => {
+  // The last translation pass moved every screen to English and still left
+  // "г", "ккал" and "шт" sitting in Today and the shopping list as literals.
+  // They rendered Russian under every locale, because no locale setting can
+  // reach a string that was never a key. Catalog completeness does not catch
+  // that — the key existed and was simply not used — so this reads the source.
+  const root = resolve(import.meta.dirname, "../src");
+  const catalog = resolve(root, "lib/i18n/messages.ts");
+
+  it("leaves Cyrillic to the catalog", () => {
+    const offenders = sourceFiles(root)
+      .filter((path) => path !== catalog)
+      .filter((path) => /[\u0400-\u04FF]/.test(readFileSync(path, "utf8")))
+      .map((path) => relative(root, path));
+
+    expect(offenders).toEqual([]);
   });
 });
 

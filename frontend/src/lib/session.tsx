@@ -1,8 +1,9 @@
 /**
  * Who is signed in, and in which language.
  *
- * The locale comes from the profile rather than the browser: the follower's
- * screens are Russian because the plan is, not because of a device setting.
+ * The locale comes from the profile rather than the browser: the screens
+ * follow the plan's language, not a device setting. The fallback applies
+ * only before sign-in, when no profile has been loaded yet.
  */
 import { createContext, useContext, type ReactNode } from "react";
 
@@ -21,7 +22,7 @@ const SessionContext = createContext<Session | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading } = useCurrentUser();
-  const locale = (user?.locale as Locale | undefined) ?? "ru";
+  const locale = (user?.locale as Locale | undefined) ?? "en";
 
   const value: Session = {
     user,

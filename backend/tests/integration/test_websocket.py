@@ -11,7 +11,7 @@ pytestmark = pytest.mark.integration
 @pytest.fixture
 def plan_id(planner: TestClient) -> str:
     plans = planner.get("/api/plans").json()
-    return next(p["id"] for p in plans if p["name"] == "Пилотная неделя 1")
+    return next(p["id"] for p in plans if p["name"] == "Pilot week 1")
 
 
 class TestAuthorisation:
@@ -203,7 +203,7 @@ class TestBroadcastHappensAfterCommit:
         from ration.repositories import models
 
         plans = planner.get("/api/plans").json()
-        plan_id = next(p["id"] for p in plans if p["name"] == "Пилотная неделя 1")
+        plan_id = next(p["id"] for p in plans if p["name"] == "Pilot week 1")
 
         seen: list[int] = []
         original = broadcast_module._send
@@ -243,7 +243,7 @@ class TestBroadcastHappensAfterCommit:
         from ration.api import broadcast as broadcast_module
 
         plans = planner.get("/api/plans").json()
-        plan_id = next(p["id"] for p in plans if p["name"] == "Пилотная неделя 1")
+        plan_id = next(p["id"] for p in plans if p["name"] == "Pilot week 1")
 
         sent: list[str] = []
         monkeypatch.setattr(
