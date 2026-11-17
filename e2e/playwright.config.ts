@@ -39,9 +39,10 @@ export default defineConfig({
         isMobile: false,
         hasTouch: true,
       },
-      // Only the follower's screens. The planner's board is desktop-only by
-      // design (PRD §2), so running it at 375px would test a promise the
-      // product does not make.
+      // The follower's screens, and the planner's ingredient catalog. The
+      // planner's week *board* is desktop-only by design (PRD §2), so running
+      // it at 375px would test a promise the product does not make — but the
+      // catalog is data management, which happens on whatever is to hand.
       grep: /@mobile/,
     },
   ],

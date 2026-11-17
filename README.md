@@ -10,6 +10,13 @@ who **eats** it.
 **[Open the demo](https://ration-plan-staging.fly.dev)** — one click in as
 either role, no password. Fictional data, restored nightly.
 
+[![The planner's week board](docs/images/planner-week.png)](https://ration-plan-staging.fly.dev)
+
+*The planner's week. Every figure is computed: day and slot totals against the
+planner's own budgets, and each finding on the right names the rule it
+breaks — including the seventh day, which the reference week leaves unplanned
+on purpose.*
+
 <details>
 <summary><strong>Thirty seconds, if that is all you have</strong></summary>
 
@@ -111,6 +118,14 @@ production.
 
 Both machines suspend when idle, so the first request after a quiet spell
 takes about a second.
+
+| The follower's day | The ingredient catalog |
+|---|---|
+| [![Today](docs/images/follower-today.png)](https://ration-plan-staging.fly.dev) | [![Ingredients](docs/images/planner-catalog.png)](https://ration-plan-staging.fly.dev) |
+| One screen, one tap to rate. Under thirty seconds is an acceptance criterion, not an aspiration. | Yield factors carry a ≈ where they are estimated rather than measured, because that is the shakiest input in the system. |
+
+Regenerate these with `make screenshots` — a committed image goes stale
+silently, so they are reproducible rather than archaeological.
 
 ## Status
 

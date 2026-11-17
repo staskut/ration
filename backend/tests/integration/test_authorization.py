@@ -14,6 +14,12 @@ from fastapi.testclient import TestClient
 
 pytestmark = pytest.mark.integration
 
+# Operations reachable without a session at all. Mirrors PUBLIC_OPERATIONS in
+# tests/unit/test_openapi_contract.py, which asserts this set against the
+# contract's `security: []` declarations — so the two cannot drift apart
+# without one of them failing.
+PUBLIC = {"getDemoAccess", "login", "signInAsDemo"}
+
 # Mutations both roles may perform. Mirrors the allowlist in the contract test;
 # anything not named here must be able to answer 403 to a follower.
 OPEN_TO_BOTH_ROLES = {
@@ -21,6 +27,11 @@ OPEN_TO_BOTH_ROLES = {
     "logout",
     "setShoppingItemChecked",  # the follower is the one in the shop
     "setFeedback",  # follower-only, checked separately below
+    # Public, and deliberately so: the sign-in page has to ask before anyone
+    # has signed in. It has no role check to run — what guards it is that the
+    # seed refuses to create these accounts in production. `TestDemoSignIn`
+    # in test_auth.py drives that refusal through RATION_ENV.
+    *PUBLIC,
 }
 
 # Routes a follower may read. Everything else planner-only on reads would make
@@ -80,6 +91,19 @@ def ids(planner: TestClient) -> dict[str, str]:
     }
 
 
+def test_the_public_set_matches_the_contract_test() -> None:
+    """The two lists are one fact, so assert it rather than commenting it.
+
+    `PUBLIC` here is checked against the running app; `PUBLIC_OPERATIONS`
+    there is checked against `openapi.yaml`. Letting them disagree would mean
+    an operation could be public in the contract and unreviewed here, or the
+    reverse — which is the precise shape of the gap both tests exist to close.
+    """
+    from tests.unit.test_openapi_contract import PUBLIC_OPERATIONS
+
+    assert set(PUBLIC_OPERATIONS) == PUBLIC
+
+
 def test_the_route_list_is_not_empty(planner: TestClient) -> None:
     """Guards the derivation itself: a broken walker would silently pass
     every parameterised test below by iterating nothing."""
@@ -90,7 +114,7 @@ class TestUnauthenticated:
     def test_every_protected_route_rejects_an_anonymous_caller(
         self, anonymous: TestClient, planner: TestClient, ids: dict[str, str]
     ) -> None:
-        allowed_without_a_session = {"login"}
+        allowed_without_a_session = PUBLIC
         failures = []
         for method, path, operation in routes(planner.app):
             if operation in allowed_without_a_session:
