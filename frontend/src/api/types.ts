@@ -977,6 +977,7 @@ export interface operations {
             query?: {
                 /** @description Matches name or alias */
                 q?: string;
+                /** @description Sort order's language; defaults to the caller's profile locale */
                 locale?: string;
                 section?: components["schemas"]["ShopSection"];
             };

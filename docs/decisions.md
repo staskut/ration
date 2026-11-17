@@ -338,6 +338,26 @@ catalog. What changed is which locale the reference profile ships: `en`.
 Cyrillic. That is the check that would have caught the units, and the one the key-set
 comparison structurally could not.
 
+### The same defect twice more, found by looking rather than by testing
+
+The staged build still showed a Russian ingredient catalog under an English planner. Three
+components read `ingredient.names.ru` directly, and the edit form wrote `names: {ru: …}` back.
+Since `PATCH` replaces the whole names collection, editing any ingredient from an English
+screen would have shown the planner a Russian name, saved their English edit under `ru`, and
+**deleted the English name that was already there** — data loss, not a display bug.
+
+The Cyrillic sweep cannot see this: `names.ru` is ASCII. So there is a second guard for the
+ASCII spelling of the same mistake, and the translator grew a `name()` that falls back the way
+the server's `_display` does, rather than each caller deciding.
+
+Underneath it, `GET /ingredients` defaulted its sort locale to `"ru"` for every caller. An
+English catalog therefore came back in Russian alphabetical order — Avocado, Pineapple, Peanut
+butter — which reads as no order at all. It sorts in the caller's locale now, and an explicit
+`?locale=` still overrides.
+
+All three were found by opening the deployed page, not by a test. The suite was green across
+every layer while the catalog screen was visibly wrong.
+
 ### What this costs
 
 **Module names are English outright, not translated.** `modules` carries a single `name`

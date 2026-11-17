@@ -86,7 +86,8 @@ paths:
       summary: Search the catalog, matching names and aliases
       parameters:
         - {name: q, in: query, schema: {type: string}, description: Matches name or alias}
-        - {name: locale, in: query, schema: {type: string, default: ru}}
+        - {name: locale, in: query, schema: {type: string},
+           description: "Sort order's language; defaults to the caller's profile locale"}
         - {name: section, in: query, schema: {$ref: "#/components/schemas/ShopSection"}}
       responses:
         "200":

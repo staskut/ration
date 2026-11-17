@@ -88,7 +88,7 @@ export function Catalog() {
         <tbody>
           {data?.map((ingredient) => (
             <tr key={ingredient.id} className="border-t border-slate-100">
-              <td className="py-2">{ingredient.names.ru ?? ingredient.id}</td>
+              <td className="py-2">{t.name(ingredient.names, ingredient.id)}</td>
               <td className="py-2 text-right tabular-nums">
                 {t.number(ingredient.kcal_per_100g)}
               </td>
@@ -130,7 +130,7 @@ export function Catalog() {
                   type="button"
                   onClick={() => remove.mutate(ingredient.id)}
                   className="px-2 text-slate-400 hover:text-rose-700"
-                  aria-label={`Delete ${ingredient.names.ru ?? ingredient.id}`}
+                  aria-label={`Delete ${t.name(ingredient.names, ingredient.id)}`}
                 >
                   ×
                 </button>
