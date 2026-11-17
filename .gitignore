@@ -39,3 +39,7 @@ coverage/
 .vscode/
 *.swp
 .neon
+
+# Playwright writes these on every run; one of them was committed, so a local
+# e2e run has been dirtying the tree ever since.
+e2e/test-results/
