@@ -178,3 +178,35 @@ test.describe("the follower on a phone @mobile", () => {
     }
   });
 });
+
+test.describe("the planner on a phone @mobile", () => {
+  test("the ingredient catalog is readable at 375px", async ({ planner }) => {
+    await planner.goto("/");
+    await planner.getByRole("button", { name: "Ingredients" }).click();
+    await expect(planner.getByRole("heading", { name: "Ingredients" })).toBeVisible();
+
+    // Seven columns at this width overlapped to the point of being
+    // unreadable, so the narrow layout is cards instead. The table is still
+    // in the markup — `sm:table` — so assert it is not being shown rather
+    // than that it is absent.
+    const table = planner.locator("table");
+    await expect(table).toHaveCount(1);
+    await expect(table).toBeHidden();
+
+    const overflow = await planner.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    );
+    expect(overflow).toBe(false);
+  });
+
+  test("every figure keeps its label when the column heads are gone", async ({
+    planner,
+  }) => {
+    await planner.goto("/");
+    await planner.getByRole("button", { name: "Ingredients" }).click();
+    const first = planner.getByRole("listitem").first();
+    for (const label of ["kcal/100 g", "protein", "yield", "pack", "section"]) {
+      await expect(first.getByText(label, { exact: true })).toBeVisible();
+    }
+  });
+});

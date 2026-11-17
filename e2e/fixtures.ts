@@ -13,8 +13,12 @@ export const PASSWORD = process.env.RATION_E2E_PASSWORD ?? "correct-horse-batter
 
 export async function signIn(page: Page, email: string): Promise<void> {
   await page.goto("/");
-  await page.getByPlaceholder("Email").fill(email);
-  await page.getByPlaceholder("Password").fill(PASSWORD);
+  // By label, not by placeholder: the fields carry real labels now, and a
+  // suite that can only find them by placeholder is a suite that would have
+  // gone green while they were unreachable to anything else navigating by
+  // accessible name.
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
   // Wait on the signed-in UI rather than on a timeout.
   await page.waitForSelector("nav", { state: "visible" });
