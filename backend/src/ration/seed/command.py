@@ -209,8 +209,8 @@ def _upsert_modules(
 def _upsert_identity_and_profile(
     session: Session, reference: ReferenceData, ingredient_ids: dict[str, str]
 ) -> tuple[str, str]:
-    planner = _upsert_user(session, PLANNER_EMAIL, "Planner", "planner")
-    follower = _upsert_user(session, FOLLOWER_EMAIL, "Follower", "follower")
+    planner = _upsert_user(session, PLANNER_EMAIL, "Reference planner", "planner")
+    follower = _upsert_user(session, FOLLOWER_EMAIL, "Reference follower", "follower")
     session.flush()
 
     # Keyed on the planner, not on the profile's name. A seed that finds the

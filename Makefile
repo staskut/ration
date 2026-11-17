@@ -8,6 +8,7 @@ help:
 	@echo "make test-integration - repository and API tests, real database"
 	@echo "make test-integration-postgres - the same suite, on Postgres"
 	@echo "make test-e2e         - two browsers against the compose stack"
+	@echo "make screenshots      - regenerate the README's images"
 	@echo "make lint             - ruff, import contract, oxlint, tsc, client drift"
 	@echo "make format           - apply formatting"
 
@@ -59,6 +60,19 @@ check-client:
 # 8000 is a popular port. Override to publish elsewhere; the health check and
 # the browsers both follow this, so one variable moves the whole target.
 RATION_PORT ?= 8000
+
+screenshots:
+	@# Regenerate the README's images against a running stack. Not part of
+	@# `make test`: it asserts nothing, and a picture failing to render should
+	@# not turn the suite red.
+	@# Reset first, like test-e2e: a previous run leaves the reference week
+	@# edited, and the images should show the plan as a visitor first meets it.
+	RATION_PORT=$(RATION_PORT) docker compose down -v
+	RATION_PORT=$(RATION_PORT) docker compose up -d --build
+	@until curl -sf http://localhost:$(RATION_PORT)/health 2>/dev/null | grep -q '"version"'; do \
+		sleep 2; \
+	done
+	cd e2e && RATION_BASE_URL=http://localhost:$(RATION_PORT) node screenshots.mjs
 
 test-e2e:
 	@# Two browser contexts against the compose stack. The stack is reset
