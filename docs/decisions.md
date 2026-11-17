@@ -372,3 +372,118 @@ served; until then this is a known, recorded inconsistency rather than an accide
 
 The reference profile's seeded Russian names are kept in `name_ru` alongside the new `name_en`,
 so nothing was deleted to get here.
+
+## D12 — Display rounding is string arithmetic, and lives only at the edge
+
+**Status:** decided and implemented. Raised by the external review in #80.
+
+### The problem
+
+Numbers reached the screen at full stored precision: `1577,59 kcal`, `128,404 g protein`,
+`31,764 g`. A shopping list quoting a thousandth of a gram reads as a machine that has lost
+track of what it is for, and it was the first thing an outside reader noticed.
+
+The obvious fix is `Number(value).toFixed(1)`. That is the one thing this codebase must not
+do. Decimals cross the API as strings precisely so that no binary float ever touches them —
+`Decimal` on the server, strings on the wire, strings in the inputs (`DecimalField` exists for
+this reason alone). Parsing one to round it for display would put the drift back at the last
+step before a reader, which is the single place nobody would catch it, because the number
+still looks plausible.
+
+### What was decided
+
+**Round as string arithmetic.** `roundDecimal` splits the digits, rounds half-up by inspecting
+one character, and carries leftwards. No float appears anywhere in the path from the database
+to the pixel.
+
+**Precision is per quantity, not global.** Calories to the calorie, weights to a tenth of a
+gram, factors to two places. A portion factor of 1.2 rounded to one place is a different meal;
+a calorie count to one place is noise. `exact` stays for values on their way into an input,
+where rounding would silently rewrite what the planner stored.
+
+**Findings round to match the screen they sit beside.** A validation panel reading `1,577.59
+kcal` next to a day header reading `1,578 kcal` invites the reader to work out which figure
+the engine used, and the true answer — both, it is one number shown twice — is not reachable
+from the screen. The message key decides: a key mentioning kcal rounds to the calorie.
+
+**Thousands are grouped per locale.** A comma between thousands is a decimal point in Russian,
+so `1,578` there would say "one and a half".
+
+### Cost
+
+Three existing tests asserted the unrounded output and were updated. That is the change being
+made, not a regression — the same category as a golden shopping expectation moving because a
+yield factor changed (D9).
+
+## D13 — One-click demo entry restates the seed's refusal rather than adding a flag
+
+**Status:** decided and implemented. Raised by the external review in #80.
+
+### The problem
+
+The demo's sign-in page showed "Ration" and two fields. The seeded credentials are in the
+README, but a reviewer arriving at the deployment has no reason to look there, and nothing on
+the page says what the product is. The review asked for "Try as planner" and "Try as follower"
+buttons.
+
+That means an endpoint which issues a session without a password. The obvious implementation
+is a feature flag — `RATION_DEMO_ENABLED` — and the obvious failure of that implementation is
+somebody setting it in the wrong environment.
+
+### What was decided
+
+`POST /auth/demo` is guarded by the fact that already exists: `seed()` raises
+`ProductionSeedRefused` when `RATION_ENV` is production, so there are no demo accounts in a
+production database. The endpoint asks the same question — not production, and both seeded
+accounts present — rather than introducing a second, weaker switch that could disagree with
+the first. An environment that has never been seeded therefore offers nothing, instead of
+offering a button that 403s.
+
+`GET /auth/demo` exists so the page can decide what to render before anyone has signed in,
+which is why both are public. The contract test that asserted login was the only
+unauthenticated operation now names all three explicitly, so widening that set stays a
+deliberate edit rather than an unreviewed `security: []`.
+
+The seeded account addresses moved from `ration.seed` to `ration.config`. The API recognising
+a demo account and the seeder creating one are two users of a single fact; having the API
+import the seeder to learn it would have been the wrong direction.
+
+### Cost
+
+A nightly reset job, because the demo database is shared and writable. `ration-seed` upserts,
+so a deploy already restores anything a visitor changed — but not what they deleted, and not
+between deploys.
+
+## D14 — Deployment drift is measured by age, not by equality
+
+**Status:** decided and implemented. Closes the open question in #78.
+
+### The problem
+
+Production served an Oct 15 build for a month. Five deploys had failed, `/health` answered
+`{"status":"ok"}` throughout, and two shipped features were absent from the bundle users
+received. The 5xx rule from #59 is structurally incapable of catching this: a stale release is
+not a failing release, and the old build served every request correctly.
+
+The obvious check is "does production's `/health` version equal the head of `main`".
+
+### What was decided
+
+That check would be wrong, and loudly. Production deploys by hand on purpose (#77, and
+`docs/release-process.md`), so "production is behind `main`" is the normal state within
+minutes of every merge. A rule that fires on every merge trains everyone to ignore it, which
+is worse than having no rule at all — it looks like coverage.
+
+So the check asks how long the deployed commit has been superseded, with an allowance per
+environment: two hours for staging, which deploys automatically on green `main`, and seven
+days for production. A week without a release is somebody's decision; a month is the failure
+in #78.
+
+Two checks, not one, because either alone leaves the gap open from one side. `deploy.yml`
+reports the **event** — a deploy failed, and the previous release is still serving, so nobody
+using the app can tell. `deployment-drift.yml` reports the **condition**, which also covers a
+deploy that never ran, one that ran against the wrong app, and a hand rollback nobody undid.
+
+Both open a GitHub issue rather than posting to a channel. That needs no secret and no
+resolution to #73 — and the channel that already existed, a red workflow run, is the one that
+went unread for a month, so it is not the one to reuse.
