@@ -9,7 +9,7 @@
 # days 0 and 3; day 2 is the long shift.
 
 id: reference_week_1
-name: "Пилотная неделя 1"
+name: "Pilot week 1"
 profile_id: reference
 start_date: "2026-10-12"
 status: active

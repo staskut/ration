@@ -3,8 +3,8 @@
  *
  * The domain layer never produces a sentence — findings carry a `message_key`
  * and parameters — so this is where they become readable. That split is what
- * makes the follower's Russian screens possible without translating strings
- * that were built on a server.
+ * lets a screen change language without translating strings that were built on
+ * a server, which is why switching the product to English cost almost nothing.
  */
 import { CATALOGS, type Catalog, type Locale } from "./messages";
 

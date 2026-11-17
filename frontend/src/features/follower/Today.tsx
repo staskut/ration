@@ -77,7 +77,10 @@ export function Today() {
       {/* Day totals sit in the header so they need no scrolling. */}
       {data && (
         <p className="mt-2 text-center text-sm text-slate-600">
-          {t.t("today.total")}: {t.number(data.kcal)} ккал · {t.number(data.protein_g)} г
+          {t.t("today.day_total", {
+            kcal: t.number(data.kcal),
+            protein: t.number(data.protein_g),
+          })}
         </p>
       )}
     </header>
@@ -148,7 +151,7 @@ export function Today() {
                 <span>
                   {slot.time} · {t.slot(slot.slot)}
                 </span>
-                <span>{t.number(slot.kcal)} ккал</span>
+                <span>{t.t("today.slot_kcal", { kcal: t.number(slot.kcal) })}</span>
               </h2>
 
               {slot.entries.map((entry) => (
@@ -160,8 +163,11 @@ export function Today() {
                     <div className="min-w-0">
                       <h3 className="font-medium">{entry.module_name}</h3>
                       <p className="text-sm text-slate-500">
-                        {t.number(entry.portion_grams)} г · {t.number(entry.kcal)} ккал ·{" "}
-                        {t.number(entry.protein_g)} г белка
+                        {t.t("today.entry_line", {
+                          grams: t.number(entry.portion_grams),
+                          kcal: t.number(entry.kcal),
+                          protein: t.number(entry.protein_g),
+                        })}
                       </p>
                       {entry.home_only && (
                         <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900">

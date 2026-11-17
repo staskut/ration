@@ -112,7 +112,7 @@ def signals(engine: Engine) -> Iterator[tuple[TestClient, Signals]]:
 
 def _plan_id(client: TestClient) -> str:
     plans = client.get("/api/plans").json()
-    return next(p["id"] for p in plans if p["name"] == "Пилотная неделя 1")
+    return next(p["id"] for p in plans if p["name"] == "Pilot week 1")
 
 
 def _attributes(point: Any) -> dict[str, Any]:

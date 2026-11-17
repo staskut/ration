@@ -14,7 +14,7 @@
 
 # ---------------------------------------------------------------- breakfasts
 - slug: shake_strawberry_banana
-  name: "Клубнично-банановый коктейль"
+  name: "Strawberry and banana shake"
   slot: breakfast
   role: main
   batch_portions: 1
@@ -30,7 +30,7 @@
     - {ingredient: nut_butter, grams_cooked: "12"}
 
 - slug: shake_pineapple_kiwi
-  name: "Коктейль с ананасом и киви"
+  name: "Pineapple and kiwi shake"
   slot: breakfast
   role: main
   batch_portions: 1
@@ -46,7 +46,7 @@
     - {ingredient: nut_butter, grams_cooked: "14"}
 
 - slug: oats_strawberry
-  name: "Ночная овсянка с клубникой"
+  name: "Overnight oats with strawberry"
   slot: breakfast
   role: main
   batch_portions: 1
@@ -61,7 +61,7 @@
     - {ingredient: nuts, grams_cooked: "8"}
 
 - slug: oats_banana_cocoa
-  name: "Ночная овсянка с бананом и какао"
+  name: "Overnight oats with banana and cocoa"
   slot: breakfast
   role: main
   batch_portions: 1
@@ -76,7 +76,7 @@
     - {ingredient: cocoa, grams_cooked: "5"}
 
 - slug: egg_muffins
-  name: "Яичные маффины"
+  name: "Egg muffins"
   slot: breakfast
   role: main
   batch_portions: 1
@@ -93,7 +93,7 @@
     - {ingredient: crispbread, grams_cooked: "10"}
 
 - slug: cottage_cheese_box
-  name: "Творожная коробка"
+  name: "Cottage cheese box"
   slot: breakfast
   role: main
   batch_portions: 1
@@ -108,7 +108,7 @@
 # -------------------------------------------------------------------- lunches
 # Both are cooked once for three days (section 10), hence batch_portions: 3.
 - slug: lunch_rice_noodles_turkey
-  name: "Рисовая лапша с индейкой"
+  name: "Rice noodles with turkey"
   slot: lunch
   role: main
   batch_portions: 3
@@ -124,7 +124,7 @@
     - {ingredient: soy_sauce, grams_cooked: "10"}
 
 - slug: lunch_roll_chicken
-  name: "Ролл с куриным бедром"
+  name: "Chicken thigh roll"
   slot: lunch
   role: main
   batch_portions: 3
@@ -132,8 +132,8 @@
   stated_kcal: 530
   stated_protein: 38
   prep_notes: >-
-    Лепешка должна быть 70–80 г. На лепешке 45 г начинка не заворачивается
-    (раздел 14). Собирать ролл вечером перед рабочим днем.
+    The tortilla must be 70–80 g. On a 45 g tortilla the filling will not
+    wrap (section 14). Assemble the roll the evening before a work day.
   lines:
     - {ingredient: tortilla_wholegrain, grams_cooked: "75", size_is_critical: true}
     - {ingredient: chicken_thigh, grams_cooked: "120"}
@@ -144,7 +144,7 @@
 
 # --------------------------------------------------------------------- snacks
 - slug: snack_banana_nuts
-  name: "Банан и орехи"
+  name: "Banana and nuts"
   slot: snack
   role: main
   batch_portions: 1
@@ -156,7 +156,7 @@
     - {ingredient: nuts, grams_cooked: "25"}
 
 - slug: snack_yogurt_nuts
-  name: "Йогурт и орехи"
+  name: "Yogurt and nuts"
   slot: snack
   role: main
   batch_portions: 1
@@ -169,7 +169,7 @@
 
 # -------------------------------------------------------------------- dinners
 - slug: dinner_fish_pumpkin_carrot
-  name: "Белая рыба с тыквой и морковью"
+  name: "White fish with pumpkin and carrot"
   slot: dinner
   role: main
   batch_portions: 1
@@ -184,7 +184,7 @@
     - {ingredient: olive_oil, grams_cooked: "12"}
 
 - slug: dinner_fish_tomato_spinach
-  name: "Белая рыба в томате со шпинатом"
+  name: "White fish in tomato with spinach"
   slot: dinner
   role: main
   batch_portions: 1
@@ -199,7 +199,7 @@
     - {ingredient: olive_oil, grams_cooked: "5"}
 
 - slug: dinner_shrimp_asian
-  name: "Креветки по-азиатски"
+  name: "Asian-style shrimp"
   slot: dinner
   role: main
   batch_portions: 1
@@ -215,7 +215,7 @@
     - {ingredient: sesame_oil, grams_cooked: "9"}
 
 - slug: dinner_squid_pepper
-  name: "Кальмар с печеным перцем"
+  name: "Squid with roasted pepper"
   slot: dinner
   role: main
   batch_portions: 1
@@ -230,14 +230,14 @@
     - {ingredient: tahini, grams_cooked: "32"}
 
 - slug: dinner_salted_salmon_eggs
-  name: "Соленая красная рыба с яйцами"
+  name: "Salted salmon with eggs"
   slot: dinner
   role: main
   batch_portions: 1
   tags: [fish, salted_fish, home_only]
   stated_kcal: 480
   stated_protein: 38
-  prep_notes: "Дополнительную соль не добавлять."
+  prep_notes: "Do not add extra salt."
   lines:
     - {ingredient: salted_salmon, grams_cooked: "90"}
     - {ingredient: egg, grams_cooked: "150"}
@@ -246,7 +246,7 @@
     - {ingredient: avocado, grams_cooked: "35"}
 
 - slug: dinner_herring_cottage
-  name: "Сельдь с творогом и овощами"
+  name: "Herring with cottage cheese and vegetables"
   slot: dinner
   role: main
   batch_portions: 1
@@ -262,7 +262,7 @@
 
 # --------------------------------------------------------------------- treats
 - slug: treat_wine
-  name: "Сухое вино 125 мл"
+  name: "Dry wine, 125 ml"
   slot: treat
   role: main
   batch_portions: 1
@@ -273,7 +273,7 @@
     - {ingredient: dry_wine, grams_cooked: "125"}
 
 - slug: treat_dark_chocolate
-  name: "Темный шоколад 20 г"
+  name: "Dark chocolate, 20 g"
   slot: treat
   role: main
   batch_portions: 1
@@ -284,7 +284,7 @@
     - {ingredient: dark_chocolate, grams_cooked: "20"}
 
 - slug: treat_ice_cream
-  name: "Мороженое 50 г"
+  name: "Ice cream, 50 g"
   slot: treat
   role: main
   batch_portions: 1

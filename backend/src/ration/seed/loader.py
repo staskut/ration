@@ -79,7 +79,11 @@ def _load_ingredients(path: Path) -> dict[str, Ingredient]:
     return {
         entry["slug"]: Ingredient(
             id=entry["slug"],
-            names={"ru": entry["name_ru"]},
+            names={
+                locale: entry[key]
+                for locale, key in (("ru", "name_ru"), ("en", "name_en"))
+                if entry.get(key)
+            },
             kcal_per_100g=_dec(entry["kcal_per_100g"]),
             protein_per_100g=_dec(entry["protein_per_100g"]),
             yield_factor=_dec(entry["yield_factor"]),

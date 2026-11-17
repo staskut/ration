@@ -62,7 +62,7 @@ class TestSession:
         body = planner.get("/api/auth/me").json()
         assert body["role"] == "planner"
         assert body["profile_id"]
-        assert body["locale"] == "ru"
+        assert body["locale"] == "en"
 
     def test_the_follower_is_told_apart(self, follower: TestClient) -> None:
         assert follower.get("/api/auth/me").json()["role"] == "follower"

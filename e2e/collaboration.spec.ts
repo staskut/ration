@@ -10,7 +10,7 @@ async function openPlan(planner: Page): Promise<void> {
 
 /** Walk forward to the plan's unplanned day, wherever "today" happens to be. */
 async function gotoUnplannedDay(follower: Page): Promise<void> {
-  const empty = follower.getByText("На этот день ничего не запланировано");
+  const empty = follower.getByText("Nothing planned for this day");
 
   for (let step = 0; step < 7; step += 1) {
     // Wait for the day to settle before judging it. Checking visibility the
@@ -23,11 +23,11 @@ async function gotoUnplannedDay(follower: Page): Promise<void> {
       .catch(() => false);
     if (settled) return;
 
-    // The last day has no "Завтра". Without this check the walk ends in a
+    // The last day has no "Tomorrow". Without this check the walk ends in a
     // 30 s click timeout and a failure that reads like a product bug, which
     // is how an afternoon gets spent — the message below is the real cause
     // and it was previously unreachable.
-    const tomorrow = follower.getByLabel("Завтра");
+    const tomorrow = follower.getByLabel("Tomorrow");
     if (!(await tomorrow.isVisible().catch(() => false))) break;
     await tomorrow.click();
   }
@@ -36,7 +36,7 @@ async function gotoUnplannedDay(follower: Page): Promise<void> {
   // second cause, and the message named only the first — which sent the
   // reader after a stale database for a date problem, and cost an afternoon.
   const stillThere = await follower
-    .getByLabel("Завтра")
+    .getByLabel("Tomorrow")
     .isVisible()
     .catch(() => false);
   throw new Error(
@@ -65,7 +65,7 @@ test.describe("planner and follower", () => {
     // date would make this pass in one week and fail in the next.
     await gotoUnplannedDay(follower);
     await expect(
-      follower.getByText("На этот день ничего не запланировано"),
+      follower.getByText("Nothing planned for this day"),
     ).toBeVisible();
 
     await openPlan(planner);
@@ -88,20 +88,20 @@ test.describe("planner and follower", () => {
     // No reload: the socket invalidates and the query refetches. This is the
     // only test that proves that path end to end.
     await expect(
-      follower.getByText("На этот день ничего не запланировано"),
+      follower.getByText("Nothing planned for this day"),
     ).toBeHidden({ timeout: 15_000 });
   });
 
   test("a follower's rating reaches the planner", async ({ planner, follower }) => {
     await follower.goto("/");
-    const disliked = follower.getByRole("button", { name: "Не понравилось" }).first();
+    const disliked = follower.getByRole("button", { name: "Disliked" }).first();
     await disliked.click();
 
     // The rating sticks without a reload, and survives one.
     await expect(disliked).toHaveAttribute("aria-pressed", "true");
     await follower.reload();
     await expect(
-      follower.getByRole("button", { name: "Не понравилось" }).first(),
+      follower.getByRole("button", { name: "Disliked" }).first(),
     ).toHaveAttribute("aria-pressed", "true");
 
     // And the planner's board is reachable and current.
@@ -111,10 +111,10 @@ test.describe("planner and follower", () => {
 
   test("a shopping tick survives a reload", async ({ follower }) => {
     await follower.goto("/");
-    await follower.getByRole("button", { name: "Список покупок" }).click();
+    await follower.getByRole("button", { name: "Shopping list" }).click();
 
     const line = () =>
-      follower.getByRole("button", { name: /Бедро индейки/ }).first();
+      follower.getByRole("button", { name: /Turkey thigh/ }).first();
 
     // Relative to whatever state the stack is already in. Asserting an
     // absolute "true" would pass on a fresh database and fail on the second
@@ -126,7 +126,7 @@ test.describe("planner and follower", () => {
     await expect(line()).toHaveAttribute("aria-pressed", after);
 
     await follower.reload();
-    await follower.getByRole("button", { name: "Список покупок" }).click();
+    await follower.getByRole("button", { name: "Shopping list" }).click();
     await expect(line()).toHaveAttribute("aria-pressed", after);
   });
 
@@ -140,7 +140,7 @@ test.describe("planner and follower", () => {
       .selectOption("training");
 
     await expect(
-      planner.getByText(/не допускается в режиме/),
+      planner.getByText(/is not allowed on a/),
     ).toBeVisible({ timeout: 15_000 });
   });
 });
@@ -148,7 +148,7 @@ test.describe("planner and follower", () => {
 test.describe("the follower on a phone @mobile", () => {
   test("Today fits a 375px screen with no horizontal scroll", async ({ follower }) => {
     await follower.goto("/");
-    await expect(follower.getByRole("heading", { name: "Сегодня" })).toBeVisible();
+    await expect(follower.getByRole("heading", { name: "Today" })).toBeVisible();
 
     const overflow = await follower.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -161,9 +161,9 @@ test.describe("the follower on a phone @mobile", () => {
     // Wait for content, as the sibling test above does. Counting buttons
     // straight after goto() passes on localhost and fails against a
     // deployment, where a suspended machine takes about a second to resume:
-    // the screen is still "Загрузка…", there are zero buttons, and the
+    // the screen is still "Loading…", there are zero buttons, and the
     // failure reads as a UI defect rather than a missing wait.
-    await expect(follower.getByRole("heading", { name: "Сегодня" })).toBeVisible();
+    await expect(follower.getByRole("heading", { name: "Today" })).toBeVisible();
     const buttons = follower.getByRole("button");
     const count = await buttons.count();
     expect(count).toBeGreaterThan(0);

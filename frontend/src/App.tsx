@@ -18,6 +18,7 @@ import { useLogin, usePlans } from "./lib/queries";
 import { useSession } from "./lib/session";
 
 function SignIn() {
+  const { t } = useSession();
   const login = useLogin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +37,7 @@ function SignIn() {
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="Почта"
+          placeholder={t.t("auth.email")}
           autoComplete="username"
           className="min-h-(--spacing-tap) w-full rounded-xl border border-slate-300 px-3"
         />
@@ -44,13 +45,13 @@ function SignIn() {
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="Пароль"
+          placeholder={t.t("auth.password")}
           autoComplete="current-password"
           className="min-h-(--spacing-tap) w-full rounded-xl border border-slate-300 px-3"
         />
         {login.isError && (
           <p role="alert" className="text-sm text-rose-700">
-            Почта или пароль неверны
+            {t.t("auth.failed")}
           </p>
         )}
         <button
@@ -58,7 +59,7 @@ function SignIn() {
           disabled={login.isPending}
           className="min-h-(--spacing-tap) w-full rounded-xl bg-slate-900 text-white disabled:opacity-50"
         >
-          Войти
+          {t.t("auth.submit")}
         </button>
       </form>
     </main>

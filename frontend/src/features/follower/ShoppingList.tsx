@@ -24,8 +24,8 @@ function Item({
   const { t } = useSession();
   const amount =
     line.packages != null && line.package_unit === "pcs"
-      ? `${line.packages} шт`
-      : `${t.number(line.purchase_amount)} г`;
+      ? t.t("shopping.amount_pcs", { count: line.packages })
+      : t.t("shopping.amount_g", { amount: t.number(line.purchase_amount) });
 
   return (
     <li>

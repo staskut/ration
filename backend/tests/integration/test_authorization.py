@@ -75,7 +75,7 @@ def concrete(path: str, plan_id: str, profile_id: str) -> str:
 def ids(planner: TestClient) -> dict[str, str]:
     plans = planner.get("/api/plans").json()
     return {
-        "plan": next(p["id"] for p in plans if p["name"] == "Пилотная неделя 1"),
+        "plan": next(p["id"] for p in plans if p["name"] == "Pilot week 1"),
         "profile": planner.get("/api/auth/me").json()["profile_id"],
     }
 

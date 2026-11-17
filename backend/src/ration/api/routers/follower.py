@@ -138,8 +138,13 @@ def get_today(
             * entry_row.portion_factor
         )
 
+        # The unit follows the reader, like every other string that reaches
+        # a screen. A note is still a formatted sentence built on the server,
+        # which is the exception the domain layer is not allowed to make.
+        grams = "g" if user.locale == "en" else "г"
         critical = [
-            f"{catalog.ingredient(line.ingredient_id).name(user.locale)}: {line.grams_cooked} г"
+            f"{catalog.ingredient(line.ingredient_id).name(user.locale)}: "
+            f"{line.grams_cooked} {grams}"
             for line in module.lines
             if line.size_is_critical
         ]

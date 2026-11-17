@@ -211,12 +211,18 @@ def _upsert_modules(
 def _upsert_identity_and_profile(
     session: Session, reference: ReferenceData, ingredient_ids: dict[str, str]
 ) -> tuple[str, str]:
-    planner = _upsert_user(session, PLANNER_EMAIL, "Планировщик", "planner")
-    follower = _upsert_user(session, FOLLOWER_EMAIL, "Подопечный", "follower")
+    planner = _upsert_user(session, PLANNER_EMAIL, "Planner", "planner")
+    follower = _upsert_user(session, FOLLOWER_EMAIL, "Follower", "follower")
     session.flush()
 
+    # Keyed on the planner, not on the profile's name. A seed that finds the
+    # profile by its display name stops finding it the moment that name is
+    # edited, and silently creates a second profile beside the first — both
+    # claiming the same planner, with `deps.py` picking between them by
+    # whichever row comes back first. The planner's address is the stable
+    # identity here, because `_upsert_user` keys on it too.
     profile = session.scalars(
-        select(models.Profile).where(models.Profile.name == reference.profile.name)
+        select(models.Profile).where(models.Profile.planner_user_id == planner.id)
     ).one_or_none()
     if profile is None:
         profile = models.Profile(name=reference.profile.name)

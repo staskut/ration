@@ -13,9 +13,9 @@ export const PASSWORD = process.env.RATION_E2E_PASSWORD ?? "correct-horse-batter
 
 export async function signIn(page: Page, email: string): Promise<void> {
   await page.goto("/");
-  await page.getByPlaceholder("Почта").fill(email);
-  await page.getByPlaceholder("Пароль").fill(PASSWORD);
-  await page.getByRole("button", { name: "Войти" }).click();
+  await page.getByPlaceholder("Email").fill(email);
+  await page.getByPlaceholder("Password").fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
   // Wait on the signed-in UI rather than on a timeout.
   await page.waitForSelector("nav", { state: "visible" });
 }
