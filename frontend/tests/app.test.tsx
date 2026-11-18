@@ -12,11 +12,17 @@ import { SessionProvider } from "../src/lib/session";
  * sharing an API, so the test that matters is that a follower never lands on
  * the planner's screens and the reverse.
  */
+let signedOut = false;
+
 function mockSession(user: unknown | null, demo?: unknown): void {
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string, init?: RequestInit) => {
       calls.push(`${init?.method ?? "GET"} ${String(url)}`);
+      if (String(url).includes("/auth/logout")) {
+        signedOut = true;
+        return new Response(null, { status: 204 });
+      }
       if (String(url).includes("/auth/demo")) {
         return new Response(JSON.stringify(demo ?? { available: false, roles: [] }), {
           status: 200,
@@ -24,7 +30,7 @@ function mockSession(user: unknown | null, demo?: unknown): void {
         });
       }
       if (String(url).includes("/auth/me")) {
-        return user
+        return user && !signedOut
           ? new Response(JSON.stringify(user), {
               status: 200,
               headers: { "Content-Type": "application/json" },
@@ -57,6 +63,7 @@ let calls: string[] = [];
 
 beforeEach(() => {
   calls = [];
+  signedOut = false;
   vi.stubGlobal("WebSocket", class {
     close() {}
   });
@@ -168,6 +175,14 @@ describe("the account bar", () => {
         calls.some((c) => c.startsWith("POST") && c.endsWith("/auth/logout")),
       ).toBe(true),
     );
+
+    // The request firing is not the thing that matters, and asserting only
+    // that is how this shipped broken: on staging the server cleared the
+    // session and answered 204 while the screen stayed on the planner's
+    // board, with every request behind it answering 401. What matters is
+    // that the person ends up signed out.
+    expect(await screen.findByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign out" })).not.toBeInTheDocument();
   });
 
   it("is on the follower's screens too", async () => {
