@@ -51,6 +51,17 @@ if [ "$(git -C "$GIT_DIR" rev-parse "$DEPLOYED")" = "$(git -C "$GIT_DIR" rev-par
   exit 0
 fi
 
+# Is the deployed commit even on this branch? A `workflow_dispatch` deploy can
+# ship any ref — which is how staging ran a review branch for most of a day
+# while this was being written. "Behind" is then the wrong question: the
+# environment is serving something that was never merged, so what `main` says
+# is deployed and what is actually deployed have no relation. Worth saying
+# plainly, because the alternative is silence while staging runs an abandoned
+# branch indefinitely. A merge to `main` clears it by itself.
+if ! git -C "$GIT_DIR" merge-base --is-ancestor "$DEPLOYED" HEAD; then
+  fail "OFF-BRANCH: $URL is serving $DEPLOYED, which is not an ancestor of $HEAD_SHA — it was never merged."
+fi
+
 # How long has the deployed commit been superseded? Measured from the commit
 # that replaced it, not from the deployed commit's own date: a branch that sat
 # unmerged for a week is not a stale deployment.
@@ -59,6 +70,15 @@ HEAD_TIME=$(git -C "$GIT_DIR" show -s --format=%ct HEAD)
 DRIFT=$(( HEAD_TIME - DEPLOYED_TIME ))
 
 BEHIND=$(git -C "$GIT_DIR" rev-list --count "${DEPLOYED}..HEAD" 2>/dev/null || echo "?")
+
+# A rebase can date a commit before the one it replaced, so drift is not
+# guaranteed positive even on a clean ancestry. Reporting "-46857m behind"
+# would be absurd, and worse, a negative number silently passes the `-gt`
+# comparison below — the check would report CURRENT no matter how far behind
+# the deployment actually was.
+if [ "$DRIFT" -lt 0 ]; then
+  DRIFT=0
+fi
 
 if [ "$DRIFT" -gt "$MAX_DRIFT" ]; then
   fail "STALE: $URL is serving $DEPLOYED, $BEHIND commits and $(( DRIFT / 3600 ))h behind $HEAD_SHA."
