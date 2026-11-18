@@ -385,16 +385,23 @@ export function useDemoSignIn(): UseMutationResult<void, ApiError, "planner" | "
 /**
  * Sign out, then drop every cached answer.
  *
- * `invalidateQueries` alone would refetch as the next person; `clear` is what
- * makes sure the previous session's plan is not briefly on screen behind the
- * sign-in form.
+ * `resetQueries`, not `clear`. Both empty the cache, but `clear` does not
+ * notify the queries already mounted — so `useCurrentUser` went on serving
+ * the result it was holding, and the screen stayed on the planner's board
+ * after a sign-out the server had already carried out. Every request behind
+ * it answered 401 while the UI showed a signed-in session.
+ *
+ * `resetQueries` returns each query to its initial state *and* refetches the
+ * active ones, so `/auth/me` runs again, answers 401, and the app renders the
+ * sign-in form. Dropping the data still matters on its own: the next person
+ * at this browser must not see the previous session's plan.
  */
 export function useLogout(): UseMutationResult<void, ApiError, void> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => api.post<void>("/auth/logout", {}),
-    onSuccess: () => {
-      queryClient.clear();
+    onSuccess: async () => {
+      await queryClient.resetQueries();
     },
   });
 }

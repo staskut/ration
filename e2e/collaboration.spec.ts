@@ -210,3 +210,23 @@ test.describe("the planner on a phone @mobile", () => {
     }
   });
 });
+
+test.describe("signing out", () => {
+  test("ends the session on the screen, not only on the server", async ({ planner }) => {
+    await planner.goto("/");
+    await expect(planner.getByRole("button", { name: "Sign out" })).toBeVisible();
+
+    await planner.getByRole("button", { name: "Sign out" }).click();
+
+    // The defect this guards: the server cleared the session and answered
+    // 204, and the planner's board stayed on screen with every request
+    // behind it answering 401. A test that asserted only that the request
+    // fired went green through all of it.
+    await expect(planner.getByRole("button", { name: "Sign in" })).toBeVisible();
+    await expect(planner.getByRole("button", { name: "Sign out" })).toBeHidden();
+
+    // And it is really gone: a reload must not walk back in.
+    await planner.reload();
+    await expect(planner.getByRole("button", { name: "Sign in" })).toBeVisible();
+  });
+});
