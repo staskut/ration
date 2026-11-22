@@ -48,6 +48,33 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
         if: steps.creds.outputs.configured == 'true'
 
+      # `flyctl ssh console` connects to the Machine directly, so it fails
+      # outright when none is running — and most nights none is. staging sits
+      # at `min_machines_running = 0` with `auto_stop_machines = "suspend"`
+      # (fly.toml), and `auto_start_machines` only wakes it through the HTTP
+      # proxy. So a request is the wake-up call, and this job was failing at
+      # 04:00 UTC whenever no visitor had been through shortly before.
+      #
+      # The smoke test below cannot stand in for this: by then the reseed has
+      # already had to run.
+      - name: Wake the machine
+        if: steps.creds.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 \
+              "$URL/health" || true)
+            if [ "$code" = "200" ]; then
+              echo "Awake after $attempt attempt(s)."
+              exit 0
+            fi
+            echo "Attempt $attempt: /health said ${code:-nothing}; waiting."
+            sleep 5
+          done
+          echo "::error title=Not awake::$APP never answered /health, so the \
+          reseed has nothing to connect to. Check: flyctl status --app $APP"
+          exit 1
+
       - name: Reseed
         if: steps.creds.outputs.configured == 'true'
         run: |
